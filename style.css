@@ -238,6 +238,22 @@ body {
   transform: scale(0.96);
 }
 
+.clear-btn {
+  background: #4a4a4a;
+  color: white;
+  padding: 14px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 50px;
+}
+
+.clear-btn:active {
+  transform: scale(0.96);
+}
+
 .status-message {
   margin-top: 15px;
   padding: 10px;
@@ -262,6 +278,74 @@ body {
   background: rgba(79, 195, 247, 0.2);
   color: #4fc3f7;
   border: 1px solid #4fc3f7;
+}
+
+/* ============================================
+   ADMIN - SONG LIST FOR EDIT/DELETE
+   ============================================ */
+.admin-song-list {
+  max-height: 300px;
+  overflow-y: auto;
+  background: #151515;
+  border-radius: 8px;
+  padding: 5px;
+  margin-top: 10px;
+}
+
+.admin-song-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #1a1a2e;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-song-item .song-title {
+  color: #fff;
+  font-size: 0.95rem;
+  flex: 1;
+  min-width: 100px;
+}
+
+.admin-btn-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-btn-group button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 36px;
+  min-width: 60px;
+}
+
+.edit-btn {
+  background: #2a4a6e;
+  color: white;
+}
+
+.edit-btn:active {
+  background: #3a6a8e;
+  transform: scale(0.95);
+}
+
+.delete-btn {
+  background: #6e2a2a;
+  color: white;
+}
+
+.delete-btn:active {
+  background: #8e3a3a;
+  transform: scale(0.95);
 }
 
 /* ============================================
@@ -424,15 +508,14 @@ body {
   flex: 1;
   overflow-y: auto;
   background: #1b1b1b;
-  padding: 15px;
+  padding: 15px 20px;
   border-radius: 10px;
-  font-family: 'Courier New', monospace;
   white-space: pre-wrap;
   word-wrap: break-word;
   text-align: left;
   min-height: 150px;
   font-size: 16px;
-  line-height: 1.8;
+  line-height: 1.5;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   border: 1px solid #2a2a2a;
@@ -442,11 +525,6 @@ body {
 
 .output.scrolling {
   border-color: #4fc3f7;
-}
-
-.output .chord {
-  color: #00ffcc;
-  font-weight: bold;
 }
 
 /* Speed indicator */
@@ -505,6 +583,41 @@ body {
 }
 
 /* ============================================
+   CHORD ABOVE LYRICS STYLING
+   ============================================ */
+
+/* Chord row - displayed above lyrics */
+.chord-row {
+  color: #00ffcc;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  font-size: 1.1em;
+  letter-spacing: 1px;
+  padding-left: 4px;
+  line-height: 1.2;
+  min-height: 1.4em;
+  margin-bottom: -2px;
+}
+
+/* Lyric row - displayed below chords */
+.lyric-row {
+  font-family: Arial, sans-serif;
+  font-size: 1.1em;
+  line-height: 1.5;
+  padding-left: 4px;
+  margin-bottom: 8px;
+}
+
+/* Individual chord styling */
+.chord-row .chord {
+  color: #00ffcc;
+  font-weight: bold;
+  background: rgba(0, 255, 204, 0.08);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+/* ============================================
    VIEWER - FLOATING CONTROL BAR
    ============================================ */
 .floating-bar {
@@ -556,7 +669,6 @@ body {
     padding-bottom: 80px;
   }
 
-  /* Index page mobile */
   .app-card {
     padding: 25px 20px;
   }
@@ -565,7 +677,6 @@ body {
     font-size: 1.6rem;
   }
 
-  /* Header - more compact */
   .header h2 {
     font-size: 1rem;
   }
@@ -578,7 +689,6 @@ body {
     font-size: 0.85rem;
   }
 
-  /* Song list - adjust height */
   .song-list {
     max-height: 120px;
   }
@@ -589,15 +699,13 @@ body {
     min-height: 36px;
   }
 
-  /* Output - larger text for readability */
   .output {
     font-size: 18px;
-    line-height: 1.8;
-    padding: 12px;
+    line-height: 1.5;
+    padding: 12px 15px;
     min-height: 120px;
   }
 
-  /* Floating bar - full width at bottom */
   .floating-bar {
     bottom: 0;
     left: 0;
@@ -612,7 +720,6 @@ body {
     background: rgba(15, 15, 15, 0.95);
   }
 
-  /* Bigger buttons for fingers */
   .floating-bar button {
     flex: 1;
     font-size: 1.1rem;
@@ -622,24 +729,44 @@ body {
     margin: 0 2px;
   }
 
-  /* Remove transform on mobile for better touch feedback */
   .floating-bar button:active {
     transform: scale(0.95);
   }
 
-  /* Topbar button full width */
   .topbar button {
     padding: 12px;
     font-size: 0.95rem;
   }
   
-  /* Create page mobile */
   .create-container .app-card {
     padding: 20px 15px;
   }
   
   .form-textarea {
     min-height: 150px;
+  }
+
+  .admin-song-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .admin-btn-group {
+    justify-content: stretch;
+  }
+  
+  .admin-btn-group button {
+    flex: 1;
+  }
+  
+  .chord-row {
+    font-size: 1em;
+  }
+  
+  .lyric-row {
+    font-size: 1em;
+    line-height: 1.5;
   }
 }
 
@@ -662,7 +789,7 @@ body {
 
   .output {
     font-size: 16px;
-    padding: 10px;
+    padding: 10px 12px;
     min-height: 100px;
   }
 
@@ -769,68 +896,4 @@ body {
 
 .mb-10 {
   margin-bottom: 10px;
-}
-/* Chord above lyrics styling */
-.chord-line {
-  color: #00ffcc;
-  font-weight: bold;
-  font-size: 0.85em;
-  font-family: 'Courier New', monospace;
-  letter-spacing: 1px;
-  padding-left: 2px;
-}
-
-.lyric-line {
-  font-family: Arial, sans-serif;
-  font-size: 1.1em;
-  line-height: 1.8;
-  padding-left: 2px;
-  margin-bottom: 4px;
-}
-
-.chord-line + .lyric-line {
-  margin-top: -4px;
-}
-/* ============================================
-   CHORD ABOVE LYRICS STYLING
-   ============================================ */
-
-/* Chord row - displayed above lyrics */
-.chord-row {
-  color: #00ffcc;
-  font-weight: bold;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85em;
-  letter-spacing: 0.5px;
-  padding-left: 4px;
-  line-height: 1.6;
-  min-height: 1.6em;
-}
-
-/* Lyric row - displayed below chords */
-.lyric-row {
-  font-family: Arial, sans-serif;
-  font-size: 1.1em;
-  line-height: 1.8;
-  padding-left: 4px;
-  margin-bottom: 6px;
-}
-
-/* Individual chord styling */
-.chord-row .chord {
-  color: #00ffcc;
-  font-weight: bold;
-}
-
-/* Empty chord row (for spacing) */
-.chord-row:empty {
-  display: none;
-}
-
-/* No lyrics message */
-.no-lyrics {
-  color: #888;
-  text-align: center;
-  padding: 40px 20px;
-  font-style: italic;
 }
