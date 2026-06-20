@@ -770,3 +770,67 @@ body {
 .mb-10 {
   margin-bottom: 10px;
 }
+/* Chord above lyrics styling */
+.chord-line {
+  color: #00ffcc;
+  font-weight: bold;
+  font-size: 0.85em;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  padding-left: 2px;
+}
+
+.lyric-line {
+  font-family: Arial, sans-serif;
+  font-size: 1.1em;
+  line-height: 1.8;
+  padding-left: 2px;
+  margin-bottom: 4px;
+}
+
+.chord-line + .lyric-line {
+  margin-top: -4px;
+}
+/* ============================================
+   CHORD ABOVE LYRICS STYLING
+   ============================================ */
+
+/* Chord row - displayed above lyrics */
+.chord-row {
+  color: #00ffcc;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  letter-spacing: 0.5px;
+  padding-left: 4px;
+  line-height: 1.6;
+  min-height: 1.6em;
+}
+
+/* Lyric row - displayed below chords */
+.lyric-row {
+  font-family: Arial, sans-serif;
+  font-size: 1.1em;
+  line-height: 1.8;
+  padding-left: 4px;
+  margin-bottom: 6px;
+}
+
+/* Individual chord styling */
+.chord-row .chord {
+  color: #00ffcc;
+  font-weight: bold;
+}
+
+/* Empty chord row (for spacing) */
+.chord-row:empty {
+  display: none;
+}
+
+/* No lyrics message */
+.no-lyrics {
+  color: #888;
+  text-align: center;
+  padding: 40px 20px;
+  font-style: italic;
+}

@@ -96,7 +96,6 @@
   // LOAD SONGS FROM FIREBASE
   // ============================================
   function loadSongs() {
-    // Disable button while loading
     loadBtn.disabled = true;
     loadBtn.textContent = '⏳ Loading...';
     songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
@@ -155,7 +154,6 @@
   // SELECT AND DISPLAY A SONG
   // ============================================
   function selectSong(songId) {
-    // Stop auto-scroll when selecting a new song
     stopScroll();
 
     currentSongId = songId;
@@ -168,39 +166,149 @@
 
     songTitleEl.textContent = song.title || 'Untitled';
 
-    // Reset key when selecting new song
     currentKey = 0;
     keyDisplayEl.textContent = 'Key: 0';
 
-    // Display the lyrics
     displaySong(song);
   }
 
   // ============================================
-  // DISPLAY SONG WITH CHORD HIGHLIGHTING
+  // DISPLAY SONG WITH CHORDS ABOVE LYRICS
   // ============================================
   function displaySong(song) {
-    if (!song || !song.lyrics) {
-      outputEl.textContent = 'No lyrics available';
+    // Try both 'lyrics' and 'content' field names
+    let lyrics = song.lyrics || song.content || '';
+
+    if (!lyrics) {
+      outputEl.innerHTML = '<div class="no-lyrics">No lyrics available</div>';
       return;
     }
-
-    let lyrics = song.lyrics;
 
     // Apply transposition if key is not 0
     if (currentKey !== 0) {
       lyrics = transposeLyrics(lyrics, currentKey);
     }
 
-    // Highlight chords
-    lyrics = highlightChords(lyrics);
+    // Format: chords above lyrics
+    lyrics = formatChordsAboveLyrics(lyrics);
 
     outputEl.innerHTML = lyrics;
     outputEl.scrollTop = 0;
   }
 
   // ============================================
-  // HIGHLIGHT CHORDS (Format: [Chord])
+  // FORMAT CHORDS ABOVE LYRICS
+  // ============================================
+  function formatChordsAboveLyrics(text) {
+    const lines = text.split('\n');
+    let result = [];
+
+    for (let line of lines) {
+      // Skip empty lines but keep spacing
+      if (!line.trim()) {
+        result.push('<br>');
+        continue;
+      }
+
+      // Check if line has chords [Chord]
+      if (line.includes('[')) {
+        let parts = [];
+        let current = '';
+        let i = 0;
+
+        while (i < line.length) {
+          if (line[i] === '[') {
+            let j = line.indexOf(']', i);
+            if (j !== -1) {
+              if (current) {
+                parts.push({ type: 'text', content: current });
+                current = '';
+              }
+              parts.push({ type: 'chord', content: line.substring(i + 1, j) });
+              i = j + 1;
+            } else {
+              current += line[i];
+              i++;
+            }
+          } else {
+            current += line[i];
+            i++;
+          }
+        }
+        if (current) {
+          parts.push({ type: 'text', content: current });
+        }
+
+        // Build chord row and lyric row with alignment
+        let chordRow = '';
+        let lyricRow = '';
+        let pos = 0;
+
+        for (let part of parts) {
+          if (part.type === 'chord') {
+            let spaces = pos - chordRow.replace(/<[^>]*>/g, '').length;
+            if (spaces > 0) {
+              chordRow += '&nbsp;'.repeat(spaces);
+            }
+            chordRow += `<span class="chord">${part.content}</span>`;
+            // Update position based on visible text length
+            let visibleLength = part.content.length;
+            pos += visibleLength;
+          } else {
+            // For text, we need to count characters for spacing
+            let textLength = part.content.length;
+            lyricRow += part.content;
+            // Add spaces to chord row to align
+            if (chordRow.length < lyricRow.length) {
+              let diff = lyricRow.length - chordRow.replace(/<[^>]*>/g, '').length;
+              if (diff > 0) {
+                // We'll handle alignment with CSS instead
+              }
+            }
+            pos += textLength;
+          }
+        }
+
+        // Build the final output with proper alignment
+        let chordHtml = '';
+        let lyricHtml = '';
+        let charIndex = 0;
+
+        for (let part of parts) {
+          if (part.type === 'chord') {
+            // Find position in lyric row
+            let spaces = Math.max(0, charIndex - chordHtml.replace(/<[^>]*>/g, '').length);
+            if (spaces > 0) {
+              chordHtml += '&nbsp;'.repeat(spaces);
+            }
+            chordHtml += `<span class="chord">${part.content}</span>`;
+          } else {
+            lyricHtml += part.content;
+            charIndex += part.content.length;
+          }
+        }
+
+        // If chord row is shorter, pad it
+        let lyricLength = lyricHtml.replace(/&nbsp;/g, ' ').length;
+        let chordLength = chordHtml.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').length;
+        if (chordLength < lyricLength) {
+          chordHtml += '&nbsp;'.repeat(Math.max(0, lyricLength - chordLength));
+        }
+
+        result.push(`<div class="chord-row">${chordHtml}</div>`);
+        result.push(`<div class="lyric-row">${lyricHtml}</div>`);
+
+      } else {
+        // Plain line (no chords)
+        result.push(`<div class="lyric-row">${line}</div>`);
+      }
+    }
+
+    return result.join('\n');
+  }
+
+  // ============================================
+  // HIGHLIGHT CHORDS (Legacy - kept for compatibility)
   // ============================================
   function highlightChords(text) {
     return text.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
@@ -254,16 +362,13 @@
   // AUTO-SCROLL FUNCTIONS
   // ============================================
   function startScroll() {
-    // Don't start if already scrolling
     if (isScrolling) return;
 
-    // Don't start if no content
     const content = outputEl.innerHTML;
     if (!content || content === 'No lyrics available' || content === 'Select a song to begin') {
       return;
     }
 
-    // Don't start if already at the bottom
     if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
       return;
     }
@@ -274,7 +379,6 @@
     outputEl.classList.add('scrolling');
 
     scrollInterval = setInterval(() => {
-      // Check if we've reached the bottom
       if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
         stopScroll();
         return;
@@ -344,13 +448,11 @@
   // KEYBOARD SHORTCUTS
   // ============================================
   document.addEventListener('keydown', function(e) {
-    // Space bar to toggle scroll
     if (e.key === ' ' || e.key === 'Space') {
       e.preventDefault();
       toggleScroll();
     }
 
-    // Arrow keys to adjust scroll speed
     if (e.key === 'ArrowUp' && isScrolling) {
       e.preventDefault();
       scrollSpeed = Math.min(scrollSpeed + 0.5, 5);
