@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Create Song</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+<div class="container create-container">
+  <div class="app-card">
+    <h2>🎼 Create Song</h2>
+    <p class="subtitle">Add a new song to the collection</p>
+    
+    <div class="form-group">
+      <label for="title">Song Title</label>
+      <input id="title" placeholder="Enter song title..." class="form-input">
+    </div>
+    
+    <div class="form-group">
+      <label for="input">Lyrics with Chords</label>
+      <textarea id="input" placeholder="Example: [C]Hello [G]world" class="form-textarea"></textarea>
+      <small class="hint">Use [Chord] format for chord highlighting</small>
+    </div>
+    
+    <div class="button-group">
+      <button onclick="saveSong()" class="save-btn">💾 Save Song</button>
+      <button onclick="goBack()" class="back-btn">⬅ Back</button>
+    </div>
+    
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+  authDomain: "busker-chord-app.firebaseapp.com",
+  projectId: "busker-chord-app"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+
+<script>
+function goBack() {
+  window.location.href = "index.html";
+}
+
+function saveSong() {
+  const title = document.getElementById('title').value.trim();
+  const lyrics = document.getElementById('input').value.trim();
+  const statusMsg = document.getElementById('statusMessage');
+  
+  if (!title) {
+    statusMsg.textContent = '⚠️ Please enter a song title';
+    statusMsg.className = 'status-message error';
+    return;
+  }
+  
+  if (!lyrics) {
+    statusMsg.textContent = '⚠️ Please enter lyrics';
+    statusMsg.className = 'status-message error';
+    return;
+  }
+  
+  // Show saving status
+  statusMsg.textContent = '⏳ Saving song...';
+  statusMsg.className = 'status-message info';
+  
+  db.collection('songs').add({
+    title: title,
+    lyrics: lyrics,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  })
+  .then(() => {
+    statusMsg.textContent = '✅ Song saved successfully!';
+    statusMsg.className = 'status-message success';
+    
+    // Clear fields
+    document.getElementById('title').value = '';
+    document.getElementById('input').value = '';
+    
+    // Auto redirect after 2 seconds
+    setTimeout(() => {
+      goBack();
+    }, 2000);
+  })
+  .catch((error) => {
+    console.error('Error saving song:', error);
+    statusMsg.textContent = '❌ Error saving song: ' + error.message;
+    statusMsg.className = 'status-message error';
+  });
+}
+</script>
+
+</body>
+</html>

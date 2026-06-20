@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Busker App</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+<div class="container index-container">
+  <div class="app-card">
+    <h1>🎸 Busker Chord App</h1>
+    <p class="subtitle">Your ultimate song companion</p>
+    
+    <div class="button-group">
+      <button onclick="admin()" class="admin-btn">
+        <span class="icon">🎼</span>
+        <span class="label">Admin</span>
+        <span class="desc">Create & Manage Songs</span>
+      </button>
+      
+      <button onclick="viewer()" class="viewer-btn">
+        <span class="icon">🎵</span>
+        <span class="label">Viewer</span>
+        <span class="desc">Play & Read Songs</span>
+      </button>
+    </div>
+    
+    <div class="footer-note">
+      <small>Made for buskers 🎸</small>
+    </div>
+  </div>
+</div>
+
+<script>
+function admin() {
+  let pass = prompt("Enter admin password:");
+  if (pass === "admin123") {
+    window.location.href = "create.html";
+  } else if (pass !== null) {
+    alert("Wrong password");
+  }
+}
+
+function viewer() {
+  window.location.href = "viewer.html";
+}
+</script>
+
+</body>
+</html>

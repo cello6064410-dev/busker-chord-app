@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Song Viewer Pro</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h2>🎵 Song Viewer</h2>
+      <button onclick="goHome()" class="home-btn">🏠</button>
+    </div>
+    <h3 id="songTitle">No Song Selected</h3>
+    <div id="keyDisplay">Key: 0</div>
+  </div>
+
+  <!-- LOAD -->
+  <div class="topbar">
+    <button onclick="loadSongs()">📂 Load Songs</button>
+  </div>
+
+  <!-- SONG LIST -->
+  <div id="songList" class="song-list"></div>
+
+  <!-- LYRICS OUTPUT -->
+  <div id="output" class="output">Select a song to begin</div>
+
+  <!-- FLOATING CONTROL -->
+  <div class="floating-bar">
+    <button onclick="transpose(1)" title="Transpose +1">➕</button>
+    <button onclick="transpose(-1)" title="Transpose -1">➖</button>
+    <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
+    <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
+    <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll">▶</button>
+    <button onclick="stopScroll()" title="Stop Auto-Scroll">⏹</button>
+    <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+  </div>
+
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+  authDomain: "busker-chord-app.firebaseapp.com",
+  projectId: "busker-chord-app"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+
+<script src="script.js"></script>
+
+<script>
+function goHome() {
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
