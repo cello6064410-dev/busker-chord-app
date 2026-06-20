@@ -214,6 +214,7 @@ function formatChordsAboveLyrics(text) {
             let currentText = '';
             let i = 0;
             
+            // Parse the line into parts
             while (i < line.length) {
                 if (line[i] === '[') {
                     let j = line.indexOf(']', i);
@@ -237,38 +238,49 @@ function formatChordsAboveLyrics(text) {
                 parts.push({ type: 'text', content: currentText });
             }
             
-            // Build chord line and lyric line
-            let chordLine = '';
+            // Build lyric line first
             let lyricLine = '';
-            let currentPos = 0;
+            let chordPositions = [];
+            let textPosition = 0;
             
             for (let part of parts) {
-                if (part.type === 'chord') {
-                    let spaces = currentPos - chordLine.length;
-                    if (spaces > 0) {
-                        chordLine += ' '.repeat(spaces);
-                    }
-                    chordLine += part.content;
-                } else {
+                if (part.type === 'text') {
+                    // Position text after the chord
+                    let startPos = lyricLine.length;
                     lyricLine += part.content;
-                    // Expand chord line to match lyric position
-                    let textLength = part.content.length;
-                    currentPos += textLength;
-                    if (chordLine.length < currentPos) {
-                        chordLine += ' '.repeat(currentPos - chordLine.length);
+                    // Record the chord position (where the chord should go)
+                    if (chordPositions.length > 0) {
+                        // The last chord should be positioned at startPos
+                        chordPositions[chordPositions.length - 1].position = startPos;
                     }
+                } else if (part.type === 'chord') {
+                    chordPositions.push({
+                        chord: part.content,
+                        position: lyricLine.length
+                    });
                 }
             }
             
-            // Trim excess spaces
-            chordLine = chordLine.trimEnd();
-            lyricLine = lyricLine.trimEnd();
+            // Build chord line with proper spacing
+            let chordLine = '';
+            let lastPosition = 0;
             
-            // Only add if there's content
-            if (lyricLine) {
-                result.push(`<div class="chord-row">${chordLine}</div>`);
-                result.push(`<div class="lyric-row">${lyricLine}</div>`);
+            for (let cp of chordPositions) {
+                // Add spaces to reach the correct position
+                let spaces = cp.position - chordLine.length;
+                if (spaces > 0) {
+                    chordLine += ' '.repeat(spaces);
+                }
+                chordLine += cp.chord;
             }
+            
+            // Pad chord line to match lyric length if needed
+            if (chordLine.length < lyricLine.length) {
+                chordLine += ' '.repeat(lyricLine.length - chordLine.length);
+            }
+            
+            result.push(`<div class="chord-row">${chordLine}</div>`);
+            result.push(`<div class="lyric-row">${lyricLine}</div>`);
         } else {
             result.push(`<div class="lyric-row">${line}</div>`);
         }
@@ -276,34 +288,6 @@ function formatChordsAboveLyrics(text) {
     
     return result.join('\n');
 }
-  // ============================================
-  // HIGHLIGHT CHORDS (Legacy - kept for compatibility)
-  // ============================================
-  function highlightChords(text) {
-    return text.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
-  }
-
-  // ============================================
-  // TRANSPOSE LYRICS
-  // ============================================
-  function transposeLyrics(lyrics, steps) {
-    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
-      let transposed = chord;
-
-      for (let i = 0; i < notes.length; i++) {
-        if (chord.startsWith(notes[i])) {
-          const newIndex = (i + steps + 12) % 12;
-          transposed = notes[newIndex] + chord.substring(notes[i].length);
-          break;
-        }
-      }
-
-      return `[${transposed}]`;
-    });
-  }
-
   // ============================================
   // TRANSPOSE FUNCTION
   // ============================================
