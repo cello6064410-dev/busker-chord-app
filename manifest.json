@@ -1,20 +1,12 @@
 {
-  "name": "Song Viewer Pro",
-  "short_name": "SVP",
-  "start_url": "/viewer.html",
+  "name": "Busker Chord App",
+  "short_name": "Busker App",
+  "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#0f0f1a",
+  "background_color": "#0f0f0f",
   "theme_color": "#1a1a2e",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+  "description": "Your ultimate song companion for buskers",
+  "orientation": "portrait",
+  "categories": ["music", "entertainment", "productivity"],
+  "lang": "en"
 }

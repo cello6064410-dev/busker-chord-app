@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Song Viewer Pro</title>
   <link rel="stylesheet" href="style.css">
   
   <!-- PWA Support -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a2e">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 
@@ -20,15 +21,15 @@
   <div class="header">
     <div class="header-top">
       <h2>🎵 Song Viewer</h2>
-      <button onclick="goHome()" class="home-btn">🏠</button>
+      <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
     </div>
     <h3 id="songTitle">No Song Selected</h3>
     <div id="keyDisplay">Key: 0</div>
   </div>
 
-  <!-- LOAD -->
+  <!-- LOAD BUTTON -->
   <div class="topbar">
-    <button onclick="loadSongs()">📂 Load Songs</button>
+    <button onclick="loadSongs()" id="loadBtn">📂 Load Songs</button>
   </div>
 
   <!-- SONG LIST -->
@@ -37,40 +38,386 @@
   <!-- LYRICS OUTPUT -->
   <div id="output" class="output">Select a song to begin</div>
 
-  <!-- FLOATING CONTROL -->
+  <!-- FLOATING CONTROL BAR -->
   <div class="floating-bar">
-    <button onclick="transpose(1)" title="Transpose +1">➕</button>
-    <button onclick="transpose(-1)" title="Transpose -1">➖</button>
-    <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
-    <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
-    <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll">▶</button>
-    <button onclick="stopScroll()" title="Stop Auto-Scroll">⏹</button>
-    <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+    <button onclick="transpose(1)" title="Transpose +1 (Up)">➕</button>
+    <button onclick="transpose(-1)" title="Transpose -1 (Down)">➖</button>
+    <button onclick="changeFontSize(2)" title="Increase Font Size">A+</button>
+    <button onclick="changeFontSize(-2)" title="Decrease Font Size">A-</button>
+    <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
+    <button onclick="stopScroll()" title="Stop Auto-Scroll" id="stopBtn">⏹</button>
+    <button onclick="toggleFullscreen()" title="Toggle Fullscreen Mode">⛶</button>
   </div>
 
 </div>
 
-<!-- FIREBASE -->
+<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
-  authDomain: "busker-chord-app.firebaseapp.com",
-  projectId: "busker-chord-app"
-};
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 </script>
 
-<script src="script.js"></script>
-
 <script>
-function goHome() {
-  window.location.href = "index.html";
-}
+  // ============================================
+  // GLOBAL VARIABLES
+  // ============================================
+  let songs = [];
+  let currentSongId = null;
+  let currentKey = 0;
+  let fontSize = 16;
+  let scrollInterval = null;
+  let isScrolling = false;
+  let scrollSpeed = 1.5;
+  const SCROLL_INTERVAL_MS = 50;
+
+  // ============================================
+  // DOM REFERENCES
+  // ============================================
+  const songListEl = document.getElementById('songList');
+  const outputEl = document.getElementById('output');
+  const songTitleEl = document.getElementById('songTitle');
+  const keyDisplayEl = document.getElementById('keyDisplay');
+  const playBtn = document.getElementById('playBtn');
+  const loadBtn = document.getElementById('loadBtn');
+
+  // ============================================
+  // LOAD SONGS FROM FIREBASE
+  // ============================================
+  function loadSongs() {
+    // Disable button while loading
+    loadBtn.disabled = true;
+    loadBtn.textContent = '⏳ Loading...';
+    songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
+
+    db.collection('songs')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        songs = [];
+        songListEl.innerHTML = '';
+
+        if (snapshot.empty) {
+          songListEl.innerHTML = `
+            <div class="empty-text">
+              📭 No songs found<br>
+              <small>Go to Admin to create your first song!</small>
+            </div>
+          `;
+          loadBtn.textContent = '📂 Load Songs';
+          loadBtn.disabled = false;
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          const song = { id: doc.id, ...doc.data() };
+          songs.push(song);
+
+          const btn = document.createElement('button');
+          btn.textContent = song.title || 'Untitled';
+          btn.className = 'song-item';
+          btn.setAttribute('data-id', song.id);
+          btn.onclick = () => selectSong(song.id);
+          songListEl.appendChild(btn);
+        });
+
+        loadBtn.textContent = '✅ Loaded!';
+        setTimeout(() => {
+          loadBtn.textContent = '📂 Load Songs';
+          loadBtn.disabled = false;
+        }, 1500);
+      })
+      .catch((error) => {
+        console.error('Error loading songs:', error);
+        songListEl.innerHTML = `
+          <div class="error-text">
+            ❌ Error loading songs<br>
+            <small>${error.message}</small>
+          </div>
+        `;
+        loadBtn.textContent = '🔄 Retry';
+        loadBtn.disabled = false;
+      });
+  }
+
+  // ============================================
+  // SELECT AND DISPLAY A SONG
+  // ============================================
+  function selectSong(songId) {
+    // Stop auto-scroll when selecting a new song
+    stopScroll();
+
+    currentSongId = songId;
+    const song = songs.find(s => s.id === songId);
+
+    if (!song) {
+      outputEl.textContent = 'Song not found';
+      return;
+    }
+
+    songTitleEl.textContent = song.title || 'Untitled';
+
+    // Reset key when selecting new song
+    currentKey = 0;
+    keyDisplayEl.textContent = 'Key: 0';
+
+    // Display the lyrics
+    displaySong(song);
+  }
+
+  // ============================================
+  // DISPLAY SONG WITH CHORD HIGHLIGHTING
+  // ============================================
+  function displaySong(song) {
+    if (!song || !song.lyrics) {
+      outputEl.textContent = 'No lyrics available';
+      return;
+    }
+
+    let lyrics = song.lyrics;
+
+    // Apply transposition if key is not 0
+    if (currentKey !== 0) {
+      lyrics = transposeLyrics(lyrics, currentKey);
+    }
+
+    // Highlight chords
+    lyrics = highlightChords(lyrics);
+
+    outputEl.innerHTML = lyrics;
+    outputEl.scrollTop = 0;
+  }
+
+  // ============================================
+  // HIGHLIGHT CHORDS (Format: [Chord])
+  // ============================================
+  function highlightChords(text) {
+    return text.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
+  }
+
+  // ============================================
+  // TRANSPOSE LYRICS
+  // ============================================
+  function transposeLyrics(lyrics, steps) {
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
+      let transposed = chord;
+
+      for (let i = 0; i < notes.length; i++) {
+        if (chord.startsWith(notes[i])) {
+          const newIndex = (i + steps + 12) % 12;
+          transposed = notes[newIndex] + chord.substring(notes[i].length);
+          break;
+        }
+      }
+
+      return `[${transposed}]`;
+    });
+  }
+
+  // ============================================
+  // TRANSPOSE FUNCTION
+  // ============================================
+  function transpose(steps) {
+    currentKey += steps;
+    keyDisplayEl.textContent = `Key: ${currentKey}`;
+
+    if (currentSongId) {
+      const song = songs.find(s => s.id === currentSongId);
+      if (song) {
+        displaySong(song);
+      }
+    }
+  }
+
+  // ============================================
+  // CHANGE FONT SIZE
+  // ============================================
+  function changeFontSize(delta) {
+    fontSize = Math.min(32, Math.max(10, fontSize + delta));
+    outputEl.style.fontSize = fontSize + 'px';
+  }
+
+  // ============================================
+  // AUTO-SCROLL FUNCTIONS
+  // ============================================
+  function startScroll() {
+    // Don't start if already scrolling
+    if (isScrolling) return;
+
+    // Don't start if no content
+    const content = outputEl.innerHTML;
+    if (!content || content === 'No lyrics available' || content === 'Select a song to begin') {
+      return;
+    }
+
+    // Don't start if already at the bottom
+    if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
+      return;
+    }
+
+    isScrolling = true;
+    playBtn.textContent = '▶️';
+    playBtn.style.background = '#2a5a2e';
+    outputEl.classList.add('scrolling');
+
+    scrollInterval = setInterval(() => {
+      // Check if we've reached the bottom
+      if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
+        stopScroll();
+        return;
+      }
+      outputEl.scrollTop += scrollSpeed;
+    }, SCROLL_INTERVAL_MS);
+  }
+
+  function stopScroll() {
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+
+    isScrolling = false;
+    playBtn.textContent = '▶';
+    playBtn.style.background = '#1a1a2e';
+    outputEl.classList.remove('scrolling');
+  }
+
+  function toggleScroll() {
+    if (isScrolling) {
+      stopScroll();
+    } else {
+      startScroll();
+    }
+  }
+
+  // ============================================
+  // TAP/CLICK ON SCREEN TO STOP SCROLL
+  // ============================================
+  function setupTapToStop() {
+    outputEl.addEventListener('touchstart', function(e) {
+      if (isScrolling) {
+        stopScroll();
+        e.preventDefault();
+      }
+    });
+
+    outputEl.addEventListener('click', function() {
+      if (isScrolling) {
+        stopScroll();
+      }
+    });
+
+    outputEl.addEventListener('scroll', function() {
+      if (isScrolling) {
+        stopScroll();
+      }
+    });
+  }
+
+  // ============================================
+  // TOGGLE FULLSCREEN
+  // ============================================
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+  // ============================================
+  // KEYBOARD SHORTCUTS
+  // ============================================
+  document.addEventListener('keydown', function(e) {
+    // Space bar to toggle scroll
+    if (e.key === ' ' || e.key === 'Space') {
+      e.preventDefault();
+      toggleScroll();
+    }
+
+    // Arrow keys to adjust scroll speed
+    if (e.key === 'ArrowUp' && isScrolling) {
+      e.preventDefault();
+      scrollSpeed = Math.min(scrollSpeed + 0.5, 5);
+      showSpeedIndicator();
+    }
+    if (e.key === 'ArrowDown' && isScrolling) {
+      e.preventDefault();
+      scrollSpeed = Math.max(scrollSpeed - 0.5, 0.5);
+      showSpeedIndicator();
+    }
+  });
+
+  // ============================================
+  // SPEED INDICATOR
+  // ============================================
+  function showSpeedIndicator() {
+    let indicator = outputEl.querySelector('.speed-indicator');
+
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.className = 'speed-indicator';
+      outputEl.appendChild(indicator);
+    }
+
+    indicator.textContent = `Speed: ${scrollSpeed.toFixed(1)}x`;
+    indicator.style.display = 'block';
+
+    clearTimeout(indicator._timeout);
+    indicator._timeout = setTimeout(() => {
+      indicator.style.display = 'none';
+    }, 1500);
+  }
+
+  // ============================================
+  // GO HOME
+  // ============================================
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    setupTapToStop();
+    outputEl.style.fontSize = fontSize + 'px';
+    loadSongs();
+  });
+
+  // ============================================
+  // CLEANUP
+  // ============================================
+  window.addEventListener('beforeunload', function() {
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+  });
+
+  // Console help
+  console.log('🎵 Song Viewer Pro loaded!');
+  console.log('Controls:');
+  console.log('  ▶  - Start auto-scroll');
+  console.log('  ⏹  - Stop auto-scroll');
+  console.log('  Tap on lyrics - Stop scrolling');
+  console.log('  Space bar - Toggle scroll');
+  console.log('  ↑/↓ arrows - Adjust scroll speed');
 </script>
 
 </body>
