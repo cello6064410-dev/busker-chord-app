@@ -25,13 +25,13 @@
     <div id="keyDisplay">Key: 0</div>
   </div>
 
-  <!-- SEARCH BAR (TERUS DI BAWAH HEADER) -->
+  <!-- SEARCH BAR -->
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
     <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
   </div>
 
-  <!-- SONG LIST (HASIL CARIAN) -->
+  <!-- SONG LIST -->
   <div id="songList" class="song-list"></div>
 
   <!-- LYRICS OUTPUT -->
@@ -106,7 +106,7 @@
   const clearSearchBtn = document.getElementById('clearSearchBtn');
 
   // ============================================
-  // LOAD SONGS FROM FIREBASE (AUTOMATIC)
+  // LOAD SONGS FROM FIREBASE
   // ============================================
   function loadSongs() {
     outputEl.textContent = '⏳ Loading songs...';
@@ -135,7 +135,6 @@
           songs.push(song);
         });
 
-        // Set default message
         outputEl.textContent = 'Select a song to begin';
         songListEl.innerHTML = `
           <div class="empty-text">
@@ -379,7 +378,7 @@
   }
 
   // ============================================
-  // TRANSPOSE LYRICS - SHARP (#) & FLAT (b)
+  // TRANSPOSE LYRICS
   // ============================================
   function transposeLyrics(lyrics, steps) {
     const sharpScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -561,7 +560,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     setupTapToStop();
     outputEl.style.fontSize = fontSize + 'px';
-    loadSongs(); // Auto-load songs
+    loadSongs();
   });
 
   // ============================================

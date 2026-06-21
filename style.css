@@ -13,7 +13,7 @@ html, body {
     overflow: hidden;
     background: #0f0f0f;
     color: white;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier New', Courier, 'Liberation Mono', monospace;
 }
 
 /* ============================================
@@ -237,7 +237,7 @@ html, body {
     background: #1b1b1b;
     padding: 15px 15px;
     border-radius: 10px;
-    font-family: 'Courier New', Courier, monospace !important;
+    font-family: 'Courier New', Courier, 'Liberation Mono', monospace !important;
     white-space: pre !important;
     word-wrap: normal !important;
     text-align: left;
@@ -254,10 +254,10 @@ html, body {
 }
 
 /* ============================================
-   CHORD & LYRICS ROWS - RAPAT
+   CHORD & LYRICS ROWS - RAPAT & KONSISTEN
    ============================================ */
 .chord-row {
-    font-family: 'Courier New', Courier, monospace !important;
+    font-family: 'Courier New', Courier, 'Liberation Mono', monospace !important;
     font-size: 16px;
     line-height: 1.2 !important;
     color: #00ffcc !important;
@@ -266,16 +266,20 @@ html, body {
     letter-spacing: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
+    font-variant-ligatures: none !important;
+    font-feature-settings: "liga" 0 !important;
 }
 
 .lyric-row {
-    font-family: 'Courier New', Courier, monospace !important;
+    font-family: 'Courier New', Courier, 'Liberation Mono', monospace !important;
     font-size: 16px;
     line-height: 1.2 !important;
     color: #ffffff !important;
     white-space: pre !important;
     padding: 0 !important;
     margin: 0 !important;
+    font-variant-ligatures: none !important;
+    font-feature-settings: "liga" 0 !important;
 }
 
 .line-spacer {
