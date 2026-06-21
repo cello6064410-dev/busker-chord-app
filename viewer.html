@@ -25,9 +25,15 @@
     <div id="keyDisplay">Key: 0</div>
   </div>
 
-  <!-- LOAD BUTTON -->
+  <!-- TOP BAR: Load + Search -->
   <div class="topbar">
     <button onclick="loadSongs()" id="loadBtn">📂 Load Songs</button>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
+    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
   </div>
 
   <!-- SONG LIST -->
@@ -72,6 +78,7 @@
   // GLOBAL VARIABLES
   // ============================================
   let songs = [];
+  let filteredSongs = [];
   let currentSongId = null;
   let currentKey = 0;
   let fontSize = 16;
@@ -90,6 +97,8 @@
   const keyDisplayEl = document.getElementById('keyDisplay');
   const playBtn = document.getElementById('playBtn');
   const loadBtn = document.getElementById('loadBtn');
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
 
   // ============================================
   // LOAD SONGS FROM FIREBASE
@@ -121,14 +130,11 @@
         snapshot.forEach((doc) => {
           const song = { id: doc.id, ...doc.data() };
           songs.push(song);
-
-          const btn = document.createElement('button');
-          btn.textContent = song.title || 'Untitled';
-          btn.className = 'song-item';
-          btn.setAttribute('data-id', song.id);
-          btn.onclick = () => selectSong(song.id);
-          songListEl.appendChild(btn);
         });
+
+        // Show all songs initially
+        filteredSongs = [...songs];
+        renderSongList();
 
         loadBtn.textContent = '✅ Loaded!';
         setTimeout(() => {
@@ -147,6 +153,66 @@
         loadBtn.textContent = '🔄 Retry';
         loadBtn.disabled = false;
       });
+  }
+
+  // ============================================
+  // RENDER SONG LIST
+  // ============================================
+  function renderSongList() {
+    songListEl.innerHTML = '';
+
+    if (filteredSongs.length === 0) {
+      songListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 No songs found matching "<span id="searchTerm">${searchInput.value}</span>"
+        </div>
+      `;
+      return;
+    }
+
+    filteredSongs.forEach((song) => {
+      const btn = document.createElement('button');
+      btn.textContent = song.title || 'Untitled';
+      btn.className = 'song-item';
+      btn.setAttribute('data-id', song.id);
+      btn.onclick = () => selectSong(song.id);
+      songListEl.appendChild(btn);
+    });
+  }
+
+  // ============================================
+  // SEARCH / FILTER SONGS
+  // ============================================
+  function filterSongs() {
+    const query = searchInput.value.toLowerCase().trim();
+    
+    // Show/hide clear button
+    if (query.length > 0) {
+      clearSearchBtn.style.display = 'block';
+    } else {
+      clearSearchBtn.style.display = 'none';
+    }
+
+    if (query === '') {
+      filteredSongs = [...songs];
+    } else {
+      filteredSongs = songs.filter(song => 
+        song.title && song.title.toLowerCase().includes(query)
+      );
+    }
+
+    renderSongList();
+  }
+
+  // ============================================
+  // CLEAR SEARCH
+  // ============================================
+  function clearSearch() {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    filteredSongs = [...songs];
+    renderSongList();
+    searchInput.focus();
   }
 
   // ============================================
@@ -191,7 +257,6 @@
     outputEl.innerHTML = lyrics;
     outputEl.scrollTop = 0;
 
-    // Apply current font size to new content
     applyFontSize(fontSize);
   }
 
@@ -310,7 +375,7 @@
   }
 
   // ============================================
-  // CHANGE FONT SIZE - FIXED
+  // CHANGE FONT SIZE
   // ============================================
   function changeFontSize(delta) {
     fontSize = Math.min(32, Math.max(10, fontSize + delta));
@@ -318,10 +383,7 @@
   }
 
   function applyFontSize(size) {
-    // Set on output container
     outputEl.style.fontSize = size + 'px';
-    
-    // Set on all chord and lyric rows
     document.querySelectorAll('.chord-row, .lyric-row').forEach(el => {
       el.style.fontSize = size + 'px';
     });
@@ -333,17 +395,9 @@
   function startScroll() {
     const output = document.getElementById('output');
     
-    if (isScrolling) {
-      return;
-    }
-    
-    if (!output.innerHTML || output.innerHTML === 'Select a song to begin') {
-      return;
-    }
-    
-    if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
-      return;
-    }
+    if (isScrolling) return;
+    if (!output.innerHTML || output.innerHTML === 'Select a song to begin') return;
+    if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) return;
     
     isScrolling = true;
     
@@ -357,12 +411,10 @@
     
     scrollInterval = setInterval(() => {
       const output = document.getElementById('output');
-      
       if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
         stopScroll();
         return;
       }
-      
       output.scrollTop += scrollSpeed;
     }, 50);
   }
@@ -400,10 +452,7 @@
   // ============================================
   function setupTapToStop() {
     const output = document.getElementById('output');
-    
-    if (!output) {
-      return;
-    }
+    if (!output) return;
     
     output.addEventListener('touchstart', function(e) {
       if (isScrolling) {
@@ -484,6 +533,7 @@
   console.log('  Tap on lyrics - Stop scrolling');
   console.log('  Space bar - Toggle scroll');
   console.log('  ↑/↓ arrows - Adjust scroll speed');
+  console.log('  🔍 Search - Type to filter songs');
 </script>
 
 </body>

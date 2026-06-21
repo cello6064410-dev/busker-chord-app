@@ -721,3 +721,74 @@ html, body {
         font-size: 1.3rem;
     }
 }
+/* ============================================
+   SEARCH BAR
+   ============================================ */
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 8px 0;
+    flex-shrink: 0;
+    position: relative;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 10px 14px;
+    background: #1a1a2e;
+    border: 1px solid #2a2a4e;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    font-family: Arial, sans-serif;
+    outline: none;
+    transition: border-color 0.3s;
+    min-height: 44px;
+}
+
+#searchInput:focus {
+    border-color: #4fc3f7;
+}
+
+#searchInput::placeholder {
+    color: #666;
+}
+
+#clearSearchBtn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px 10px;
+    min-height: 44px;
+    min-width: 44px;
+    display: none;
+}
+
+#clearSearchBtn:hover {
+    color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-container {
+        padding: 0 0 6px 0;
+    }
+    
+    #searchInput {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        min-height: 38px;
+    }
+    
+    #clearSearchBtn {
+        right: 6px;
+        min-height: 38px;
+        min-width: 38px;
+        font-size: 1rem;
+    }
+}
