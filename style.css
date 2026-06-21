@@ -105,6 +105,58 @@ html, body {
 }
 
 /* ============================================
+   SEARCH BAR
+   ============================================ */
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 8px 0;
+    flex-shrink: 0;
+    position: relative;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 10px 14px;
+    background: #1a1a2e;
+    border: 1px solid #2a2a4e;
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    font-family: Arial, sans-serif;
+    outline: none;
+    transition: border-color 0.3s;
+    min-height: 44px;
+}
+
+#searchInput:focus {
+    border-color: #4fc3f7;
+}
+
+#searchInput::placeholder {
+    color: #666;
+}
+
+#clearSearchBtn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px 10px;
+    min-height: 44px;
+    min-width: 44px;
+    display: none;
+}
+
+#clearSearchBtn:hover {
+    color: #fff;
+}
+
+/* ============================================
    SONG LIST
    ============================================ */
 .song-list {
@@ -147,6 +199,30 @@ html, body {
 
 .error-text {
     color: #ff4444;
+}
+
+.result-count {
+    color: #888;
+    font-size: 0.8rem;
+    padding: 8px 10px 4px 10px;
+    font-family: Arial, sans-serif;
+    border-bottom: 1px solid #2a2a2a;
+    margin-bottom: 4px;
+}
+
+.scroll-hint {
+    color: #666;
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 6px;
+    font-family: Arial, sans-serif;
+    border-top: 1px solid #2a2a2a;
+    margin-top: 4px;
+    animation: pulse 2s infinite;
+}
+
+.hidden-result {
+    display: block;
 }
 
 /* ============================================
@@ -202,7 +278,6 @@ html, body {
     margin: 0 !important;
 }
 
-/* Tiada spacer */
 .line-spacer {
     display: none !important;
     height: 0 !important;
@@ -318,143 +393,8 @@ html, body {
 }
 
 /* ============================================
-   RESPONSIVE
+   INDEX PAGE
    ============================================ */
-@media (max-width: 768px) {
-    .app {
-        padding: 8px;
-        padding-bottom: 80px;
-    }
-
-    .header h2 { font-size: 1rem; }
-    #songTitle { font-size: 0.95rem; }
-    #keyDisplay { font-size: 0.85rem; }
-
-    .song-list { max-height: 120px; }
-    .song-list button {
-        font-size: 0.85rem;
-        padding: 8px 10px;
-        min-height: 36px;
-    }
-
-    .output {
-        font-size: 18px;
-        padding: 12px;
-        min-height: 120px;
-    }
-
-    .chord-row { font-size: 18px; }
-    .lyric-row { font-size: 18px; }
-
-    .floating-bar {
-        bottom: 0;
-        left: 0;
-        transform: none;
-        width: 100%;
-        border-radius: 0;
-        justify-content: space-around;
-        padding: 8px 5px;
-        gap: 4px;
-        border: none;
-        border-top: 1px solid #2a2a2a;
-        background: rgba(15, 15, 15, 0.95);
-    }
-
-    .floating-bar button {
-        flex: 1;
-        font-size: 1.1rem;
-        padding: 12px 0;
-        min-height: 48px;
-        min-width: 0;
-        margin: 0 2px;
-    }
-
-    .topbar button {
-        padding: 12px;
-        font-size: 0.95rem;
-    }
-}
-
-@media (max-width: 400px) {
-    .app { padding: 5px; padding-bottom: 75px; }
-    .header h2 { font-size: 0.9rem; }
-    #songTitle { font-size: 0.85rem; }
-
-    .output {
-        font-size: 16px;
-        padding: 10px;
-        min-height: 100px;
-    }
-
-    .chord-row { font-size: 16px; }
-    .lyric-row { font-size: 16px; }
-
-    .floating-bar button {
-        font-size: 0.9rem;
-        padding: 10px 0;
-        min-height: 42px;
-    }
-
-    .song-list { max-height: 100px; }
-    .song-list button {
-        font-size: 0.8rem;
-        padding: 6px 8px;
-        min-height: 32px;
-    }
-}
-
-@media (min-width: 769px) {
-    .app {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-        padding-bottom: 100px;
-    }
-
-    .output {
-        font-size: 18px;
-        min-height: 300px;
-    }
-
-    .chord-row { font-size: 18px; }
-    .lyric-row { font-size: 18px; }
-
-    .song-list { max-height: 200px; }
-
-    .floating-bar {
-        gap: 10px;
-        padding: 10px 20px;
-    }
-    .floating-bar button {
-        padding: 10px 18px;
-        min-width: 50px;
-    }
-    .floating-bar button:hover {
-        background: #2a2a4e;
-    }
-}
-
-/* ============================================
-   ANIMATIONS
-   ============================================ */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.song-list button {
-    animation: fadeIn 0.3s ease-out;
-}
-
-/* ============================================
-   UTILITY
-   ============================================ */
-.hidden { display: none !important; }
-.text-center { text-align: center; }
-/* ============================================
-   INDEX PAGE - NEW STYLING
-   ============================================ */
-
 .index-wrapper {
     display: flex;
     justify-content: center;
@@ -474,9 +414,7 @@ html, body {
     max-width: 520px;
     width: 100%;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 
-        0 30px 80px rgba(0, 0, 0, 0.7),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     text-align: center;
     transition: transform 0.3s ease;
 }
@@ -485,7 +423,6 @@ html, body {
     transform: translateY(-4px);
 }
 
-/* Header */
 .index-header {
     margin-bottom: 10px;
 }
@@ -528,7 +465,6 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-/* Divider */
 .index-divider {
     width: 60px;
     height: 3px;
@@ -537,7 +473,6 @@ html, body {
     margin: 20px auto 30px;
 }
 
-/* Buttons */
 .index-buttons {
     display: flex;
     flex-direction: column;
@@ -621,7 +556,6 @@ html, body {
     transform: translateX(4px);
 }
 
-/* Admin Button */
 .admin-btn {
     background: linear-gradient(135deg, #2a1a4e, #3a2a6e);
     border: 1px solid rgba(74, 58, 142, 0.4);
@@ -636,7 +570,6 @@ html, body {
     box-shadow: 0 8px 30px rgba(74, 58, 142, 0.3);
 }
 
-/* Viewer Button */
 .viewer-btn {
     background: linear-gradient(135deg, #1a2a4e, #2a4a6e);
     border: 1px solid rgba(58, 106, 142, 0.4);
@@ -651,7 +584,6 @@ html, body {
     box-shadow: 0 8px 30px rgba(58, 106, 142, 0.3);
 }
 
-/* Footer */
 .index-footer {
     margin-top: 30px;
     color: rgba(255, 255, 255, 0.2);
@@ -661,9 +593,79 @@ html, body {
 }
 
 /* ============================================
-   RESPONSIVE - INDEX
+   RESPONSIVE
    ============================================ */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+    .app {
+        padding: 8px;
+        padding-bottom: 80px;
+    }
+
+    .header h2 { font-size: 1rem; }
+    #songTitle { font-size: 0.95rem; }
+    #keyDisplay { font-size: 0.85rem; }
+
+    .song-list { max-height: 120px; }
+    .song-list button {
+        font-size: 0.85rem;
+        padding: 8px 10px;
+        min-height: 36px;
+    }
+
+    .output {
+        font-size: 18px;
+        padding: 12px;
+        min-height: 120px;
+    }
+
+    .chord-row { font-size: 18px; }
+    .lyric-row { font-size: 18px; }
+
+    .floating-bar {
+        bottom: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        border-radius: 0;
+        justify-content: space-around;
+        padding: 8px 5px;
+        gap: 4px;
+        border: none;
+        border-top: 1px solid #2a2a2a;
+        background: rgba(15, 15, 15, 0.95);
+    }
+
+    .floating-bar button {
+        flex: 1;
+        font-size: 1.1rem;
+        padding: 12px 0;
+        min-height: 48px;
+        min-width: 0;
+        margin: 0 2px;
+    }
+
+    .topbar button {
+        padding: 12px;
+        font-size: 0.95rem;
+    }
+
+    .search-container {
+        padding: 0 0 6px 0;
+    }
+    
+    #searchInput {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        min-height: 38px;
+    }
+    
+    #clearSearchBtn {
+        right: 6px;
+        min-height: 38px;
+        min-width: 38px;
+        font-size: 1rem;
+    }
+
     .index-card {
         padding: 35px 25px;
         border-radius: 24px;
@@ -697,7 +699,64 @@ html, body {
     }
 }
 
-@media (min-width: 768px) {
+@media (max-width: 400px) {
+    .app { padding: 5px; padding-bottom: 75px; }
+    .header h2 { font-size: 0.9rem; }
+    #songTitle { font-size: 0.85rem; }
+
+    .output {
+        font-size: 16px;
+        padding: 10px;
+        min-height: 100px;
+    }
+
+    .chord-row { font-size: 16px; }
+    .lyric-row { font-size: 16px; }
+
+    .floating-bar button {
+        font-size: 0.9rem;
+        padding: 10px 0;
+        min-height: 42px;
+    }
+
+    .song-list { max-height: 100px; }
+    .song-list button {
+        font-size: 0.8rem;
+        padding: 6px 8px;
+        min-height: 32px;
+    }
+}
+
+@media (min-width: 769px) {
+    .app {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        padding-bottom: 100px;
+    }
+
+    .output {
+        font-size: 18px;
+        min-height: 300px;
+    }
+
+    .chord-row { font-size: 18px; }
+    .lyric-row { font-size: 18px; }
+
+    .song-list { max-height: 200px; }
+
+    .floating-bar {
+        gap: 10px;
+        padding: 10px 20px;
+    }
+    .floating-bar button {
+        padding: 10px 18px;
+        min-width: 50px;
+    }
+    .floating-bar button:hover {
+        background: #2a2a4e;
+    }
+
     .index-card {
         padding: 60px 55px;
         max-width: 560px;
@@ -721,74 +780,21 @@ html, body {
         font-size: 1.3rem;
     }
 }
+
 /* ============================================
-   SEARCH BAR
+   ANIMATIONS
    ============================================ */
-.search-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 0 8px 0;
-    flex-shrink: 0;
-    position: relative;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-#searchInput {
-    flex: 1;
-    padding: 10px 14px;
-    background: #1a1a2e;
-    border: 1px solid #2a2a4e;
-    border-radius: 10px;
-    color: white;
-    font-size: 1rem;
-    font-family: Arial, sans-serif;
-    outline: none;
-    transition: border-color 0.3s;
-    min-height: 44px;
+.song-list button {
+    animation: fadeIn 0.3s ease-out;
 }
 
-#searchInput:focus {
-    border-color: #4fc3f7;
-}
-
-#searchInput::placeholder {
-    color: #666;
-}
-
-#clearSearchBtn {
-    position: absolute;
-    right: 10px;
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 8px 10px;
-    min-height: 44px;
-    min-width: 44px;
-    display: none;
-}
-
-#clearSearchBtn:hover {
-    color: #fff;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .search-container {
-        padding: 0 0 6px 0;
-    }
-    
-    #searchInput {
-        padding: 8px 12px;
-        font-size: 0.9rem;
-        min-height: 38px;
-    }
-    
-    #clearSearchBtn {
-        right: 6px;
-        min-height: 38px;
-        min-width: 38px;
-        font-size: 1rem;
-    }
-}
+/* ============================================
+   UTILITY
+   ============================================ */
+.hidden { display: none !important; }
+.text-center { text-align: center; }

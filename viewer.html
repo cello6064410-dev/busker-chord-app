@@ -25,7 +25,7 @@
     <div id="keyDisplay">Key: 0</div>
   </div>
 
-  <!-- TOP BAR: Load + Search -->
+  <!-- LOAD BUTTON -->
   <div class="topbar">
     <button onclick="loadSongs()" id="loadBtn">📂 Load Songs</button>
   </div>
@@ -36,7 +36,7 @@
     <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
   </div>
 
-  <!-- SONG LIST -->
+  <!-- SONG LIST (HASIL CARIAN) -->
   <div id="songList" class="song-list"></div>
 
   <!-- LYRICS OUTPUT -->
@@ -88,6 +88,10 @@
   let isScrolling = false;
   let scrollSpeed = 0.8;
 
+  // Search results limit
+  const MAX_SEARCH_RESULTS = 10;
+  const DISPLAY_RESULTS = 5;
+
   // ============================================
   // DOM REFERENCES
   // ============================================
@@ -132,9 +136,12 @@
           songs.push(song);
         });
 
-        // Show all songs initially
-        filteredSongs = [...songs];
-        renderSongList();
+        // Show empty search prompt
+        songListEl.innerHTML = `
+          <div class="empty-text">
+            🔍 Type a song title to search
+          </div>
+        `;
 
         loadBtn.textContent = '✅ Loaded!';
         setTimeout(() => {
@@ -156,31 +163,6 @@
   }
 
   // ============================================
-  // RENDER SONG LIST
-  // ============================================
-  function renderSongList() {
-    songListEl.innerHTML = '';
-
-    if (filteredSongs.length === 0) {
-      songListEl.innerHTML = `
-        <div class="empty-text">
-          🔍 No songs found matching "<span id="searchTerm">${searchInput.value}</span>"
-        </div>
-      `;
-      return;
-    }
-
-    filteredSongs.forEach((song) => {
-      const btn = document.createElement('button');
-      btn.textContent = song.title || 'Untitled';
-      btn.className = 'song-item';
-      btn.setAttribute('data-id', song.id);
-      btn.onclick = () => selectSong(song.id);
-      songListEl.appendChild(btn);
-    });
-  }
-
-  // ============================================
   // SEARCH / FILTER SONGS
   // ============================================
   function filterSongs() {
@@ -194,14 +176,82 @@
     }
 
     if (query === '') {
-      filteredSongs = [...songs];
-    } else {
-      filteredSongs = songs.filter(song => 
-        song.title && song.title.toLowerCase().includes(query)
-      );
+      songListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 Type a song title to search
+        </div>
+      `;
+      return;
     }
 
-    renderSongList();
+    // Filter songs
+    const results = songs.filter(song => 
+      song.title && song.title.toLowerCase().includes(query)
+    );
+
+    // Limit to MAX_SEARCH_RESULTS (10)
+    const limitedResults = results.slice(0, MAX_SEARCH_RESULTS);
+    filteredSongs = limitedResults;
+
+    renderSongList(limitedResults, results.length);
+  }
+
+  // ============================================
+  // RENDER SONG LIST
+  // ============================================
+  function renderSongList(results, totalFound) {
+    songListEl.innerHTML = '';
+
+    if (results.length === 0) {
+      songListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 No songs found matching "<span id="searchTerm">${searchInput.value}</span>"
+        </div>
+      `;
+      return;
+    }
+
+    // Show result count
+    const resultCount = document.createElement('div');
+    resultCount.className = 'result-count';
+    resultCount.textContent = `Showing ${results.length} of ${totalFound} results`;
+    songListEl.appendChild(resultCount);
+
+    // Display only first 5 results (others need scroll)
+    const displayResults = results.slice(0, DISPLAY_RESULTS);
+    const hiddenResults = results.slice(DISPLAY_RESULTS);
+
+    displayResults.forEach((song) => {
+      const btn = createSongButton(song);
+      songListEl.appendChild(btn);
+    });
+
+    // If there are hidden results, add a "scroll hint"
+    if (hiddenResults.length > 0) {
+      const hint = document.createElement('div');
+      hint.className = 'scroll-hint';
+      hint.textContent = `⬇️ ${hiddenResults.length} more results (scroll down)`;
+      songListEl.appendChild(hint);
+
+      // Add hidden results (they will be visible on scroll)
+      hiddenResults.forEach((song) => {
+        const btn = createSongButton(song);
+        btn.className += ' hidden-result';
+        songListEl.appendChild(btn);
+      });
+    }
+  }
+
+  // ============================================
+  // CREATE SONG BUTTON
+  // ============================================
+  function createSongButton(song) {
+    const btn = document.createElement('button');
+    btn.textContent = song.title || 'Untitled';
+    btn.className = 'song-item';
+    btn.setAttribute('data-id', song.id);
+    btn.onclick = () => selectSong(song.id);
+    return btn;
   }
 
   // ============================================
@@ -210,8 +260,11 @@
   function clearSearch() {
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';
-    filteredSongs = [...songs];
-    renderSongList();
+    songListEl.innerHTML = `
+      <div class="empty-text">
+        🔍 Type a song title to search
+      </div>
+    `;
     searchInput.focus();
   }
 
