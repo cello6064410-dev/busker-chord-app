@@ -25,7 +25,7 @@
     <div id="keyDisplay">Key: 0</div>
   </div>
 
-  <!-- SEARCH BAR -->
+  <!-- SEARCH BAR (TERUS DI BAWAH HEADER) -->
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
     <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
@@ -35,7 +35,7 @@
   <div id="songList" class="song-list"></div>
 
   <!-- LYRICS OUTPUT -->
-  <div id="output" class="output">Select a song to begin</div>
+  <div id="output" class="output">Loading songs...</div>
 
   <!-- LINK TO ALL SONGS LIST -->
   <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
@@ -102,16 +102,14 @@
   const songTitleEl = document.getElementById('songTitle');
   const keyDisplayEl = document.getElementById('keyDisplay');
   const playBtn = document.getElementById('playBtn');
-  const loadBtn = document.getElementById('loadBtn');
   const searchInput = document.getElementById('searchInput');
   const clearSearchBtn = document.getElementById('clearSearchBtn');
 
   // ============================================
-  // LOAD SONGS FROM FIREBASE
+  // LOAD SONGS FROM FIREBASE (AUTOMATIC)
   // ============================================
   function loadSongs() {
-    loadBtn.disabled = true;
-    loadBtn.textContent = '⏳ Loading...';
+    outputEl.textContent = '⏳ Loading songs...';
     songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
 
     db.collection('songs')
@@ -122,14 +120,13 @@
         songListEl.innerHTML = '';
 
         if (snapshot.empty) {
+          outputEl.textContent = '📭 No songs found. Go to Admin to create one.';
           songListEl.innerHTML = `
             <div class="empty-text">
               📭 No songs found<br>
               <small>Go to Admin to create your first song!</small>
             </div>
           `;
-          loadBtn.textContent = '📂 Load Songs';
-          loadBtn.disabled = false;
           return;
         }
 
@@ -138,28 +135,25 @@
           songs.push(song);
         });
 
+        // Set default message
+        outputEl.textContent = 'Select a song to begin';
         songListEl.innerHTML = `
           <div class="empty-text">
             🔍 Type a song title to search
           </div>
         `;
 
-        loadBtn.textContent = '✅ Loaded!';
-        setTimeout(() => {
-          loadBtn.textContent = '📂 Load Songs';
-          loadBtn.disabled = false;
-        }, 1500);
+        console.log(`✅ ${songs.length} songs loaded`);
       })
       .catch((error) => {
         console.error('Error loading songs:', error);
+        outputEl.textContent = '❌ Error loading songs. Please refresh.';
         songListEl.innerHTML = `
           <div class="error-text">
             ❌ Error loading songs<br>
             <small>${error.message}</small>
           </div>
         `;
-        loadBtn.textContent = '🔄 Retry';
-        loadBtn.disabled = false;
       });
   }
 
@@ -277,7 +271,6 @@
     }
 
     songTitleEl.textContent = song.title || 'Untitled';
-
     currentKey = 0;
     keyDisplayEl.textContent = 'Key: 0';
 
@@ -389,13 +382,9 @@
   // TRANSPOSE LYRICS - SHARP (#) & FLAT (b)
   // ============================================
   function transposeLyrics(lyrics, steps) {
-    // Sharp scale untuk + (naik)
     const sharpScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    
-    // Flat scale untuk - (turun)
     const flatScale = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-    // Pilih skala berdasarkan arah: + = Sharp, - = Flat
     const useSharp = steps >= 0;
     const scale = useSharp ? sharpScale : flatScale;
     const semitoneSteps = ((steps % 12) + 12) % 12;
@@ -403,7 +392,6 @@
     return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
       let transposed = chord;
 
-      // Cuba match root chord dengan skala
       for (let i = 0; i < scale.length; i++) {
         const root = scale[i];
         if (chord.startsWith(root)) {
@@ -456,7 +444,7 @@
     const output = document.getElementById('output');
     
     if (isScrolling) return;
-    if (!output.innerHTML || output.innerHTML === 'Select a song to begin') return;
+    if (!output.innerHTML || output.innerHTML === 'Select a song to begin' || output.innerHTML === 'Loading songs...') return;
     if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) return;
     
     isScrolling = true;
@@ -573,7 +561,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     setupTapToStop();
     outputEl.style.fontSize = fontSize + 'px';
-    loadSongs();
+    loadSongs(); // Auto-load songs
   });
 
   // ============================================
