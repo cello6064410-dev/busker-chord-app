@@ -324,25 +324,34 @@
   }
 
   // ============================================
-  // AUTO-SCROLL FUNCTIONS
+  // AUTO-SCROLL FUNCTIONS - FIXED
   // ============================================
 
   function startScroll() {
     const output = document.getElementById('output');
     
+    // Debug
+    console.log('▶️ startScroll() called');
+    
     // Jangan mula jika sudah scrolling
-    if (isScrolling) return;
+    if (isScrolling) {
+      console.log('Already scrolling');
+      return;
+    }
     
     // Jangan mula jika tiada lirik
-    if (!output.innerHTML || output.innerHTML === 'Select a song to begin' || output.innerHTML === 'No lyrics available') {
+    if (!output.innerHTML || output.innerHTML === 'Select a song to begin') {
+      console.log('No lyrics');
       return;
     }
     
     // Jangan mula jika sudah di bawah
     if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
+      console.log('Already at bottom');
       return;
     }
     
+    console.log('✅ Starting scroll...');
     isScrolling = true;
     
     // Tukar butang play
@@ -350,29 +359,34 @@
     if (playBtn) {
       playBtn.textContent = '▶️';
       playBtn.style.background = '#2a5a2e';
-      playBtn.style.color = '#ffffff';
     }
     
-    // Tambah class scrolling
     output.classList.add('scrolling');
     
-    // Mulakan scroll perlahan
+    // Mulakan scroll
     scrollInterval = setInterval(() => {
       const output = document.getElementById('output');
       
+      // Debug setiap 10 kali
+      if (Math.random() < 0.1) {
+        console.log('Scroll position:', output.scrollTop);
+      }
+      
       // Berhenti jika sampai ke bawah
       if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
+        console.log('✅ Reached bottom');
         stopScroll();
         return;
       }
       
-      // Scroll ke bawah perlahan
+      // Scroll ke bawah
       output.scrollTop += scrollSpeed;
-    }, 50); // 50ms = 20fps
+    }, 50);
   }
 
   function stopScroll() {
-    // Hentikan interval
+    console.log('⏹️ stopScroll() called');
+    
     if (scrollInterval) {
       clearInterval(scrollInterval);
       scrollInterval = null;
@@ -380,20 +394,20 @@
     
     isScrolling = false;
     
-    // Reset butang play
     const playBtn = document.getElementById('playBtn');
     if (playBtn) {
       playBtn.textContent = '▶';
       playBtn.style.background = '#1a1a2e';
-      playBtn.style.color = '#ffffff';
     }
     
-    // Buang class scrolling
     const output = document.getElementById('output');
-    output.classList.remove('scrolling');
+    if (output) {
+      output.classList.remove('scrolling');
+    }
   }
 
   function toggleScroll() {
+    console.log('🔄 toggleScroll() called');
     if (isScrolling) {
       stopScroll();
     } else {
@@ -402,35 +416,41 @@
   }
 
   // ============================================
-  // TAP/CLICK UNTUK BERHENTI SCROLL
+  // TAP TO STOP
   // ============================================
 
   function setupTapToStop() {
     const output = document.getElementById('output');
     
-    // Untuk touch (mobile)
+    if (!output) {
+      console.log('Output not found');
+      return;
+    }
+    
+    console.log('✅ Tap-to-stop setup');
+    
     output.addEventListener('touchstart', function(e) {
       if (isScrolling) {
+        console.log('👆 Touch detected, stopping');
         stopScroll();
-        e.preventDefault(); // Elak pemilihan teks
+        e.preventDefault();
       }
     });
     
-    // Untuk klik (desktop)
     output.addEventListener('click', function() {
       if (isScrolling) {
+        console.log('👆 Click detected, stopping');
         stopScroll();
       }
     });
     
-    // Jika user scroll secara manual
     output.addEventListener('scroll', function() {
       if (isScrolling) {
+        console.log('👆 Manual scroll, stopping');
         stopScroll();
       }
     });
   }
-
   // ============================================
   // TOGGLE FULLSCREEN
   // ============================================
