@@ -492,3 +492,11 @@ body {
 .text-center {
     text-align: center;
 }
+/* FIX: Force scroll on output */
+#output {
+    flex: 1 1 auto !important;
+    height: 0 !important;
+    min-height: 200px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
