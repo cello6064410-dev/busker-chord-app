@@ -154,37 +154,36 @@ html, body {
    ============================================ */
 .output {
     flex: 1 1 auto !important;
-    height: 0 !important; /* KRUSIAL: membolehkan flex scroll */
+    height: 0 !important;
     min-height: 150px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     background: #1b1b1b;
-    padding: 20px 15px;
+    padding: 15px 15px;
     border-radius: 10px;
     font-family: 'Courier New', Courier, monospace !important;
     white-space: pre !important;
     word-wrap: normal !important;
     text-align: left;
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.4 !important;
     border: 1px solid #2a2a2a;
     position: relative;
     transition: border-color 0.3s;
     -webkit-overflow-scrolling: touch;
 }
 
-/* Scroll aktif */
 .output.scrolling {
     border-color: #4fc3f7;
 }
 
 /* ============================================
-   CHORD & LYRICS ROWS
+   CHORD & LYRICS ROWS - RAPAT
    ============================================ */
 .chord-row {
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 16px !important;
-    line-height: 1.4 !important;
+    line-height: 1.2 !important;
     color: #00ffcc !important;
     font-weight: bold !important;
     white-space: pre !important;
@@ -196,11 +195,19 @@ html, body {
 .lyric-row {
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 16px !important;
-    line-height: 1.6 !important;
+    line-height: 1.2 !important;
     color: #ffffff !important;
     white-space: pre !important;
     padding: 0 !important;
-    margin: 0 0 6px 0 !important;
+    margin: 0 !important;
+}
+
+/* Tiada spacer */
+.line-spacer {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* ============================================
