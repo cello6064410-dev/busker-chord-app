@@ -202,77 +202,83 @@
     const result = [];
 
     for (let line of lines) {
-      if (!line.trim()) {
-        result.push('<br>');
-        continue;
-      }
+        if (!line.trim()) {
+            result.push('<br>');
+            continue;
+        }
 
-      // Parse line into parts: { type: 'text'|'chord', content: string }
-      const parts = [];
-      let current = '';
-      let i = 0;
+        // Parse line into parts
+        const parts = [];
+        let current = '';
+        let i = 0;
 
-      while (i < line.length) {
-        if (line[i] === '[') {
-          const j = line.indexOf(']', i);
-          if (j !== -1) {
-            if (current) {
-              parts.push({ type: 'text', content: current });
-              current = '';
+        while (i < line.length) {
+            if (line[i] === '[') {
+                const j = line.indexOf(']', i);
+                if (j !== -1) {
+                    if (current) {
+                        parts.push({ type: 'text', content: current });
+                        current = '';
+                    }
+                    parts.push({ type: 'chord', content: line.substring(i + 1, j) });
+                    i = j + 1;
+                } else {
+                    current += line[i];
+                    i++;
+                }
+            } else {
+                current += line[i];
+                i++;
             }
-            parts.push({ type: 'chord', content: line.substring(i + 1, j) });
-            i = j + 1;
-          } else {
-            current += line[i];
-            i++;
-          }
-        } else {
-          current += line[i];
-          i++;
         }
-      }
-      if (current) {
-        parts.push({ type: 'text', content: current });
-      }
-
-      // Build lyric line and track where each chord should appear
-      let lyricLine = '';
-      const chordMap = [];
-
-      for (let part of parts) {
-        if (part.type === 'text') {
-          lyricLine += part.content;
-        } else if (part.type === 'chord') {
-          chordMap.push({
-            chord: part.content,
-            position: lyricLine.length
-          });
+        if (current) {
+            parts.push({ type: 'text', content: current });
         }
-      }
 
-      // Build chord line: place each chord at its exact position
-      let chordLine = '';
+        // Build lyric line and track chord positions
+        let lyricLine = '';
+        const chordMap = [];
 
-      for (let item of chordMap) {
-        const spaces = item.position - chordLine.length;
-        if (spaces > 0) {
-          chordLine += ' '.repeat(spaces);
+        for (let part of parts) {
+            if (part.type === 'text') {
+                // Record the position BEFORE adding text
+                const startPos = lyricLine.length;
+                lyricLine += part.content;
+                
+                // If there's a pending chord, it belongs at startPos
+                if (chordMap.length > 0 && chordMap[chordMap.length - 1].position === undefined) {
+                    chordMap[chordMap.length - 1].position = startPos;
+                }
+            } else if (part.type === 'chord') {
+                // Chord goes at the current lyric position
+                chordMap.push({
+                    chord: part.content,
+                    position: lyricLine.length
+                });
+            }
         }
-        chordLine += item.chord;
-      }
 
-      chordLine = chordLine.trimEnd();
+        // Build chord line
+        let chordLine = '';
+        for (let item of chordMap) {
+            const spaces = item.position - chordLine.length;
+            if (spaces > 0) {
+                chordLine += ' '.repeat(spaces);
+            }
+            chordLine += item.chord;
+        }
 
-      // Only add chord line if there are chords
-      if (chordMap.length > 0) {
-        result.push(`<div class="chord-row">${chordLine}</div>`);
-      }
-      result.push(`<div class="lyric-row">${lyricLine}</div>`);
+        chordLine = chordLine.trimEnd();
+
+        // Only add if there are chords
+        if (chordMap.length > 0) {
+            result.push(`<div class="chord-row">${chordLine}</div>`);
+        }
+        result.push(`<div class="lyric-row">${lyricLine}</div>`);
     }
 
     return result.join('\n');
   }
-
   // ============================================
   // TRANSPOSE LYRICS
   // ============================================
