@@ -326,35 +326,71 @@
   // ============================================
   // AUTO-SCROLL FUNCTIONS
   // ============================================
+
   function startScroll() {
+    const output = document.getElementById('output');
+    
+    // Jangan mula jika sudah scrolling
     if (isScrolling) return;
-    if (!outputEl.innerHTML || outputEl.innerHTML === 'Select a song to begin') return;
-    if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) return;
-
+    
+    // Jangan mula jika tiada lirik
+    if (!output.innerHTML || output.innerHTML === 'Select a song to begin' || output.innerHTML === 'No lyrics available') {
+      return;
+    }
+    
+    // Jangan mula jika sudah di bawah
+    if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
+      return;
+    }
+    
     isScrolling = true;
-    playBtn.textContent = '▶️';
-    playBtn.style.background = '#2a5a2e';
-    outputEl.classList.add('scrolling');
-
+    
+    // Tukar butang play
+    const playBtn = document.getElementById('playBtn');
+    if (playBtn) {
+      playBtn.textContent = '▶️';
+      playBtn.style.background = '#2a5a2e';
+      playBtn.style.color = '#ffffff';
+    }
+    
+    // Tambah class scrolling
+    output.classList.add('scrolling');
+    
+    // Mulakan scroll perlahan
     scrollInterval = setInterval(() => {
-      if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
+      const output = document.getElementById('output');
+      
+      // Berhenti jika sampai ke bawah
+      if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
         stopScroll();
         return;
       }
-      outputEl.scrollTop += scrollSpeed;
-    }, 50);
+      
+      // Scroll ke bawah perlahan
+      output.scrollTop += scrollSpeed;
+    }, 50); // 50ms = 20fps
   }
 
   function stopScroll() {
+    // Hentikan interval
     if (scrollInterval) {
       clearInterval(scrollInterval);
       scrollInterval = null;
     }
-
+    
     isScrolling = false;
-    playBtn.textContent = '▶';
-    playBtn.style.background = '#1a1a2e';
-    outputEl.classList.remove('scrolling');
+    
+    // Reset butang play
+    const playBtn = document.getElementById('playBtn');
+    if (playBtn) {
+      playBtn.textContent = '▶';
+      playBtn.style.background = '#1a1a2e';
+      playBtn.style.color = '#ffffff';
+    }
+    
+    // Buang class scrolling
+    const output = document.getElementById('output');
+    output.classList.remove('scrolling');
   }
 
   function toggleScroll() {
@@ -366,23 +402,29 @@
   }
 
   // ============================================
-  // TAP TO STOP SCROLLING
+  // TAP/CLICK UNTUK BERHENTI SCROLL
   // ============================================
+
   function setupTapToStop() {
-    outputEl.addEventListener('touchstart', function(e) {
+    const output = document.getElementById('output');
+    
+    // Untuk touch (mobile)
+    output.addEventListener('touchstart', function(e) {
       if (isScrolling) {
         stopScroll();
-        e.preventDefault();
+        e.preventDefault(); // Elak pemilihan teks
       }
     });
-
-    outputEl.addEventListener('click', function() {
+    
+    // Untuk klik (desktop)
+    output.addEventListener('click', function() {
       if (isScrolling) {
         stopScroll();
       }
     });
-
-    outputEl.addEventListener('scroll', function() {
+    
+    // Jika user scroll secara manual
+    output.addEventListener('scroll', function() {
       if (isScrolling) {
         stopScroll();
       }
