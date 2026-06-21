@@ -47,6 +47,36 @@
       overflow: visible !important;
     }
     
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .header-top h2 {
+      font-size: 32px !important;
+      color: #ffcc00 !important;
+      margin: 0;
+    }
+    
+    .home-btn {
+      background: #2a2a4e;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      min-height: 48px;
+      min-width: 48px;
+      transition: background 0.2s;
+    }
+    
+    .home-btn:hover {
+      background: #3a3a6e;
+    }
+    
     .form-input, .form-textarea {
       width: 100% !important;
       font-size: 18px !important;
@@ -151,11 +181,6 @@
       border: 2px solid #4fc3f7 !important;
     }
     
-    h2 {
-      font-size: 32px !important;
-      color: #ffcc00 !important;
-    }
-    
     .subtitle {
       font-size: 18px !important;
       color: #aaa !important;
@@ -238,7 +263,12 @@
       <a href="songslist.html">📋 All Songs</a>
     </div>
     
-    <h2>🎼 Manage Songs</h2>
+    <!-- HEADER WITH HOME BUTTON -->
+    <div class="header-top">
+      <h2>🎼 Manage Songs</h2>
+      <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+    </div>
+    
     <p class="subtitle" id="modeLabel">Create a new song</p>
     
     <!-- Create/Edit Form -->
@@ -291,6 +321,13 @@ const deleteBtn = document.getElementById('deleteBtn');
 const modeLabel = document.getElementById('modeLabel');
 
 let currentSongId = null;
+
+// ============================================
+// GO HOME
+// ============================================
+function goHome() {
+  window.location.href = "index.html";
+}
 
 // ============================================
 // CHECK URL PARAMETER FOR EDIT MODE
@@ -435,7 +472,6 @@ function clearForm() {
   statusMsg.className = 'status-message';
   titleInput.focus();
   
-  // Remove edit parameter from URL
   if (window.history && window.history.replaceState) {
     const url = window.location.href.split('?')[0];
     window.history.replaceState({}, document.title, url);
