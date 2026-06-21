@@ -8,8 +8,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Song Viewer Pro</title>
   <link rel="stylesheet" href="style.css">
-  
-  <!-- PWA Support -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a2e">
 </head>
@@ -40,13 +38,13 @@
 
   <!-- FLOATING CONTROL BAR -->
   <div class="floating-bar">
-    <button onclick="transpose(1)" title="Transpose +1 (Up)">➕</button>
-    <button onclick="transpose(-1)" title="Transpose -1 (Down)">➖</button>
-    <button onclick="changeFontSize(2)" title="Increase Font Size">A+</button>
-    <button onclick="changeFontSize(-2)" title="Decrease Font Size">A-</button>
+    <button onclick="transpose(1)" title="Transpose +1">➕</button>
+    <button onclick="transpose(-1)" title="Transpose -1">➖</button>
+    <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
+    <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
     <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
     <button onclick="stopScroll()" title="Stop Auto-Scroll" id="stopBtn">⏹</button>
-    <button onclick="toggleFullscreen()" title="Toggle Fullscreen Mode">⛶</button>
+    <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
   </div>
 
 </div>
@@ -77,10 +75,11 @@
   let currentSongId = null;
   let currentKey = 0;
   let fontSize = 16;
+
+  // Auto-scroll variables
   let scrollInterval = null;
   let isScrolling = false;
-  let scrollSpeed = 1.5;
-  const SCROLL_INTERVAL_MS = 50;
+  let scrollSpeed = 0.8; // Slow scroll (pixels per frame)
 
   // ============================================
   // DOM REFERENCES
@@ -173,10 +172,9 @@
   }
 
   // ============================================
-  // DISPLAY SONG WITH CHORDS ABOVE LYRICS
+  // DISPLAY SONG
   // ============================================
   function displaySong(song) {
-    // Try both 'lyrics' and 'content' field names
     let lyrics = song.lyrics || song.content || '';
 
     if (!lyrics) {
@@ -189,7 +187,7 @@
       lyrics = transposeLyrics(lyrics, currentKey);
     }
 
-    // Format: chords above lyrics
+    // Format: chords above lyrics with perfect alignment
     lyrics = formatChordsAboveLyrics(lyrics);
 
     outputEl.innerHTML = lyrics;
@@ -197,97 +195,105 @@
   }
 
   // ============================================
-  // FORMAT CHORDS ABOVE LYRICS
+  // FORMAT CHORDS ABOVE LYRICS (PERFECT ALIGNMENT)
   // ============================================
-function formatChordsAboveLyrics(text) {
+  function formatChordsAboveLyrics(text) {
     const lines = text.split('\n');
-    let result = [];
-    
+    const result = [];
+
     for (let line of lines) {
-        if (!line.trim()) {
-            result.push('<br>');
-            continue;
-        }
-        
-        if (line.includes('[')) {
-            let parts = [];
-            let currentText = '';
-            let i = 0;
-            
-            // Parse the line into parts
-            while (i < line.length) {
-                if (line[i] === '[') {
-                    let j = line.indexOf(']', i);
-                    if (j !== -1) {
-                        if (currentText) {
-                            parts.push({ type: 'text', content: currentText });
-                            currentText = '';
-                        }
-                        parts.push({ type: 'chord', content: line.substring(i + 1, j) });
-                        i = j + 1;
-                    } else {
-                        currentText += line[i];
-                        i++;
-                    }
-                } else {
-                    currentText += line[i];
-                    i++;
-                }
+      if (!line.trim()) {
+        result.push('<br>');
+        continue;
+      }
+
+      // Parse line into parts: { type: 'text'|'chord', content: string }
+      const parts = [];
+      let current = '';
+      let i = 0;
+
+      while (i < line.length) {
+        if (line[i] === '[') {
+          const j = line.indexOf(']', i);
+          if (j !== -1) {
+            if (current) {
+              parts.push({ type: 'text', content: current });
+              current = '';
             }
-            if (currentText) {
-                parts.push({ type: 'text', content: currentText });
-            }
-            
-            // Build lyric line first
-            let lyricLine = '';
-            let chordPositions = [];
-            let textPosition = 0;
-            
-            for (let part of parts) {
-                if (part.type === 'text') {
-                    // Position text after the chord
-                    let startPos = lyricLine.length;
-                    lyricLine += part.content;
-                    // Record the chord position (where the chord should go)
-                    if (chordPositions.length > 0) {
-                        // The last chord should be positioned at startPos
-                        chordPositions[chordPositions.length - 1].position = startPos;
-                    }
-                } else if (part.type === 'chord') {
-                    chordPositions.push({
-                        chord: part.content,
-                        position: lyricLine.length
-                    });
-                }
-            }
-            
-            // Build chord line with proper spacing
-            let chordLine = '';
-            let lastPosition = 0;
-            
-            for (let cp of chordPositions) {
-                // Add spaces to reach the correct position
-                let spaces = cp.position - chordLine.length;
-                if (spaces > 0) {
-                    chordLine += ' '.repeat(spaces);
-                }
-                chordLine += cp.chord;
-            }
-            
-            // Pad chord line to match lyric length if needed
-            if (chordLine.length < lyricLine.length) {
-                chordLine += ' '.repeat(lyricLine.length - chordLine.length);
-            }
-            
-            result.push(`<div class="chord-row">${chordLine}</div>`);
-            result.push(`<div class="lyric-row">${lyricLine}</div>`);
+            parts.push({ type: 'chord', content: line.substring(i + 1, j) });
+            i = j + 1;
+          } else {
+            current += line[i];
+            i++;
+          }
         } else {
-            result.push(`<div class="lyric-row">${line}</div>`);
+          current += line[i];
+          i++;
         }
+      }
+      if (current) {
+        parts.push({ type: 'text', content: current });
+      }
+
+      // Build lyric line and track where each chord should appear
+      let lyricLine = '';
+      const chordMap = [];
+
+      for (let part of parts) {
+        if (part.type === 'text') {
+          lyricLine += part.content;
+        } else if (part.type === 'chord') {
+          chordMap.push({
+            chord: part.content,
+            position: lyricLine.length
+          });
+        }
+      }
+
+      // Build chord line: place each chord at its exact position
+      let chordLine = '';
+
+      for (let item of chordMap) {
+        const spaces = item.position - chordLine.length;
+        if (spaces > 0) {
+          chordLine += ' '.repeat(spaces);
+        }
+        chordLine += item.chord;
+      }
+
+      chordLine = chordLine.trimEnd();
+
+      // Only add chord line if there are chords
+      if (chordMap.length > 0) {
+        result.push(`<div class="chord-row">${chordLine}</div>`);
+      }
+      result.push(`<div class="lyric-row">${lyricLine}</div>`);
     }
-    
+
     return result.join('\n');
-}
+  }
+
+  // ============================================
+  // TRANSPOSE LYRICS
+  // ============================================
+  function transposeLyrics(lyrics, steps) {
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
+      let transposed = chord;
+
+      for (let i = 0; i < notes.length; i++) {
+        if (chord.startsWith(notes[i])) {
+          const newIndex = (i + steps + 12) % 12;
+          transposed = notes[newIndex] + chord.substring(notes[i].length);
+          break;
+        }
+      }
+
+      return `[${transposed}]`;
+    });
+  }
+
   // ============================================
   // TRANSPOSE FUNCTION
   // ============================================
@@ -316,15 +322,8 @@ function formatChordsAboveLyrics(text) {
   // ============================================
   function startScroll() {
     if (isScrolling) return;
-
-    const content = outputEl.innerHTML;
-    if (!content || content === 'No lyrics available' || content === 'Select a song to begin') {
-      return;
-    }
-
-    if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
-      return;
-    }
+    if (!outputEl.innerHTML || outputEl.innerHTML === 'Select a song to begin') return;
+    if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) return;
 
     isScrolling = true;
     playBtn.textContent = '▶️';
@@ -337,7 +336,7 @@ function formatChordsAboveLyrics(text) {
         return;
       }
       outputEl.scrollTop += scrollSpeed;
-    }, SCROLL_INTERVAL_MS);
+    }, 50);
   }
 
   function stopScroll() {
@@ -361,7 +360,7 @@ function formatChordsAboveLyrics(text) {
   }
 
   // ============================================
-  // TAP/CLICK ON SCREEN TO STOP SCROLL
+  // TAP TO STOP SCROLLING
   // ============================================
   function setupTapToStop() {
     outputEl.addEventListener('touchstart', function(e) {
@@ -408,36 +407,13 @@ function formatChordsAboveLyrics(text) {
 
     if (e.key === 'ArrowUp' && isScrolling) {
       e.preventDefault();
-      scrollSpeed = Math.min(scrollSpeed + 0.5, 5);
-      showSpeedIndicator();
+      scrollSpeed = Math.min(scrollSpeed + 0.3, 3);
     }
     if (e.key === 'ArrowDown' && isScrolling) {
       e.preventDefault();
-      scrollSpeed = Math.max(scrollSpeed - 0.5, 0.5);
-      showSpeedIndicator();
+      scrollSpeed = Math.max(scrollSpeed - 0.3, 0.3);
     }
   });
-
-  // ============================================
-  // SPEED INDICATOR
-  // ============================================
-  function showSpeedIndicator() {
-    let indicator = outputEl.querySelector('.speed-indicator');
-
-    if (!indicator) {
-      indicator = document.createElement('div');
-      indicator.className = 'speed-indicator';
-      outputEl.appendChild(indicator);
-    }
-
-    indicator.textContent = `Speed: ${scrollSpeed.toFixed(1)}x`;
-    indicator.style.display = 'block';
-
-    clearTimeout(indicator._timeout);
-    indicator._timeout = setTimeout(() => {
-      indicator.style.display = 'none';
-    }, 1500);
-  }
 
   // ============================================
   // GO HOME
