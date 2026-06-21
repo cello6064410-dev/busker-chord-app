@@ -11,7 +11,6 @@
        FORCE DESKTOP VIEW WITH SCROLLBARS
        ============================================ */
     
-    /* Force scrollbars to always show */
     html {
       overflow: scroll !important;
       min-width: 1024px !important;
@@ -27,7 +26,6 @@
       overflow: auto !important;
     }
     
-    /* Desktop container - scrollable */
     .create-container {
       display: block !important;
       min-width: 900px !important;
@@ -49,7 +47,6 @@
       overflow: visible !important;
     }
     
-    /* Large form elements */
     .form-input, .form-textarea {
       width: 100% !important;
       font-size: 18px !important;
@@ -68,7 +65,6 @@
       resize: vertical !important;
     }
     
-    /* BUTTONS - Large and always visible */
     .button-group {
       display: flex !important;
       flex-direction: row !important;
@@ -118,70 +114,17 @@
       border: 2px solid #6a9abe !important;
     }
     
-    /* Admin song list - scrollable */
-    .admin-song-list {
-      max-height: 400px !important;
-      overflow-y: auto !important;
-      overflow-x: visible !important;
-      background: #151515 !important;
-      border-radius: 10px !important;
-      padding: 10px !important;
-      margin: 15px 0 !important;
-    }
-    
-    .admin-song-item {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      padding: 15px 20px !important;
-      background: #1a1a2e !important;
-      border-radius: 8px !important;
-      margin-bottom: 8px !important;
-      border: 1px solid #2a2a4e !important;
-      flex-wrap: wrap !important;
-      gap: 10px !important;
-    }
-    
-    .admin-song-item .song-title {
-      font-size: 18px !important;
-      font-weight: bold !important;
-      color: #fff !important;
-    }
-    
-    .admin-btn-group {
-      display: flex !important;
-      gap: 12px !important;
-    }
-    
-    .admin-btn-group button {
-      padding: 10px 20px !important;
-      font-size: 16px !important;
-      border: none !important;
-      border-radius: 8px !important;
-      cursor: pointer !important;
-      min-width: 80px !important;
-      font-weight: bold !important;
-    }
-    
-    .edit-btn {
-      background: #2a4a6e !important;
-      color: #fff !important;
-    }
-    
-    .edit-btn:hover {
-      background: #3a6a8e !important;
-    }
-    
     .delete-btn {
       background: #6e2a2a !important;
       color: #fff !important;
+      border: 2px solid #ff4444 !important;
+      display: none !important;
     }
     
-    .delete-btn:hover {
-      background: #8e3a3a !important;
+    .delete-btn.active {
+      display: inline-block !important;
     }
     
-    /* Status messages */
     .status-message {
       padding: 15px !important;
       border-radius: 10px !important;
@@ -208,7 +151,6 @@
       border: 2px solid #4fc3f7 !important;
     }
     
-    /* Headings */
     h2 {
       font-size: 32px !important;
       color: #ffcc00 !important;
@@ -239,7 +181,29 @@
       margin: 30px 0 !important;
     }
     
-    /* Custom scrollbar styling */
+    .top-links {
+      display: flex;
+      justify-content: flex-end;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .top-links a {
+      color: #4fc3f7;
+      text-decoration: none;
+      font-size: 18px;
+      font-family: Arial, sans-serif;
+      padding: 8px 16px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      border: 1px solid #2a2a4e;
+      transition: background 0.2s;
+    }
+    
+    .top-links a:hover {
+      background: #2a2a4e;
+    }
+    
     ::-webkit-scrollbar {
       width: 12px !important;
       height: 12px !important;
@@ -258,7 +222,6 @@
       background: #4a4a6e !important;
     }
     
-    /* Firefox scrollbar */
     * {
       scrollbar-width: auto !important;
       scrollbar-color: #2a2a4e #0f0f0f !important;
@@ -269,16 +232,14 @@
 
 <div class="container create-container">
   <div class="app-card">
-    <h2>🎼 Manage Songs</h2>
-    <p class="subtitle">Create, edit, or delete songs (Desktop Only)</p>
     
-    <!-- Song List for Editing/Deleting -->
-    <div class="form-group">
-      <label>Select a song to edit or delete</label>
-      <div id="songListForAdmin" class="admin-song-list"></div>
+    <!-- TOP LINKS -->
+    <div class="top-links">
+      <a href="songslist.html">📋 All Songs</a>
     </div>
     
-    <hr>
+    <h2>🎼 Manage Songs</h2>
+    <p class="subtitle" id="modeLabel">Create a new song</p>
     
     <!-- Create/Edit Form -->
     <div class="form-group">
@@ -295,9 +256,10 @@
       <small class="hint">Use [Chord] format. Example: [C]Hello [G]world</small>
     </div>
     
-    <!-- BUTTONS - Desktop Only -->
+    <!-- BUTTONS -->
     <div class="button-group">
       <button onclick="saveSong()" id="saveBtn">💾 Save Song</button>
+      <button onclick="deleteSong()" id="deleteBtn" class="delete-btn">🗑️ Delete</button>
       <button onclick="clearForm()" class="clear-btn">🔄 Clear</button>
       <button onclick="goBack()" class="back-btn">⬅ Back</button>
     </div>
@@ -324,48 +286,49 @@ const titleInput = document.getElementById('title');
 const lyricsInput = document.getElementById('input');
 const statusMsg = document.getElementById('statusMessage');
 const songIdInput = document.getElementById('songId');
-const songListAdmin = document.getElementById('songListForAdmin');
+const saveBtn = document.getElementById('saveBtn');
+const deleteBtn = document.getElementById('deleteBtn');
+const modeLabel = document.getElementById('modeLabel');
 
-function loadSongsForAdmin() {
-  songListAdmin.innerHTML = '⏳ Loading songs...';
-  db.collection('songs').orderBy('title').get()
-    .then((snapshot) => {
-      songListAdmin.innerHTML = '';
-      if (snapshot.empty) {
-        songListAdmin.innerHTML = '📭 No songs found';
-        return;
-      }
-      snapshot.forEach((doc) => {
-        const song = doc.data();
-        const div = document.createElement('div');
-        div.className = 'admin-song-item';
-        div.innerHTML = `
-          <span class="song-title">${song.title || 'Untitled'}</span>
-          <div class="admin-btn-group">
-            <button class="edit-btn" onclick="loadSongForEdit('${doc.id}')">✏️ Edit</button>
-            <button class="delete-btn" onclick="deleteSong('${doc.id}')">🗑️ Delete</button>
-          </div>
-        `;
-        songListAdmin.appendChild(div);
-      });
-    })
-    .catch(err => {
-      songListAdmin.innerHTML = '❌ Error loading songs';
-      console.error(err);
-    });
+let currentSongId = null;
+
+// ============================================
+// CHECK URL PARAMETER FOR EDIT MODE
+// ============================================
+function checkForEditMode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const songId = urlParams.get('edit');
+  
+  if (songId) {
+    loadSongForEdit(songId);
+  }
 }
 
+// ============================================
+// LOAD SONG FOR EDIT
+// ============================================
 function loadSongForEdit(songId) {
+  currentSongId = songId;
+  songIdInput.value = songId;
+  
+  statusMsg.textContent = '⏳ Loading song...';
+  statusMsg.className = 'status-message info';
+  
   db.collection('songs').doc(songId).get()
     .then((doc) => {
       if (doc.exists) {
         const song = doc.data();
-        songIdInput.value = songId;
         titleInput.value = song.title || '';
         lyricsInput.value = song.lyrics || song.content || '';
-        document.getElementById('saveBtn').textContent = '✏️ Update Song';
+        saveBtn.textContent = '✏️ Update Song';
+        modeLabel.textContent = 'Editing: ' + (song.title || 'Untitled');
+        deleteBtn.classList.add('active');
         statusMsg.textContent = '✅ Song loaded for editing';
         statusMsg.className = 'status-message success';
+      } else {
+        statusMsg.textContent = '❌ Song not found';
+        statusMsg.className = 'status-message error';
+        clearForm();
       }
     })
     .catch(err => {
@@ -374,6 +337,9 @@ function loadSongForEdit(songId) {
     });
 }
 
+// ============================================
+// SAVE SONG (CREATE OR UPDATE)
+// ============================================
 function saveSong() {
   const title = titleInput.value.trim();
   const lyrics = lyricsInput.value.trim();
@@ -385,14 +351,22 @@ function saveSong() {
     return;
   }
   
-  const data = { title, lyrics, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+  const data = { 
+    title, 
+    lyrics, 
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+  };
   
   let promise;
+  let action;
+  
   if (songId) {
     promise = db.collection('songs').doc(songId).update(data);
+    action = 'updated';
   } else {
     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
     promise = db.collection('songs').add(data);
+    action = 'saved';
   }
   
   statusMsg.textContent = '⏳ Saving...';
@@ -400,11 +374,14 @@ function saveSong() {
   
   promise
     .then(() => {
-      statusMsg.textContent = '✅ Song saved successfully!';
+      statusMsg.textContent = `✅ Song ${action} successfully!`;
       statusMsg.className = 'status-message success';
-      if (!songId) { clearForm(); }
-      loadSongsForAdmin();
-      document.getElementById('saveBtn').textContent = '💾 Save Song';
+      
+      if (!songId) {
+        clearForm();
+      } else {
+        saveBtn.textContent = '✏️ Update Song';
+      }
     })
     .catch(err => {
       statusMsg.textContent = '❌ Error: ' + err.message;
@@ -412,13 +389,29 @@ function saveSong() {
     });
 }
 
-function deleteSong(songId) {
-  if (!confirm('Delete this song?')) return;
+// ============================================
+// DELETE SONG
+// ============================================
+function deleteSong() {
+  const songId = songIdInput.value;
+  
+  if (!songId) {
+    statusMsg.textContent = '⚠️ No song to delete';
+    statusMsg.className = 'status-message error';
+    return;
+  }
+  
+  if (!confirm('Delete this song permanently?')) {
+    return;
+  }
+  
+  statusMsg.textContent = '⏳ Deleting...';
+  statusMsg.className = 'status-message info';
+  
   db.collection('songs').doc(songId).delete()
     .then(() => {
-      statusMsg.textContent = '✅ Deleted!';
+      statusMsg.textContent = '✅ Song deleted successfully!';
       statusMsg.className = 'status-message success';
-      loadSongsForAdmin();
       clearForm();
     })
     .catch(err => {
@@ -427,20 +420,41 @@ function deleteSong(songId) {
     });
 }
 
+// ============================================
+// CLEAR FORM
+// ============================================
 function clearForm() {
   songIdInput.value = '';
+  currentSongId = null;
   titleInput.value = '';
   lyricsInput.value = '';
+  saveBtn.textContent = '💾 Save Song';
+  modeLabel.textContent = 'Create a new song';
+  deleteBtn.classList.remove('active');
   statusMsg.textContent = '';
   statusMsg.className = 'status-message';
-  document.getElementById('saveBtn').textContent = '💾 Save Song';
+  titleInput.focus();
+  
+  // Remove edit parameter from URL
+  if (window.history && window.history.replaceState) {
+    const url = window.location.href.split('?')[0];
+    window.history.replaceState({}, document.title, url);
+  }
 }
 
+// ============================================
+// GO BACK
+// ============================================
 function goBack() {
   window.location.href = "index.html";
 }
 
-loadSongsForAdmin();
+// ============================================
+// INITIALIZE
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  checkForEditMode();
+});
 </script>
 
 </body>

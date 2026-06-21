@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>All Songs</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+</head>
+<body>
+
+<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h2>📋 All Songs</h2>
+      <button onclick="goBack()" class="home-btn" title="Go Back">⬅</button>
+    </div>
+    <p style="color: #888; font-size: 0.9rem; font-family: Arial, sans-serif;" id="songCount">Loading...</p>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
+    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
+  </div>
+
+  <!-- SONG LIST -->
+  <div id="songList" class="song-list" style="flex: 1; max-height: none; overflow-y: auto; height: 0;"></div>
+
+  <!-- FLOATING BACK BUTTON -->
+  <div class="floating-bar" style="justify-content: center;">
+    <button onclick="goBack()" style="flex: 0 1 auto; padding: 12px 30px; min-width: 120px;">⬅ Back</button>
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+  // ============================================
+  // GLOBAL VARIABLES
+  // ============================================
+  let allSongs = [];
+  let filteredSongs = [];
+  const songListEl = document.getElementById('songList');
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  const songCountEl = document.getElementById('songCount');
+
+  // ============================================
+  // LOAD ALL SONGS
+  // ============================================
+  function loadAllSongs() {
+    songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
+
+    db.collection('songs')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        allSongs = [];
+        songListEl.innerHTML = '';
+
+        if (snapshot.empty) {
+          songListEl.innerHTML = `
+            <div class="empty-text">
+              📭 No songs found<br>
+              <small>Go to Admin to create your first song!</small>
+            </div>
+          `;
+          songCountEl.textContent = '0 songs';
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          const song = { id: doc.id, ...doc.data() };
+          allSongs.push(song);
+        });
+
+        filteredSongs = [...allSongs];
+        renderSongList();
+        songCountEl.textContent = `${allSongs.length} songs`;
+      })
+      .catch((error) => {
+        console.error('Error loading songs:', error);
+        songListEl.innerHTML = `
+          <div class="error-text">
+            ❌ Error loading songs<br>
+            <small>${error.message}</small>
+          </div>
+        `;
+        songCountEl.textContent = 'Error loading';
+      });
+  }
+
+  // ============================================
+  // RENDER SONG LIST
+  // ============================================
+  function renderSongList() {
+    songListEl.innerHTML = '';
+
+    if (filteredSongs.length === 0) {
+      songListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 No songs found matching "<span id="searchTerm">${searchInput.value}</span>"
+        </div>
+      `;
+      return;
+    }
+
+    filteredSongs.forEach((song) => {
+      const btn = document.createElement('button');
+      btn.textContent = song.title || 'Untitled';
+      btn.className = 'song-item';
+      btn.style.padding = '14px 16px';
+      btn.style.fontSize = '1rem';
+      btn.onclick = () => openSongForEdit(song.id);
+      songListEl.appendChild(btn);
+    });
+  }
+
+  // ============================================
+  // SEARCH / FILTER SONGS
+  // ============================================
+  function filterSongs() {
+    const query = searchInput.value.toLowerCase().trim();
+    
+    if (query.length > 0) {
+      clearSearchBtn.style.display = 'block';
+    } else {
+      clearSearchBtn.style.display = 'none';
+    }
+
+    if (query === '') {
+      filteredSongs = [...allSongs];
+    } else {
+      filteredSongs = allSongs.filter(song => 
+        song.title && song.title.toLowerCase().includes(query)
+      );
+    }
+
+    renderSongList();
+  }
+
+  // ============================================
+  // CLEAR SEARCH
+  // ============================================
+  function clearSearch() {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    filteredSongs = [...allSongs];
+    renderSongList();
+    searchInput.focus();
+  }
+
+  // ============================================
+  // OPEN SONG FOR EDIT
+  // ============================================
+  function openSongForEdit(songId) {
+    // Redirect to create.html with songId as URL parameter
+    window.location.href = `create.html?edit=${songId}`;
+  }
+
+  // ============================================
+  // GO BACK
+  // ============================================
+  function goBack() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    loadAllSongs();
+  });
+</script>
+
+</body>
+</html>
