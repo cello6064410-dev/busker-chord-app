@@ -14,28 +14,49 @@
 </head>
 <body>
 
-<div class="container index-container">
-  <div class="app-card">
-    <h1>🎸 Busker Chord App</h1>
-    <p class="subtitle">Your ultimate song companion</p>
+<div class="index-wrapper">
+  <div class="index-card">
     
-    <div class="button-group">
-      <button onclick="admin()" class="admin-btn">
-        <span class="icon">🎼</span>
-        <span class="label">Admin</span>
-        <span class="desc">Create & Manage Songs</span>
+    <!-- Header -->
+    <div class="index-header">
+      <div class="index-icon">🎸</div>
+      <h1>Busker<span>Chord</span></h1>
+      <p class="index-subtitle">Your ultimate song companion</p>
+    </div>
+
+    <!-- Decorative Line -->
+    <div class="index-divider"></div>
+
+    <!-- Buttons -->
+    <div class="index-buttons">
+      
+      <!-- Admin Button -->
+      <button onclick="admin()" class="index-btn admin-btn">
+        <div class="index-btn-icon">🎼</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Admin</span>
+          <span class="index-btn-desc">Create &amp; Manage Songs</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
       </button>
       
-      <button onclick="viewer()" class="viewer-btn">
-        <span class="icon">🎵</span>
-        <span class="label">Viewer</span>
-        <span class="desc">Play & Read Songs</span>
+      <!-- Viewer Button -->
+      <button onclick="viewer()" class="index-btn viewer-btn">
+        <div class="index-btn-icon">🎵</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Viewer</span>
+          <span class="index-btn-desc">Play &amp; Read Songs</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
       </button>
+      
     </div>
-    
-    <div class="footer-note">
-      <small>Made for buskers 🎸</small>
+
+    <!-- Footer -->
+    <div class="index-footer">
+      <span>Made with ❤️ for buskers</span>
     </div>
+
   </div>
 </div>
 
