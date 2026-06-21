@@ -1,5 +1,5 @@
 /* ============================================
-   BASE RESET & GLOBAL STYLES
+   RESET & BASE
    ============================================ */
 * {
     margin: 0;
@@ -7,18 +7,17 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
     background: #0f0f0f;
     color: white;
     font-family: 'Courier New', Courier, monospace;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
 }
 
 /* ============================================
-   APP WRAPPER
+   APP CONTAINER
    ============================================ */
 .app {
     display: flex;
@@ -28,14 +27,15 @@ body {
     padding: 10px;
     padding-bottom: 80px;
     overflow: hidden;
+    background: #0f0f0f;
 }
 
 /* ============================================
    HEADER
    ============================================ */
 .header {
-    text-align: center;
     flex-shrink: 0;
+    text-align: center;
     padding: 5px 0;
     margin-bottom: 8px;
 }
@@ -77,7 +77,6 @@ body {
     border-radius: 8px;
     font-size: 1.2rem;
     cursor: pointer;
-    touch-action: manipulation;
     min-height: 40px;
     min-width: 40px;
 }
@@ -86,8 +85,8 @@ body {
    TOP BAR
    ============================================ */
 .topbar {
-    text-align: center;
     flex-shrink: 0;
+    text-align: center;
     margin-bottom: 8px;
 }
 
@@ -101,7 +100,6 @@ body {
     color: white;
     font-size: 1rem;
     cursor: pointer;
-    touch-action: manipulation;
     min-height: 44px;
     font-family: Arial, sans-serif;
 }
@@ -117,8 +115,6 @@ body {
     border-radius: 10px;
     padding: 5px;
     margin-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
 }
 
 .song-list button {
@@ -132,7 +128,6 @@ body {
     color: white;
     font-size: 0.9rem;
     cursor: pointer;
-    touch-action: manipulation;
     min-height: 40px;
     font-family: Arial, sans-serif;
 }
@@ -154,24 +149,15 @@ body {
     color: #ff4444;
 }
 
-/* Scrollbar */
-.song-list::-webkit-scrollbar {
-    width: 4px;
-}
-.song-list::-webkit-scrollbar-track {
-    background: #151515;
-}
-.song-list::-webkit-scrollbar-thumb {
-    background: #444;
-    border-radius: 4px;
-}
-
 /* ============================================
-   OUTPUT - LYRICS WITH CHORDS
+   OUTPUT - LYRICS (SCROLLABLE)
    ============================================ */
 .output {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1 1 auto !important;
+    height: 0 !important; /* KRUSIAL: membolehkan flex scroll */
+    min-height: 150px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     background: #1b1b1b;
     padding: 20px 15px;
     border-radius: 10px;
@@ -179,21 +165,22 @@ body {
     white-space: pre !important;
     word-wrap: normal !important;
     text-align: left;
-    min-height: 150px;
     font-size: 16px;
     line-height: 1.6;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
     border: 1px solid #2a2a2a;
     position: relative;
     transition: border-color 0.3s;
+    -webkit-overflow-scrolling: touch;
 }
 
+/* Scroll aktif */
 .output.scrolling {
     border-color: #4fc3f7;
 }
 
-/* CHORD ROW - duduk di atas lirik */
+/* ============================================
+   CHORD & LYRICS ROWS
+   ============================================ */
 .chord-row {
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 16px !important;
@@ -206,7 +193,6 @@ body {
     margin: 0 !important;
 }
 
-/* LYRICS ROW - di bawah chord */
 .lyric-row {
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 16px !important;
@@ -217,7 +203,9 @@ body {
     margin: 0 0 6px 0 !important;
 }
 
-/* Speed indicator */
+/* ============================================
+   SPEED INDICATOR & TAP HINT
+   ============================================ */
 .speed-indicator {
     position: absolute;
     bottom: 10px;
@@ -233,7 +221,6 @@ body {
     font-family: Arial, sans-serif;
 }
 
-/* Tap to stop hint */
 .output.scrolling::after {
     content: '👆 Tap to stop';
     position: absolute;
@@ -251,16 +238,13 @@ body {
 }
 
 @keyframes pulse {
-    0%,
-    100% {
-        opacity: 0.6;
-    }
-    50% {
-        opacity: 1;
-    }
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
-/* Scrollbar */
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
 .output::-webkit-scrollbar {
     width: 5px;
 }
@@ -270,6 +254,17 @@ body {
 .output::-webkit-scrollbar-thumb {
     background: #444;
     border-radius: 5px;
+}
+
+.song-list::-webkit-scrollbar {
+    width: 4px;
+}
+.song-list::-webkit-scrollbar-track {
+    background: #151515;
+}
+.song-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
 }
 
 /* ============================================
@@ -306,9 +301,8 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    touch-action: manipulation;
-    transition: background 0.2s, transform 0.1s;
     font-family: Arial, sans-serif;
+    transition: background 0.2s, transform 0.1s;
 }
 
 .floating-bar button:active {
@@ -317,7 +311,7 @@ body {
 }
 
 /* ============================================
-   RESPONSIVE - MOBILE
+   RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
     .app {
@@ -325,19 +319,11 @@ body {
         padding-bottom: 80px;
     }
 
-    .header h2 {
-        font-size: 1rem;
-    }
-    #songTitle {
-        font-size: 0.95rem;
-    }
-    #keyDisplay {
-        font-size: 0.85rem;
-    }
+    .header h2 { font-size: 1rem; }
+    #songTitle { font-size: 0.95rem; }
+    #keyDisplay { font-size: 0.85rem; }
 
-    .song-list {
-        max-height: 120px;
-    }
+    .song-list { max-height: 120px; }
     .song-list button {
         font-size: 0.85rem;
         padding: 8px 10px;
@@ -350,12 +336,8 @@ body {
         min-height: 120px;
     }
 
-    .chord-row {
-        font-size: 18px !important;
-    }
-    .lyric-row {
-        font-size: 18px !important;
-    }
+    .chord-row { font-size: 18px !important; }
+    .lyric-row { font-size: 18px !important; }
 
     .floating-bar {
         bottom: 0;
@@ -387,17 +369,9 @@ body {
 }
 
 @media (max-width: 400px) {
-    .app {
-        padding: 5px;
-        padding-bottom: 75px;
-    }
-
-    .header h2 {
-        font-size: 0.9rem;
-    }
-    #songTitle {
-        font-size: 0.85rem;
-    }
+    .app { padding: 5px; padding-bottom: 75px; }
+    .header h2 { font-size: 0.9rem; }
+    #songTitle { font-size: 0.85rem; }
 
     .output {
         font-size: 16px;
@@ -405,12 +379,8 @@ body {
         min-height: 100px;
     }
 
-    .chord-row {
-        font-size: 16px !important;
-    }
-    .lyric-row {
-        font-size: 16px !important;
-    }
+    .chord-row { font-size: 16px !important; }
+    .lyric-row { font-size: 16px !important; }
 
     .floating-bar button {
         font-size: 0.9rem;
@@ -418,9 +388,7 @@ body {
         min-height: 42px;
     }
 
-    .song-list {
-        max-height: 100px;
-    }
+    .song-list { max-height: 100px; }
     .song-list button {
         font-size: 0.8rem;
         padding: 6px 8px;
@@ -441,16 +409,10 @@ body {
         min-height: 300px;
     }
 
-    .chord-row {
-        font-size: 18px !important;
-    }
-    .lyric-row {
-        font-size: 18px !important;
-    }
+    .chord-row { font-size: 18px !important; }
+    .lyric-row { font-size: 18px !important; }
 
-    .song-list {
-        max-height: 200px;
-    }
+    .song-list { max-height: 200px; }
 
     .floating-bar {
         gap: 10px;
@@ -469,14 +431,8 @@ body {
    ANIMATIONS
    ============================================ */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .song-list button {
@@ -484,19 +440,7 @@ body {
 }
 
 /* ============================================
-   UTILITY CLASSES
+   UTILITY
    ============================================ */
-.hidden {
-    display: none !important;
-}
-.text-center {
-    text-align: center;
-}
-/* FIX: Force scroll on output */
-#output {
-    flex: 1 1 auto !important;
-    height: 0 !important;
-    min-height: 200px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
+.hidden { display: none !important; }
+.text-center { text-align: center; }
