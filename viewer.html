@@ -79,7 +79,7 @@
   // Auto-scroll variables
   let scrollInterval = null;
   let isScrolling = false;
-  let scrollSpeed = 0.8; // Slow scroll (pixels per frame)
+  let scrollSpeed = 0.8;
 
   // ============================================
   // DOM REFERENCES
@@ -182,103 +182,97 @@
       return;
     }
 
-    // Apply transposition if key is not 0
     if (currentKey !== 0) {
       lyrics = transposeLyrics(lyrics, currentKey);
     }
 
-    // Format: chords above lyrics with perfect alignment
     lyrics = formatChordsAboveLyrics(lyrics);
 
     outputEl.innerHTML = lyrics;
     outputEl.scrollTop = 0;
+
+    // Apply current font size to new content
+    applyFontSize(fontSize);
   }
 
   // ============================================
-  // FORMAT CHORDS ABOVE LYRICS (PERFECT ALIGNMENT)
+  // FORMAT CHORDS ABOVE LYRICS
   // ============================================
   function formatChordsAboveLyrics(text) {
     const lines = text.split('\n');
     const result = [];
 
     for (let line of lines) {
-        if (!line.trim()) {
-            result.push('<br>');
-            continue;
-        }
+      if (!line.trim()) {
+        result.push('<br>');
+        continue;
+      }
 
-        // Parse line into parts
-        const parts = [];
-        let current = '';
-        let i = 0;
+      const parts = [];
+      let current = '';
+      let i = 0;
 
-        while (i < line.length) {
-            if (line[i] === '[') {
-                const j = line.indexOf(']', i);
-                if (j !== -1) {
-                    if (current) {
-                        parts.push({ type: 'text', content: current });
-                        current = '';
-                    }
-                    parts.push({ type: 'chord', content: line.substring(i + 1, j) });
-                    i = j + 1;
-                } else {
-                    current += line[i];
-                    i++;
-                }
-            } else {
-                current += line[i];
-                i++;
+      while (i < line.length) {
+        if (line[i] === '[') {
+          const j = line.indexOf(']', i);
+          if (j !== -1) {
+            if (current) {
+              parts.push({ type: 'text', content: current });
+              current = '';
             }
+            parts.push({ type: 'chord', content: line.substring(i + 1, j) });
+            i = j + 1;
+          } else {
+            current += line[i];
+            i++;
+          }
+        } else {
+          current += line[i];
+          i++;
         }
-        if (current) {
-            parts.push({ type: 'text', content: current });
+      }
+      if (current) {
+        parts.push({ type: 'text', content: current });
+      }
+
+      let lyricLine = '';
+      const chordMap = [];
+
+      for (let part of parts) {
+        if (part.type === 'text') {
+          const startPos = lyricLine.length;
+          lyricLine += part.content;
+          if (chordMap.length > 0 && chordMap[chordMap.length - 1].position === undefined) {
+            chordMap[chordMap.length - 1].position = startPos;
+          }
+        } else if (part.type === 'chord') {
+          chordMap.push({
+            chord: part.content,
+            position: lyricLine.length
+          });
         }
+      }
 
-        // Build lyric line and track chord positions
-        let lyricLine = '';
-        const chordMap = [];
-
-        for (let part of parts) {
-            if (part.type === 'text') {
-                // Record the position BEFORE adding text
-                const startPos = lyricLine.length;
-                lyricLine += part.content;
-                
-                // If there's a pending chord, it belongs at startPos
-                if (chordMap.length > 0 && chordMap[chordMap.length - 1].position === undefined) {
-                    chordMap[chordMap.length - 1].position = startPos;
-                }
-            } else if (part.type === 'chord') {
-                // Chord goes at the current lyric position
-                chordMap.push({
-                    chord: part.content,
-                    position: lyricLine.length
-                });
-            }
+      let chordLine = '';
+      for (let item of chordMap) {
+        const spaces = item.position - chordLine.length;
+        if (spaces > 0) {
+          chordLine += ' '.repeat(spaces);
         }
+        chordLine += item.chord;
+      }
 
-        // Build chord line
-        let chordLine = '';
-        for (let item of chordMap) {
-            const spaces = item.position - chordLine.length;
-            if (spaces > 0) {
-                chordLine += ' '.repeat(spaces);
-            }
-            chordLine += item.chord;
-        }
+      chordLine = chordLine.trimEnd();
 
-        chordLine = chordLine.trimEnd();
-
-        // Only add if there are chords
-        if (chordMap.length > 0) {
-            result.push(`<div class="chord-row">${chordLine}</div>`);
-        }
-        result.push(`<div class="lyric-row">${lyricLine}</div>`);
+      if (chordMap.length > 0) {
+        result.push(`<div class="chord-row">${chordLine}</div>`);
+      }
+      result.push(`<div class="lyric-row">${lyricLine}</div>`);
     }
 
     return result.join('\n');
   }
+
   // ============================================
   // TRANSPOSE LYRICS
   // ============================================
@@ -316,45 +310,43 @@
   }
 
   // ============================================
-  // CHANGE FONT SIZE
+  // CHANGE FONT SIZE - FIXED
   // ============================================
   function changeFontSize(delta) {
     fontSize = Math.min(32, Math.max(10, fontSize + delta));
-    outputEl.style.fontSize = fontSize + 'px';
+    applyFontSize(fontSize);
+  }
+
+  function applyFontSize(size) {
+    // Set on output container
+    outputEl.style.fontSize = size + 'px';
+    
+    // Set on all chord and lyric rows
+    document.querySelectorAll('.chord-row, .lyric-row').forEach(el => {
+      el.style.fontSize = size + 'px';
+    });
   }
 
   // ============================================
-  // AUTO-SCROLL FUNCTIONS - FIXED
+  // AUTO-SCROLL FUNCTIONS
   // ============================================
-
   function startScroll() {
     const output = document.getElementById('output');
     
-    // Debug
-    console.log('▶️ startScroll() called');
-    
-    // Jangan mula jika sudah scrolling
     if (isScrolling) {
-      console.log('Already scrolling');
       return;
     }
     
-    // Jangan mula jika tiada lirik
     if (!output.innerHTML || output.innerHTML === 'Select a song to begin') {
-      console.log('No lyrics');
       return;
     }
     
-    // Jangan mula jika sudah di bawah
     if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
-      console.log('Already at bottom');
       return;
     }
     
-    console.log('✅ Starting scroll...');
     isScrolling = true;
     
-    // Tukar butang play
     const playBtn = document.getElementById('playBtn');
     if (playBtn) {
       playBtn.textContent = '▶️';
@@ -363,30 +355,19 @@
     
     output.classList.add('scrolling');
     
-    // Mulakan scroll
     scrollInterval = setInterval(() => {
       const output = document.getElementById('output');
       
-      // Debug setiap 10 kali
-      if (Math.random() < 0.1) {
-        console.log('Scroll position:', output.scrollTop);
-      }
-      
-      // Berhenti jika sampai ke bawah
       if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
-        console.log('✅ Reached bottom');
         stopScroll();
         return;
       }
       
-      // Scroll ke bawah
       output.scrollTop += scrollSpeed;
     }, 50);
   }
 
   function stopScroll() {
-    console.log('⏹️ stopScroll() called');
-    
     if (scrollInterval) {
       clearInterval(scrollInterval);
       scrollInterval = null;
@@ -407,7 +388,6 @@
   }
 
   function toggleScroll() {
-    console.log('🔄 toggleScroll() called');
     if (isScrolling) {
       stopScroll();
     } else {
@@ -418,21 +398,15 @@
   // ============================================
   // TAP TO STOP
   // ============================================
-
-function setupTapToStop() {
+  function setupTapToStop() {
     const output = document.getElementById('output');
     
     if (!output) {
-      console.log('Output not found');
       return;
     }
     
-    console.log('✅ Tap-to-stop setup (fixed)');
-    
-    // HANYA touch dan click - BUANG scroll event
     output.addEventListener('touchstart', function(e) {
       if (isScrolling) {
-        console.log('👆 Touch detected, stopping');
         stopScroll();
         e.preventDefault();
       }
@@ -440,11 +414,11 @@ function setupTapToStop() {
     
     output.addEventListener('click', function() {
       if (isScrolling) {
-        console.log('👆 Click detected, stopping');
         stopScroll();
       }
     });
   }
+
   // ============================================
   // TOGGLE FULLSCREEN
   // ============================================
@@ -503,7 +477,6 @@ function setupTapToStop() {
     }
   });
 
-  // Console help
   console.log('🎵 Song Viewer Pro loaded!');
   console.log('Controls:');
   console.log('  ▶  - Start auto-scroll');

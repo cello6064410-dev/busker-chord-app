@@ -182,7 +182,7 @@ html, body {
    ============================================ */
 .chord-row {
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 16px !important;
+    font-size: 16px;
     line-height: 1.2 !important;
     color: #00ffcc !important;
     font-weight: bold !important;
@@ -194,7 +194,7 @@ html, body {
 
 .lyric-row {
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 16px !important;
+    font-size: 16px;
     line-height: 1.2 !important;
     color: #ffffff !important;
     white-space: pre !important;
@@ -343,8 +343,8 @@ html, body {
         min-height: 120px;
     }
 
-    .chord-row { font-size: 18px !important; }
-    .lyric-row { font-size: 18px !important; }
+    .chord-row { font-size: 18px; }
+    .lyric-row { font-size: 18px; }
 
     .floating-bar {
         bottom: 0;
@@ -386,8 +386,8 @@ html, body {
         min-height: 100px;
     }
 
-    .chord-row { font-size: 16px !important; }
-    .lyric-row { font-size: 16px !important; }
+    .chord-row { font-size: 16px; }
+    .lyric-row { font-size: 16px; }
 
     .floating-bar button {
         font-size: 0.9rem;
@@ -416,8 +416,8 @@ html, body {
         min-height: 300px;
     }
 
-    .chord-row { font-size: 18px !important; }
-    .lyric-row { font-size: 18px !important; }
+    .chord-row { font-size: 18px; }
+    .lyric-row { font-size: 18px; }
 
     .song-list { max-height: 200px; }
 
