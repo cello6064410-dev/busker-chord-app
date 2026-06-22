@@ -167,11 +167,10 @@
   }
 
   // ============================================
-  // CHECK AUTH - ONLY ADMIN
+  // CHECK AUTH - REDIRECT IF NOT ADMIN
   // ============================================
-  // Simple check - if not logged in as admin, redirect
-  // For now, we rely on the password protection from index.html
-  // But we can add an extra layer if needed
+  // For now, password protection is handled by index.html
+  // But we can add an extra check if needed
 
   // ============================================
   // INITIALIZE
@@ -191,6 +190,12 @@
     box-sizing: border-box;
   }
 
+  html, body {
+    height: 100%;
+    overflow: auto !important;
+    background: #0f0f1a;
+  }
+
   .dashboard-wrapper {
     display: block !important;
     min-height: 100vh;
@@ -198,7 +203,7 @@
     height: auto !important;
     background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
     padding: 20px;
-    overflow-y: scroll !important;
+    overflow-y: auto !important;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
   }
@@ -211,8 +216,7 @@
     padding: 40px 35px;
     max-width: 800px;
     width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: auto !important;
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
     margin: 0 auto;
@@ -229,6 +233,22 @@
     margin: 0;
     color: #ffcc00;
     font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .home-btn {
+    background: #2a2a4e;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  .home-btn:hover {
+    background: #3a3a6e;
   }
 
   .dashboard-subtitle {
@@ -374,6 +394,18 @@
     font-family: Arial, sans-serif;
   }
 
+  .empty-text,
+  .error-text {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+    font-family: Arial, sans-serif;
+  }
+
+  .error-text {
+    color: #ff4444;
+  }
+
   .dashboard-footer {
     margin-top: 25px;
     text-align: center;
@@ -399,7 +431,9 @@
     transform: scale(0.96);
   }
 
-  /* Responsive */
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
   @media (max-width: 480px) {
     .dashboard-card {
       padding: 25px 20px;
