@@ -88,7 +88,7 @@
   // Auto-scroll variables
   let scrollInterval = null;
   let isScrolling = false;
-  let scrollSpeed = 0.4; // LEBIH PERLAHAN
+  let scrollSpeed = 0.4;
 
   // Search results limit
   const MAX_SEARCH_RESULTS = 10;
@@ -495,12 +495,13 @@
   }
 
   // ============================================
-  // TAP TO STOP
+  // TAP TO STOP - TAPI SCROLL MANUAL TAK BERHENTI
   // ============================================
   function setupTapToStop() {
     const output = document.getElementById('output');
     if (!output) return;
     
+    // Touch = BERHENTI (tap skrin)
     output.addEventListener('touchstart', function(e) {
       if (isScrolling) {
         stopScroll();
@@ -508,15 +509,23 @@
       }
     });
     
+    // Click = BERHENTI (desktop)
     output.addEventListener('click', function() {
       if (isScrolling) {
         stopScroll();
       }
     });
+    
+    // ❌ SCROLL EVENT DIBUANG - auto-scroll terus berjalan
+    // output.addEventListener('scroll', function() {
+    //   if (isScrolling) {
+    //     stopScroll();
+    //   }
+    // });
   }
 
   // ============================================
-  // TOGGLE FULLSCREEN - HIDE EVERYTHING EXCEPT LYRICS
+  // TOGGLE FULLSCREEN
   // ============================================
   function toggleFullscreen() {
     const app = document.querySelector('.app');
@@ -589,9 +598,10 @@
 
   console.log('🎵 Song Viewer Pro loaded!');
   console.log('Controls:');
-  console.log('  ▶  - Start auto-scroll (slower)');
+  console.log('  ▶  - Start auto-scroll');
   console.log('  ⏹  - Stop auto-scroll');
   console.log('  Tap on lyrics - Stop scrolling');
+  console.log('  Scroll up/down - Auto-scroll continues');
   console.log('  Space bar - Toggle scroll');
   console.log('  ↑/↓ arrows - Adjust scroll speed');
   console.log('  🔍 Search - Type to filter songs');
