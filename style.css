@@ -437,15 +437,24 @@ html, body {
     font-weight: 800;
     margin: 0;
     letter-spacing: -1px;
-    background: linear-gradient(135deg, #ffcc00 0%, #ff8800 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-.index-header h1 span {
-    font-weight: 300;
-    background: linear-gradient(135deg, #ff8800 0%, #ff4400 100%);
+/* Three colors for Asli Busker Chords */
+.index-header h1 .color-asli {
+    background: linear-gradient(135deg, #ffcc00 0%, #f5a623 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.index-header h1 .color-busker {
+    background: linear-gradient(135deg, #ff8800 0%, #e65c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.index-header h1 .color-chords {
+    background: linear-gradient(135deg, #ff4400 0%, #cc0000 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
