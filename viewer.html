@@ -10,6 +10,11 @@
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a1a2e">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
 
@@ -19,7 +24,11 @@
   <div class="header">
     <div class="header-top">
       <h2>🎵 Song Viewer</h2>
-      <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
+        <button onclick="logoutUser()" class="logout-btn" title="Logout" style="background: #4a2a2a; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; min-width: 40px;">🚪</button>
+        <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+      </div>
     </div>
     <h3 id="songTitle">No Song Selected</h3>
     <div id="keyDisplay">Key: 0</div>
@@ -58,9 +67,6 @@
 </div>
 
 <!-- FIREBASE SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
 <script>
   // ============================================
   // FIREBASE CONFIGURATION
@@ -72,6 +78,7 @@
   };
 
   firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
   const db = firebase.firestore();
 </script>
 
@@ -90,6 +97,10 @@
   let isScrolling = false;
   let scrollSpeed = 0.4;
 
+  // Auto-logout timer
+  let logoutTimer = null;
+  const IDLE_TIMEOUT = 30 * 60 * 1000; // 30 minit
+
   // Search results limit
   const MAX_SEARCH_RESULTS = 10;
   const DISPLAY_RESULTS = 5;
@@ -104,6 +115,72 @@
   const playBtn = document.getElementById('playBtn');
   const searchInput = document.getElementById('searchInput');
   const clearSearchBtn = document.getElementById('clearSearchBtn');
+  const userNameEl = document.getElementById('userName');
+
+  // ============================================
+  // AUTH - CHECK LOGIN STATUS
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      // Not logged in - redirect to login
+      window.location.href = "login.html";
+      return;
+    }
+
+    // User is logged in
+    console.log('✅ Logged in as:', user.displayName || user.email);
+    if (user.displayName) {
+      userNameEl.textContent = '👤 ' + user.displayName;
+      userNameEl.style.display = 'inline';
+    }
+
+    // Update last login
+    db.collection('users').doc(user.uid).set({
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+      loginCount: firebase.firestore.FieldValue.increment(1)
+    }, { merge: true }).catch(err => console.error('Error updating login:', err));
+
+    // Load songs after login
+    loadSongs();
+  });
+
+  // ============================================
+  // AUTO-LOGOUT - IDLE TIMER
+  // ============================================
+  function resetLogoutTimer() {
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+    }
+    logoutTimer = setTimeout(function() {
+      console.log('⏰ Auto-logout: Idle for 30 minutes');
+      logoutUser();
+    }, IDLE_TIMEOUT);
+  }
+
+  function setupIdleTimer() {
+    const events = ['mousemove', 'mousedown', 'click', 'scroll', 'touchstart', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, resetLogoutTimer);
+    });
+    resetLogoutTimer(); // Start timer
+  }
+
+  // ============================================
+  // LOGOUT
+  // ============================================
+  function logoutUser() {
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+      logoutTimer = null;
+    }
+    stopScroll();
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch((error) => {
+      console.error('Logout error:', error);
+      window.location.href = "login.html";
+    });
+  }
 
   // ============================================
   // LOAD SONGS FROM FIREBASE
@@ -504,34 +581,26 @@
     let touchStartY = 0;
     let isSwiping = false;
     
-    // Rekod posisi sentuhan mula
     output.addEventListener('touchstart', function(e) {
       touchStartY = e.touches[0].clientY;
       isSwiping = false;
     }, { passive: true });
     
-    // Jika jari bergerak → ini adalah SCROLL, bukan TAP
     output.addEventListener('touchmove', function(e) {
       const touchEndY = e.touches[0].clientY;
       const diff = touchStartY - touchEndY;
-      
-      // Jika gerakan > 10px → ini scroll
       if (Math.abs(diff) > 10) {
         isSwiping = true;
       }
     }, { passive: true });
     
-    // Lepas sentuhan — jika TAP (bukan scroll), berhenti
     output.addEventListener('touchend', function(e) {
       if (!isSwiping && isScrolling) {
-        // Ini TAP — berhenti
         stopScroll();
         e.preventDefault();
       }
-      // Jika SWIPE (scroll) — biarkan auto-scroll terus
     }, { passive: true });
     
-    // Click untuk desktop
     output.addEventListener('click', function() {
       if (isScrolling) {
         stopScroll();
@@ -556,9 +625,6 @@
     }
   }
 
-  // ============================================
-  // DETECT FULLSCREEN EXIT (ESC KEY)
-  // ============================================
   document.addEventListener('fullscreenchange', function() {
     const app = document.querySelector('.app');
     if (!document.fullscreenElement) {
@@ -598,7 +664,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     setupTapToStop();
     outputEl.style.fontSize = fontSize + 'px';
-    loadSongs();
+    setupIdleTimer(); // Start auto-logout timer
   });
 
   // ============================================
@@ -608,6 +674,10 @@
     if (scrollInterval) {
       clearInterval(scrollInterval);
       scrollInterval = null;
+    }
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+      logoutTimer = null;
     }
   });
 
@@ -623,6 +693,8 @@
   console.log('  ➕ Transpose +1 (Sharp)');
   console.log('  ➖ Transpose -1 (Flat)');
   console.log('  ⛶ Fullscreen - Only lyrics & chords');
+  console.log('  🚪 Logout - Click to sign out');
+  console.log('  ⏰ Auto-logout - 30 minutes idle');
 </script>
 
 </body>
