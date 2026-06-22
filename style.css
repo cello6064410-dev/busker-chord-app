@@ -830,9 +830,32 @@ html, body {
         max-width: 560px;
     }
 
-    .index-header h1 {
-        font-size: 3.2rem;
-    }
+.index-header h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -1px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* Three colors for Asli Busker Chords */
+.index-header h1 .color-asli {
+  background: linear-gradient(135deg, #ffcc00 0%, #f5a623 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.index-header h1 .color-busker {
+  background: linear-gradient(135deg, #ff8800 0%, #e65c00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.index-header h1 .color-chords {
+  background: linear-gradient(135deg, #ff4400 0%, #cc0000 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
     .index-btn {
         padding: 22px 28px;
