@@ -49,6 +49,16 @@
         </div>
         <div class="index-btn-arrow">→</div>
       </button>
+
+      <!-- Dashboard Button -->
+      <button onclick="dashboard()" class="index-btn dashboard-btn">
+        <div class="index-btn-icon">📊</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Dashboard</span>
+          <span class="index-btn-desc">Lihat Statistik Pengguna &amp; Lagu</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
+      </button>
       
     </div>
 
@@ -72,6 +82,15 @@ function admin() {
 
 function viewer() {
   window.location.href = "login.html";
+}
+
+function dashboard() {
+  let pass = prompt("Enter admin password:");
+  if (pass === "admin123") {
+    window.location.href = "dashboard.html";
+  } else if (pass !== null) {
+    alert("Wrong password");
+  }
 }
 </script>
 

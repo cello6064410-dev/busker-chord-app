@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Dashboard - Busker App</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+  <div class="dashboard-card">
+    
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="dashboard-header-top">
+        <h2>📊 Dashboard</h2>
+        <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+      </div>
+      <p class="dashboard-subtitle">Statistik Pengguna &amp; Lagu</p>
+    </div>
+
+    <!-- Divider -->
+    <div class="dashboard-divider"></div>
+
+    <!-- Stats Grid -->
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <span class="stat-number" id="totalUsers">0</span>
+        <span class="stat-label">👥 Jumlah Pengguna</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="totalSongs">0</span>
+        <span class="stat-label">🎵 Jumlah Lagu</span>
+      </div>
+    </div>
+
+    <!-- User List -->
+    <div class="dashboard-section">
+      <h3>👤 Senarai Pengguna</h3>
+      <div id="userList" class="user-list">⏳ Loading users...</div>
+    </div>
+
+    <!-- Song List -->
+    <div class="dashboard-section">
+      <h3>🎵 Senarai Lagu</h3>
+      <div id="songList" class="song-list-dashboard">⏳ Loading songs...</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="dashboard-footer">
+      <button onclick="goHome()" class="back-btn">⬅ Back to Home</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIG
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+
+<script>
+  // ============================================
+  // DOM REFERENCES
+  // ============================================
+  const totalUsersEl = document.getElementById('totalUsers');
+  const totalSongsEl = document.getElementById('totalSongs');
+  const userListEl = document.getElementById('userList');
+  const songListEl = document.getElementById('songList');
+
+  // ============================================
+  // GO HOME
+  // ============================================
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
+  // LOAD DATA
+  // ============================================
+  function loadDashboard() {
+    // Load Users
+    db.collection('users')
+      .orderBy('lastLogin', 'desc')
+      .get()
+      .then((snapshot) => {
+        totalUsersEl.textContent = snapshot.size;
+
+        if (snapshot.empty) {
+          userListEl.innerHTML = '<div class="empty-text">No users yet</div>';
+          return;
+        }
+
+        userListEl.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const user = doc.data();
+          const div = document.createElement('div');
+          div.className = 'user-item';
+
+          const lastLogin = user.lastLogin 
+            ? new Date(user.lastLogin.seconds * 1000).toLocaleString() 
+            : 'Never';
+
+          div.innerHTML = `
+            <div class="user-avatar">
+              ${user.photoURL ? `<img src="${user.photoURL}" alt="${user.displayName}">` : '👤'}
+            </div>
+            <div class="user-info">
+              <div class="user-name">${user.displayName || 'Unknown'}</div>
+              <div class="user-email">${user.email || 'No email'}</div>
+              <div class="user-login">Last login: ${lastLogin}</div>
+            </div>
+            <div class="user-count">${user.loginCount || 1} logins</div>
+          `;
+          userListEl.appendChild(div);
+        });
+      })
+      .catch((error) => {
+        console.error('Error loading users:', error);
+        userListEl.innerHTML = '<div class="error-text">❌ Error loading users</div>';
+      });
+
+    // Load Songs
+    db.collection('songs')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        totalSongsEl.textContent = snapshot.size;
+
+        if (snapshot.empty) {
+          songListEl.innerHTML = '<div class="empty-text">No songs yet</div>';
+          return;
+        }
+
+        songListEl.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const song = doc.data();
+          const div = document.createElement('div');
+          div.className = 'song-item-dashboard';
+          div.textContent = song.title || 'Untitled';
+          songListEl.appendChild(div);
+        });
+      })
+      .catch((error) => {
+        console.error('Error loading songs:', error);
+        songListEl.innerHTML = '<div class="error-text">❌ Error loading songs</div>';
+      });
+  }
+
+  // ============================================
+  // CHECK AUTH - ONLY ADMIN
+  // ============================================
+  // Simple check - if not logged in as admin, redirect
+  // For now, we rely on the password protection from index.html
+  // But we can add an extra layer if needed
+
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    loadDashboard();
+  });
+</script>
+
+<style>
+  /* ============================================
+     DASHBOARD PAGE
+     ============================================ */
+  .dashboard-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+    padding: 20px;
+  }
+
+  .dashboard-card {
+    background: rgba(26, 26, 46, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 32px;
+    padding: 40px 35px;
+    max-width: 800px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+    transition: transform 0.3s ease;
+  }
+
+  .dashboard-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .dashboard-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dashboard-header h2 {
+    font-size: 2rem;
+    margin: 0;
+    color: #ffcc00;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .dashboard-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    margin-top: 4px;
+    font-family: Arial, sans-serif;
+  }
+
+  .dashboard-divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ffcc00, #ff8800);
+    border-radius: 10px;
+    margin: 20px 0 25px;
+  }
+
+  .dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .stat-card {
+    background: #1a1a2e;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #2a2a4e;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #ffcc00;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 4px;
+    font-family: Arial, sans-serif;
+  }
+
+  .dashboard-section {
+    margin-top: 25px;
+  }
+
+  .dashboard-section h3 {
+    color: #aaa;
+    font-size: 1.1rem;
+    font-family: Arial, sans-serif;
+    margin-bottom: 10px;
+  }
+
+  .user-list {
+    max-height: 250px;
+    overflow-y: auto;
+    background: #151515;
+    border-radius: 10px;
+    padding: 5px;
+  }
+
+  .user-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 14px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    border: 1px solid #2a2a4e;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #2a2a4e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .user-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .user-name {
+    font-weight: bold;
+    color: #fff;
+    font-family: Arial, sans-serif;
+  }
+
+  .user-email {
+    font-size: 0.8rem;
+    color: #888;
+    font-family: Arial, sans-serif;
+  }
+
+  .user-login {
+    font-size: 0.7rem;
+    color: #666;
+    font-family: Arial, sans-serif;
+  }
+
+  .user-count {
+    font-size: 0.8rem;
+    color: #4fc3f7;
+    font-family: Arial, sans-serif;
+    white-space: nowrap;
+  }
+
+  .song-list-dashboard {
+    max-height: 200px;
+    overflow-y: auto;
+    background: #151515;
+    border-radius: 10px;
+    padding: 5px;
+  }
+
+  .song-item-dashboard {
+    padding: 10px 14px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    border: 1px solid #2a2a4e;
+    color: #fff;
+    font-family: Arial, sans-serif;
+  }
+
+  .dashboard-footer {
+    margin-top: 25px;
+    text-align: center;
+  }
+
+  .back-btn {
+    background: #2a2a4e;
+    color: white;
+    padding: 12px 30px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    transition: background 0.3s;
+  }
+
+  .back-btn:hover {
+    background: #3a3a6e;
+  }
+
+  .back-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .dashboard-card {
+      padding: 25px 20px;
+      border-radius: 24px;
+    }
+
+    .dashboard-header h2 {
+      font-size: 1.5rem;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+    }
+
+    .user-item {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .user-count {
+      width: 100%;
+      text-align: right;
+    }
+  }
+</style>
+
+</body>
+</html>

@@ -81,6 +81,22 @@ html, body {
     min-width: 40px;
 }
 
+.logout-btn {
+    background: #4a2a2a !important;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    min-height: 40px;
+    min-width: 40px;
+}
+
+.logout-btn:hover {
+    background: #5a3a3a !important;
+}
+
 /* ============================================
    SEARCH BAR
    ============================================ */
@@ -533,6 +549,7 @@ html, body {
     transform: translateX(4px);
 }
 
+/* Admin Button */
 .admin-btn {
     background: linear-gradient(135deg, #2a1a4e, #3a2a6e);
     border: 1px solid rgba(74, 58, 142, 0.4);
@@ -547,6 +564,7 @@ html, body {
     box-shadow: 0 8px 30px rgba(74, 58, 142, 0.3);
 }
 
+/* Viewer Button */
 .viewer-btn {
     background: linear-gradient(135deg, #1a2a4e, #2a4a6e);
     border: 1px solid rgba(58, 106, 142, 0.4);
@@ -561,6 +579,21 @@ html, body {
     box-shadow: 0 8px 30px rgba(58, 106, 142, 0.3);
 }
 
+/* Dashboard Button */
+.dashboard-btn {
+    background: linear-gradient(135deg, #1a3a2e, #2a5a4e) !important;
+    border: 1px solid rgba(58, 142, 106, 0.4) !important;
+}
+
+.dashboard-btn .index-btn-icon {
+    background: rgba(58, 142, 106, 0.3) !important;
+}
+
+.dashboard-btn:hover {
+    border-color: rgba(58, 142, 106, 0.8) !important;
+    box-shadow: 0 8px 30px rgba(58, 142, 106, 0.3) !important;
+}
+
 .index-footer {
     margin-top: 30px;
     color: rgba(255, 255, 255, 0.2);
@@ -570,13 +603,14 @@ html, body {
 }
 
 /* ============================================
-   FULLSCREEN MODE - FIT TO SCREEN, NO SCROLL
+   FULLSCREEN MODE
    ============================================ */
 .fullscreen-mode .header,
 .fullscreen-mode .search-container,
 .fullscreen-mode .song-list,
 .fullscreen-mode .floating-bar,
 .fullscreen-mode .home-btn,
+.fullscreen-mode .logout-btn,
 .fullscreen-mode a[href="list.html"] {
     display: none !important;
 }
@@ -812,6 +846,19 @@ html, body {
 
     .index-btn-label {
         font-size: 1.3rem;
+    }
+
+    .fullscreen-mode .output {
+        padding: 30px 20px !important;
+        font-size: 20px !important;
+    }
+
+    .fullscreen-mode .chord-row {
+        font-size: 20px !important;
+    }
+
+    .fullscreen-mode .lyric-row {
+        font-size: 20px !important;
     }
 }
 
