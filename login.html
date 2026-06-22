@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Login - Busker App</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<div class="login-wrapper">
+  <div class="login-card">
+    
+    <!-- Icon -->
+    <div class="login-icon">🎸</div>
+    
+    <!-- Title -->
+    <h1>Busker<span>Chord</span></h1>
+    <p class="login-subtitle">Sign in to access your songs</p>
+    
+    <!-- Divider -->
+    <div class="login-divider"></div>
+    
+    <!-- Google Login Button -->
+    <button id="googleLoginBtn" class="login-google-btn">
+      <img src="https://www.google.com/favicon.ico" alt="Google" class="google-icon">
+      <span>Sign in with Google</span>
+    </button>
+    
+    <!-- Status Message -->
+    <div id="loginStatus" class="login-status"></div>
+    
+    <!-- Back Link -->
+    <div class="login-footer">
+      <a href="index.html">⬅ Back to Home</a>
+    </div>
+    
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIG
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+
+<script>
+  // ============================================
+  // DOM REFERENCES
+  // ============================================
+  const loginBtn = document.getElementById('googleLoginBtn');
+  const loginStatus = document.getElementById('loginStatus');
+
+  // ============================================
+  // CHECK IF ALREADY LOGGED IN
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    if (user) {
+      // Already logged in — redirect to viewer
+      window.location.href = "viewer.html";
+    }
+  });
+
+  // ============================================
+  // GOOGLE LOGIN
+  // ============================================
+  loginBtn.addEventListener('click', function() {
+    loginBtn.disabled = true;
+    loginBtn.textContent = '⏳ Signing in...';
+    loginStatus.textContent = '';
+    loginStatus.className = 'login-status';
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    auth.signInWithPopup(provider)
+      .then((result) => {
+        const user = result.user;
+        
+        // Save user data to Firestore
+        const userData = {
+          uid: user.uid,
+          displayName: user.displayName || 'Unknown',
+          email: user.email || '',
+          photoURL: user.photoURL || '',
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+          loginCount: firebase.firestore.FieldValue.increment(1)
+        };
+
+        // Check if user exists, if not create
+        db.collection('users').doc(user.uid).set(userData, { merge: true })
+          .then(() => {
+            console.log('✅ User data saved');
+            window.location.href = "viewer.html";
+          })
+          .catch((error) => {
+            console.error('Error saving user:', error);
+            window.location.href = "viewer.html";
+          });
+      })
+      .catch((error) => {
+        console.error('Login error:', error);
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<img src="https://www.google.com/favicon.ico" alt="Google" class="google-icon"><span>Sign in with Google</span>';
+        loginStatus.textContent = '❌ Login failed: ' + error.message;
+        loginStatus.className = 'login-status error';
+      });
+  });
+</script>
+
+<style>
+  /* ============================================
+     LOGIN PAGE STYLING
+     ============================================ */
+  .login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+    padding: 20px;
+  }
+
+  .login-card {
+    background: rgba(26, 26, 46, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 32px;
+    padding: 50px 45px;
+    max-width: 420px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+
+  .login-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .login-icon {
+    font-size: 4rem;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .login-card h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 10px 0 0 0;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #ffcc00 0%, #ff8800 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .login-card h1 span {
+    font-weight: 300;
+    background: linear-gradient(135deg, #ff8800 0%, #ff4400 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .login-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    margin-top: 6px;
+    font-family: Arial, sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  .login-divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ffcc00, #ff8800);
+    border-radius: 10px;
+    margin: 25px auto 30px;
+  }
+
+  .login-google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    padding: 16px 20px;
+    background: #ffffff;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    min-height: 56px;
+  }
+
+  .login-google-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
+  }
+
+  .login-google-btn:active {
+    transform: scale(0.97);
+  }
+
+  .login-google-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .google-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .login-status {
+    margin-top: 16px;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: Arial, sans-serif;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login-status.error {
+    background: rgba(255, 68, 68, 0.15);
+    color: #ff4444;
+    border: 1px solid rgba(255, 68, 68, 0.3);
+  }
+
+  .login-status.success {
+    background: rgba(0, 200, 83, 0.15);
+    color: #00e676;
+    border: 1px solid rgba(0, 200, 83, 0.3);
+  }
+
+  .login-footer {
+    margin-top: 25px;
+  }
+
+  .login-footer a {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.9rem;
+    font-family: Arial, sans-serif;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .login-footer a:hover {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .login-card {
+      padding: 35px 25px;
+      border-radius: 24px;
+    }
+
+    .login-card h1 {
+      font-size: 2rem;
+    }
+
+    .login-icon {
+      font-size: 3rem;
+    }
+
+    .login-google-btn {
+      padding: 14px 16px;
+      font-size: 1rem;
+      min-height: 48px;
+    }
+  }
+</style>
+
+</body>
+</html>
