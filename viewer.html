@@ -88,7 +88,7 @@
   // Auto-scroll variables
   let scrollInterval = null;
   let isScrolling = false;
-  let scrollSpeed = 0.8;
+  let scrollSpeed = 0.4; // LEBIH PERLAHAN
 
   // Search results limit
   const MAX_SEARCH_RESULTS = 10;
@@ -516,17 +516,31 @@
   }
 
   // ============================================
-  // TOGGLE FULLSCREEN
+  // TOGGLE FULLSCREEN - HIDE EVERYTHING EXCEPT LYRICS
   // ============================================
   function toggleFullscreen() {
+    const app = document.querySelector('.app');
+    
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
+      app.classList.add('fullscreen-mode');
     } else {
       if (document.exitFullscreen) {
         document.exitFullscreen();
       }
+      app.classList.remove('fullscreen-mode');
     }
   }
+
+  // ============================================
+  // DETECT FULLSCREEN EXIT (ESC KEY)
+  // ============================================
+  document.addEventListener('fullscreenchange', function() {
+    const app = document.querySelector('.app');
+    if (!document.fullscreenElement) {
+      app.classList.remove('fullscreen-mode');
+    }
+  });
 
   // ============================================
   // KEYBOARD SHORTCUTS
@@ -575,7 +589,7 @@
 
   console.log('🎵 Song Viewer Pro loaded!');
   console.log('Controls:');
-  console.log('  ▶  - Start auto-scroll');
+  console.log('  ▶  - Start auto-scroll (slower)');
   console.log('  ⏹  - Stop auto-scroll');
   console.log('  Tap on lyrics - Stop scrolling');
   console.log('  Space bar - Toggle scroll');
@@ -583,6 +597,7 @@
   console.log('  🔍 Search - Type to filter songs');
   console.log('  ➕ Transpose +1 (Sharp)');
   console.log('  ➖ Transpose -1 (Flat)');
+  console.log('  ⛶ Fullscreen - Only lyrics & chords');
 </script>
 
 </body>

@@ -82,29 +82,6 @@ html, body {
 }
 
 /* ============================================
-   TOP BAR
-   ============================================ */
-.topbar {
-    flex-shrink: 0;
-    text-align: center;
-    margin-bottom: 8px;
-}
-
-.topbar button {
-    background: #2a2a4e;
-    font-weight: bold;
-    padding: 12px 20px;
-    width: 100%;
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
-    min-height: 44px;
-    font-family: Arial, sans-serif;
-}
-
-/* ============================================
    SEARCH BAR
    ============================================ */
 .search-container {
@@ -254,7 +231,7 @@ html, body {
 }
 
 /* ============================================
-   CHORD & LYRICS ROWS - RAPAT & KONSISTEN
+   CHORD & LYRICS ROWS
    ============================================ */
 .chord-row {
     font-family: 'Courier New', Courier, 'Liberation Mono', monospace !important;
@@ -266,8 +243,6 @@ html, body {
     letter-spacing: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
-    font-variant-ligatures: none !important;
-    font-feature-settings: "liga" 0 !important;
 }
 
 .lyric-row {
@@ -278,8 +253,6 @@ html, body {
     white-space: pre !important;
     padding: 0 !important;
     margin: 0 !important;
-    font-variant-ligatures: none !important;
-    font-feature-settings: "liga" 0 !important;
 }
 
 .line-spacer {
@@ -597,6 +570,43 @@ html, body {
 }
 
 /* ============================================
+   FULLSCREEN MODE - ONLY LYRICS & CHORDS
+   ============================================ */
+.fullscreen-mode .header,
+.fullscreen-mode .search-container,
+.fullscreen-mode .song-list,
+.fullscreen-mode .floating-bar,
+.fullscreen-mode .home-btn,
+.fullscreen-mode a[href="list.html"] {
+    display: none !important;
+}
+
+.fullscreen-mode .app {
+    padding: 0 !important;
+    padding-bottom: 0 !important;
+    background: #0f0f0f !important;
+}
+
+.fullscreen-mode .output {
+    border-radius: 0 !important;
+    border: none !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    padding: 30px 20px !important;
+    font-size: 20px !important;
+    line-height: 1.6 !important;
+    background: #0f0f0f !important;
+}
+
+.fullscreen-mode .chord-row {
+    font-size: 20px !important;
+}
+
+.fullscreen-mode .lyric-row {
+    font-size: 20px !important;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
@@ -648,11 +658,6 @@ html, body {
         margin: 0 2px;
     }
 
-    .topbar button {
-        padding: 12px;
-        font-size: 0.95rem;
-    }
-
     .search-container {
         padding: 0 0 6px 0;
     }
@@ -701,6 +706,19 @@ html, body {
     .index-btn-desc {
         font-size: 0.7rem;
     }
+
+    .fullscreen-mode .output {
+        font-size: 18px !important;
+        padding: 20px 15px !important;
+    }
+
+    .fullscreen-mode .chord-row {
+        font-size: 18px !important;
+    }
+
+    .fullscreen-mode .lyric-row {
+        font-size: 18px !important;
+    }
 }
 
 @media (max-width: 400px) {
@@ -728,6 +746,19 @@ html, body {
         font-size: 0.8rem;
         padding: 6px 8px;
         min-height: 32px;
+    }
+
+    .fullscreen-mode .output {
+        font-size: 16px !important;
+        padding: 15px 12px !important;
+    }
+
+    .fullscreen-mode .chord-row {
+        font-size: 16px !important;
+    }
+
+    .fullscreen-mode .lyric-row {
+        font-size: 16px !important;
     }
 }
 
@@ -782,6 +813,19 @@ html, body {
 
     .index-btn-label {
         font-size: 1.3rem;
+    }
+
+    .fullscreen-mode .output {
+        font-size: 22px !important;
+        padding: 40px 30px !important;
+    }
+
+    .fullscreen-mode .chord-row {
+        font-size: 22px !important;
+    }
+
+    .fullscreen-mode .lyric-row {
+        font-size: 22px !important;
     }
 }
 
