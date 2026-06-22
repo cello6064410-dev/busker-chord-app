@@ -69,6 +69,31 @@
   const loginStatus = document.getElementById('loginStatus');
 
   // ============================================
+  // SAVE USER DATA TO FIRESTORE
+  // ============================================
+  function saveUserAndRedirect(user) {
+    const userData = {
+      uid: user.uid,
+      displayName: user.displayName || 'Unknown',
+      email: user.email || '',
+      photoURL: user.photoURL || '',
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+      loginCount: firebase.firestore.FieldValue.increment(1)
+    };
+
+    db.collection('users').doc(user.uid).set(userData, { merge: true })
+      .then(() => {
+        console.log('✅ User data saved');
+        window.location.href = "viewer.html";
+      })
+      .catch((error) => {
+        console.error('Error saving user:', error);
+        // Still redirect even if save fails
+        window.location.href = "viewer.html";
+      });
+  }
+
+  // ============================================
   // CHECK IF ALREADY LOGGED IN
   // ============================================
   auth.onAuthStateChanged(function(user) {
@@ -79,7 +104,28 @@
   });
 
   // ============================================
-  // GOOGLE LOGIN
+  // HANDLE REDIRECT RESULT (from Google)
+  // ============================================
+  auth.getRedirectResult()
+    .then((result) => {
+      if (result.user) {
+        // Successfully logged in
+        saveUserAndRedirect(result.user);
+      }
+    })
+    .catch((error) => {
+      console.error('Redirect login error:', error);
+      // Only show error if it's not a "no result" error
+      if (error.code !== 'auth.no-such-provider') {
+        loginStatus.textContent = '❌ Login failed: ' + error.message;
+        loginStatus.className = 'login-status error';
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<img src="https://www.google.com/favicon.ico" alt="Google" class="google-icon"><span>Sign in with Google</span>';
+      }
+    });
+
+  // ============================================
+  // GOOGLE LOGIN - REDIRECT METHOD
   // ============================================
   loginBtn.addEventListener('click', function() {
     loginBtn.disabled = true;
@@ -88,39 +134,7 @@
     loginStatus.className = 'login-status';
 
     const provider = new firebase.auth.GoogleAuthProvider();
-
-    auth.signInWithPopup(provider)
-      .then((result) => {
-        const user = result.user;
-        
-        // Save user data to Firestore
-        const userData = {
-          uid: user.uid,
-          displayName: user.displayName || 'Unknown',
-          email: user.email || '',
-          photoURL: user.photoURL || '',
-          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-          loginCount: firebase.firestore.FieldValue.increment(1)
-        };
-
-        // Check if user exists, if not create
-        db.collection('users').doc(user.uid).set(userData, { merge: true })
-          .then(() => {
-            console.log('✅ User data saved');
-            window.location.href = "viewer.html";
-          })
-          .catch((error) => {
-            console.error('Error saving user:', error);
-            window.location.href = "viewer.html";
-          });
-      })
-      .catch((error) => {
-        console.error('Login error:', error);
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = '<img src="https://www.google.com/favicon.ico" alt="Google" class="google-icon"><span>Sign in with Google</span>';
-        loginStatus.textContent = '❌ Login failed: ' + error.message;
-        loginStatus.className = 'login-status error';
-      });
+    auth.signInWithRedirect(provider);
   });
 </script>
 
