@@ -1,87 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Song Viewer Pro</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1a1a2e">
-  
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-</head>
-<body>
-
-<div class="app">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
-      <h2>🎵 Song Viewer</h2>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
-        <button onclick="logoutUser()" class="logout-btn" title="Logout" style="background: #4a2a2a; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; min-width: 40px;">🚪</button>
-        <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
-      </div>
-    </div>
-    <h3 id="songTitle">No Song Selected</h3>
-    <div id="keyDisplay">Key: 0</div>
-  </div>
-
-  <!-- SEARCH BAR -->
-  <div class="search-container">
-    <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
-    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
-  </div>
-
-  <!-- SONG LIST -->
-  <div id="songList" class="song-list"></div>
-
-  <!-- LYRICS OUTPUT -->
-  <div id="output" class="output">Loading songs...</div>
-
-  <!-- LINK TO ALL SONGS LIST -->
-  <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
-    <a href="list.html" style="color: #4fc3f7; font-family: Arial, sans-serif; font-size: 0.9rem; text-decoration: none; padding: 8px 16px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4e; display: inline-block;">
-      📋 All Songs
-    </a>
-  </div>
-
-  <!-- FLOATING CONTROL BAR -->
-  <div class="floating-bar">
-    <button onclick="transpose(1)" title="Transpose +1 (Sharp)">➕</button>
-    <button onclick="transpose(-1)" title="Transpose -1 (Flat)">➖</button>
-    <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
-    <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
-    <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
-    <button onclick="stopScroll()" title="Stop Auto-Scroll" id="stopBtn">⏹</button>
-    <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
-  </div>
-
-</div>
-
-<!-- FIREBASE SDK -->
-<script>
-  // ============================================
-  // FIREBASE CONFIGURATION
-  // ============================================
-  const firebaseConfig = {
-    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
-    authDomain: "busker-chord-app.firebaseapp.com",
-    projectId: "busker-chord-app"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-</script>
-
 <script>
   // ============================================
   // GLOBAL VARIABLES
@@ -89,8 +5,12 @@
   let songs = [];
   let filteredSongs = [];
   let currentSongId = null;
-  let currentKey = 0;
+  let currentKey = 0; // semitone offset
+  let currentKeyMajor = 'C';
+  let currentKeyMinor = 'Am';
+  let currentKeySignature = '0';
   let fontSize = 16;
+  let isEnharmonicMode = false;
 
   // Auto-scroll variables
   let scrollInterval = null;
@@ -106,6 +26,70 @@
   const DISPLAY_RESULTS = 5;
 
   // ============================================
+  // KEY SIGNATURE DATA (DENGAN ♭ ♯ ø +)
+  // ============================================
+  const allKeys = [
+    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭' },
+    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭' },
+    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭' },
+    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭' },
+    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭' },
+    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭' },
+    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭' },
+    { id: '0',   major: 'C',  minor: 'Am',  sig: '0' },
+    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯' },
+    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯' },
+    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯' },
+    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯' },
+    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯' },
+    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯' },
+    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯' }
+  ];
+
+  const enharmonicMap = {
+    '6♯': { targetId: '6♭', label: 'F♯ / G♭' },
+    '7♯': { targetId: '5♭', label: 'C♯ / D♭' },
+    '6♭': { targetId: '6♯', label: 'G♭ / F♯' },
+    '7♭': { targetId: '5♯', label: 'C♭ / B' }
+  };
+
+  const keyMap = {
+    'C':  { sig: '0',  minor: 'Am' },
+    'G':  { sig: '1♯', minor: 'Em' },
+    'D':  { sig: '2♯', minor: 'Bm' },
+    'A':  { sig: '3♯', minor: 'F♯m' },
+    'E':  { sig: '4♯', minor: 'C♯m' },
+    'B':  { sig: '5♯', minor: 'G♯m' },
+    'F♯': { sig: '6♯', minor: 'D♯m' },
+    'C♯': { sig: '7♯', minor: 'A♯m' },
+    'F':  { sig: '1♭', minor: 'Dm' },
+    'B♭': { sig: '2♭', minor: 'Gm' },
+    'E♭': { sig: '3♭', minor: 'Cm' },
+    'A♭': { sig: '4♭', minor: 'Fm' },
+    'D♭': { sig: '5♭', minor: 'B♭m' },
+    'G♭': { sig: '6♭', minor: 'E♭m' },
+    'C♭': { sig: '7♭', minor: 'A♭m' }
+  };
+
+  const sigToKey = {
+    '0':  { major: 'C',  minor: 'Am' },
+    '1♯': { major: 'G',  minor: 'Em' },
+    '2♯': { major: 'D',  minor: 'Bm' },
+    '3♯': { major: 'A',  minor: 'F♯m' },
+    '4♯': { major: 'E',  minor: 'C♯m' },
+    '5♯': { major: 'B',  minor: 'G♯m' },
+    '6♯': { major: 'F♯', minor: 'D♯m' },
+    '7♯': { major: 'C♯', minor: 'A♯m' },
+    '1♭': { major: 'F',  minor: 'Dm' },
+    '2♭': { major: 'B♭', minor: 'Gm' },
+    '3♭': { major: 'E♭', minor: 'Cm' },
+    '4♭': { major: 'A♭', minor: 'Fm' },
+    '5♭': { major: 'D♭', minor: 'B♭m' },
+    '6♭': { major: 'G♭', minor: 'E♭m' },
+    '7♭': { major: 'C♭', minor: 'A♭m' }
+  };
+
+  // ============================================
   // DOM REFERENCES
   // ============================================
   const songListEl = document.getElementById('songList');
@@ -117,40 +101,38 @@
   const clearSearchBtn = document.getElementById('clearSearchBtn');
   const userNameEl = document.getElementById('userName');
 
+  // Modal
+  const modal = document.getElementById('transposeModal');
+  const modalCurrentKey = document.getElementById('modalCurrentKey');
+  const keyListContainer = document.getElementById('keyListContainer');
+  const enharmonicToggle = document.getElementById('enharmonicToggle');
+  const enharmonicLabel = document.getElementById('enharmonicLabel');
+
   // ============================================
   // AUTH - CHECK LOGIN STATUS
   // ============================================
   auth.onAuthStateChanged(function(user) {
     if (!user) {
-      // Not logged in - redirect to login
       window.location.href = "login.html";
       return;
     }
-
-    // User is logged in
     console.log('✅ Logged in as:', user.displayName || user.email);
     if (user.displayName) {
       userNameEl.textContent = '👤 ' + user.displayName;
       userNameEl.style.display = 'inline';
     }
-
-    // Update last login
     db.collection('users').doc(user.uid).set({
       lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
       loginCount: firebase.firestore.FieldValue.increment(1)
     }, { merge: true }).catch(err => console.error('Error updating login:', err));
-
-    // Load songs after login
     loadSongs();
   });
 
   // ============================================
-  // AUTO-LOGOUT - IDLE TIMER
+  // AUTO-LOGOUT
   // ============================================
   function resetLogoutTimer() {
-    if (logoutTimer) {
-      clearTimeout(logoutTimer);
-    }
+    if (logoutTimer) clearTimeout(logoutTimer);
     logoutTimer = setTimeout(function() {
       console.log('⏰ Auto-logout: Idle for 30 minutes');
       logoutUser();
@@ -162,28 +144,21 @@
     events.forEach(event => {
       document.addEventListener(event, resetLogoutTimer);
     });
-    resetLogoutTimer(); // Start timer
+    resetLogoutTimer();
   }
 
-  // ============================================
-  // LOGOUT
-  // ============================================
   function logoutUser() {
-    if (logoutTimer) {
-      clearTimeout(logoutTimer);
-      logoutTimer = null;
-    }
+    if (logoutTimer) clearTimeout(logoutTimer);
     stopScroll();
     auth.signOut().then(() => {
       window.location.href = "login.html";
-    }).catch((error) => {
-      console.error('Logout error:', error);
+    }).catch(() => {
       window.location.href = "login.html";
     });
   }
 
   // ============================================
-  // LOAD SONGS FROM FIREBASE
+  // LOAD SONGS
   // ============================================
   function loadSongs() {
     outputEl.textContent = '⏳ Loading songs...';
@@ -195,7 +170,6 @@
       .then((snapshot) => {
         songs = [];
         songListEl.innerHTML = '';
-
         if (snapshot.empty) {
           outputEl.textContent = '📭 No songs found. Go to Admin to create one.';
           songListEl.innerHTML = `
@@ -206,19 +180,16 @@
           `;
           return;
         }
-
         snapshot.forEach((doc) => {
           const song = { id: doc.id, ...doc.data() };
           songs.push(song);
         });
-
         outputEl.textContent = 'Select a song to begin';
         songListEl.innerHTML = `
           <div class="empty-text">
             🔍 Type a song title to search
           </div>
         `;
-
         console.log(`✅ ${songs.length} songs loaded`);
       })
       .catch((error) => {
@@ -234,17 +205,15 @@
   }
 
   // ============================================
-  // SEARCH / FILTER SONGS
+  // SEARCH / FILTER
   // ============================================
   function filterSongs() {
     const query = searchInput.value.toLowerCase().trim();
-    
     if (query.length > 0) {
       clearSearchBtn.style.display = 'block';
     } else {
       clearSearchBtn.style.display = 'none';
     }
-
     if (query === '') {
       songListEl.innerHTML = `
         <div class="empty-text">
@@ -253,23 +222,15 @@
       `;
       return;
     }
-
-    const results = songs.filter(song => 
+    const results = songs.filter(song =>
       song.title && song.title.toLowerCase().includes(query)
     );
-
     const limitedResults = results.slice(0, MAX_SEARCH_RESULTS);
-    filteredSongs = limitedResults;
-
     renderSongList(limitedResults, results.length);
   }
 
-  // ============================================
-  // RENDER SONG LIST
-  // ============================================
   function renderSongList(results, totalFound) {
     songListEl.innerHTML = '';
-
     if (results.length === 0) {
       songListEl.innerHTML = `
         <div class="empty-text">
@@ -278,26 +239,21 @@
       `;
       return;
     }
-
     const resultCount = document.createElement('div');
     resultCount.className = 'result-count';
     resultCount.textContent = `Showing ${results.length} of ${totalFound} results`;
     songListEl.appendChild(resultCount);
-
     const displayResults = results.slice(0, DISPLAY_RESULTS);
     const hiddenResults = results.slice(DISPLAY_RESULTS);
-
     displayResults.forEach((song) => {
       const btn = createSongButton(song);
       songListEl.appendChild(btn);
     });
-
     if (hiddenResults.length > 0) {
       const hint = document.createElement('div');
       hint.className = 'scroll-hint';
       hint.textContent = `⬇️ ${hiddenResults.length} more results (scroll down)`;
       songListEl.appendChild(hint);
-
       hiddenResults.forEach((song) => {
         const btn = createSongButton(song);
         btn.className += ' hidden-result';
@@ -306,9 +262,6 @@
     }
   }
 
-  // ============================================
-  // CREATE SONG BUTTON
-  // ============================================
   function createSongButton(song) {
     const btn = document.createElement('button');
     btn.textContent = song.title || 'Untitled';
@@ -318,9 +271,6 @@
     return btn;
   }
 
-  // ============================================
-  // CLEAR SEARCH
-  // ============================================
   function clearSearch() {
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';
@@ -333,23 +283,34 @@
   }
 
   // ============================================
-  // SELECT AND DISPLAY A SONG
+  // SELECT SONG
   // ============================================
   function selectSong(songId) {
     stopScroll();
-
     currentSongId = songId;
     const song = songs.find(s => s.id === songId);
-
     if (!song) {
       outputEl.textContent = 'Song not found';
       return;
     }
-
     songTitleEl.textContent = song.title || 'Untitled';
-    currentKey = 0;
-    keyDisplayEl.textContent = 'Key: 0';
 
+    // Set key signature from song data
+    if (song.keyMajor && song.keyMinor) {
+      currentKeyMajor = song.keyMajor;
+      currentKeyMinor = song.keyMinor;
+      currentKeySignature = song.keySignature || '0';
+    } else {
+      // Fallback: detect from keySignature or default to C
+      const sig = song.keySignature || '0';
+      const keyData = sigToKey[sig] || { major: 'C', minor: 'Am' };
+      currentKeyMajor = keyData.major;
+      currentKeyMinor = keyData.minor;
+      currentKeySignature = sig;
+    }
+
+    currentKey = 0;
+    updateKeyDisplay();
     displaySong(song);
   }
 
@@ -358,22 +319,202 @@
   // ============================================
   function displaySong(song) {
     let lyrics = song.lyrics || song.content || '';
-
     if (!lyrics) {
       outputEl.innerHTML = '<div class="no-lyrics">No lyrics available</div>';
       return;
     }
-
+    // Apply transposition if key offset is not 0
     if (currentKey !== 0) {
-      lyrics = transposeLyrics(lyrics, currentKey);
+      lyrics = transposeLyricsBySemitone(lyrics, currentKey);
     }
-
     lyrics = formatChordsAboveLyrics(lyrics);
-
     outputEl.innerHTML = lyrics;
     outputEl.scrollTop = 0;
-
     applyFontSize(fontSize);
+  }
+
+  // ============================================
+  // UPDATE KEY DISPLAY
+  // ============================================
+  function updateKeyDisplay() {
+    const displayKey = getDisplayKey();
+    keyDisplayEl.textContent = `Key: ${displayKey}`;
+    modalCurrentKey.textContent = displayKey;
+  }
+
+  function getDisplayKey() {
+    let major = currentKeyMajor;
+    let minor = currentKeyMinor;
+
+    // If enharmonic mode is on, try to convert
+    if (isEnharmonicMode) {
+      const sig = currentKeySignature;
+      if (enharmonicMap[sig]) {
+        const target = enharmonicMap[sig];
+        const targetData = allKeys.find(k => k.id === target.targetId);
+        if (targetData) {
+          major = targetData.major;
+          minor = targetData.minor;
+        }
+      }
+    }
+
+    // Apply semitone offset
+    const offset = currentKey;
+    if (offset === 0) {
+      return `${major} / ${minor}`;
+    }
+    return `${major} / ${minor} ${offset > 0 ? '+' : ''}${offset}`;
+  }
+
+  // ============================================
+  // TRANSPOSE FUNCTIONS
+  // ============================================
+  function transposeSemitone(steps) {
+    currentKey += steps;
+    updateKeyDisplay();
+    if (currentSongId) {
+      const song = songs.find(s => s.id === currentSongId);
+      if (song) displaySong(song);
+    }
+  }
+
+  function transposeLyricsBySemitone(lyrics, steps) {
+    const sharpScale = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+    const flatScale = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+
+    const useSharp = steps >= 0;
+    const scale = useSharp ? sharpScale : flatScale;
+    const semitoneSteps = ((steps % 12) + 12) % 12;
+
+    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
+      let transposed = chord;
+      for (let i = 0; i < scale.length; i++) {
+        const root = scale[i];
+        if (chord.startsWith(root)) {
+          const newIndex = (i + semitoneSteps + 12) % 12;
+          const newRoot = scale[newIndex];
+          const quality = chord.substring(root.length);
+          transposed = newRoot + quality;
+          break;
+        }
+      }
+      // Fix enharmonic with new symbols
+      transposed = transposed.replace('E♯', 'F');
+      transposed = transposed.replace('B♯', 'C');
+      transposed = transposed.replace('F♭', 'E');
+      transposed = transposed.replace('C♭', 'B');
+      return `[${transposed}]`;
+    });
+  }
+
+  // ============================================
+  // TRANSPOSE POPUP
+  // ============================================
+  function openTransposePopup() {
+    modal.style.display = 'flex';
+    renderKeyList();
+    updateModalEnharmonicState();
+  }
+
+  function closeTransposePopup() {
+    modal.style.display = 'none';
+  }
+
+  function renderKeyList() {
+    keyListContainer.innerHTML = '';
+    let keysToRender = allKeys;
+
+    if (isEnharmonicMode) {
+      keysToRender = allKeys.map(k => {
+        if (enharmonicMap[k.id]) {
+          const target = enharmonicMap[k.id];
+          const targetData = allKeys.find(k2 => k2.id === target.targetId);
+          if (targetData) {
+            return { ...k, major: targetData.major, minor: targetData.minor, id: k.id + '_enh' };
+          }
+        }
+        return k;
+      });
+    }
+
+    keysToRender.forEach((key, index) => {
+      const div = document.createElement('div');
+      div.className = 'key-item';
+      const isCurrent = (key.major === currentKeyMajor && key.minor === currentKeyMinor) ||
+                        (enharmonicMap[key.id] && isEnharmonicMode);
+      if (isCurrent) {
+        div.classList.add('highlight-key');
+      }
+      let label = `${key.sig}  ${key.major} / ${key.minor}`;
+      if (enharmonicMap[key.id] && isEnharmonicMode) {
+        const target = enharmonicMap[key.id];
+        const targetData = allKeys.find(k => k.id === target.targetId);
+        if (targetData) {
+          label += ` (${targetData.major} / ${targetData.minor})`;
+        }
+      }
+      div.textContent = label;
+      div.dataset.keyId = key.id;
+      div.onclick = () => selectKey(key.id);
+      keyListContainer.appendChild(div);
+    });
+  }
+
+  function selectKey(keyId) {
+    let keyData = allKeys.find(k => k.id === keyId);
+    if (!keyData) return;
+
+    let selectedMajor = keyData.major;
+    let selectedMinor = keyData.minor;
+    let selectedSig = keyData.sig;
+
+    if (isEnharmonicMode && enharmonicMap[keyId]) {
+      const target = enharmonicMap[keyId];
+      const targetData = allKeys.find(k => k.id === target.targetId);
+      if (targetData) {
+        selectedMajor = targetData.major;
+        selectedMinor = targetData.minor;
+        selectedSig = targetData.sig;
+      }
+    }
+
+    currentKeyMajor = selectedMajor;
+    currentKeyMinor = selectedMinor;
+    currentKeySignature = selectedSig;
+    currentKey = 0;
+    updateKeyDisplay();
+
+    if (currentSongId) {
+      const song = songs.find(s => s.id === currentSongId);
+      if (song) displaySong(song);
+    }
+
+    closeTransposePopup();
+  }
+
+  function toggleEnharmonic() {
+    isEnharmonicMode = enharmonicToggle.checked;
+    enharmonicLabel.textContent = `Enharmonic: ${isEnharmonicMode ? 'ON' : 'OFF'}`;
+    renderKeyList();
+    updateKeyDisplay();
+    if (currentSongId) {
+      const song = songs.find(s => s.id === currentSongId);
+      if (song) displaySong(song);
+    }
+  }
+
+  function updateModalEnharmonicState() {
+    const sig = currentKeySignature;
+    const isActive = ['6♯', '7♯', '6♭', '7♭'].includes(sig);
+    enharmonicToggle.disabled = !isActive;
+    if (!isActive) {
+      enharmonicToggle.checked = false;
+      isEnharmonicMode = false;
+      enharmonicLabel.textContent = 'Enharmonic: OFF (not available)';
+    } else {
+      enharmonicLabel.textContent = `Enharmonic: ${isEnharmonicMode ? 'ON' : 'OFF'}`;
+    }
   }
 
   // ============================================
@@ -382,17 +523,14 @@
   function formatChordsAboveLyrics(text) {
     const lines = text.split('\n');
     const result = [];
-
     for (let line of lines) {
       if (!line.trim()) {
         result.push('<br>');
         continue;
       }
-
       const parts = [];
       let current = '';
       let i = 0;
-
       while (i < line.length) {
         if (line[i] === '[') {
           const j = line.indexOf(']', i);
@@ -415,10 +553,8 @@
       if (current) {
         parts.push({ type: 'text', content: current });
       }
-
       let lyricLine = '';
       const chordMap = [];
-
       for (let part of parts) {
         if (part.type === 'text') {
           const startPos = lyricLine.length;
@@ -433,7 +569,6 @@
           });
         }
       }
-
       let chordLine = '';
       for (let item of chordMap) {
         const spaces = item.position - chordLine.length;
@@ -442,72 +577,17 @@
         }
         chordLine += item.chord;
       }
-
       chordLine = chordLine.trimEnd();
-
       if (chordMap.length > 0) {
         result.push(`<div class="chord-row">${chordLine}</div>`);
       }
       result.push(`<div class="lyric-row">${lyricLine}</div>`);
     }
-
     return result.join('\n');
   }
 
   // ============================================
-  // TRANSPOSE LYRICS
-  // ============================================
-  // ============================================
-  // TRANSPOSE LYRICS - WITH ENHARMONIC FIX
-  // ============================================
-  function transposeLyrics(lyrics, steps) {
-    const sharpScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const flatScale = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-
-    const useSharp = steps >= 0;
-    const scale = useSharp ? sharpScale : flatScale;
-    const semitoneSteps = ((steps % 12) + 12) % 12;
-
-    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
-      let transposed = chord;
-
-      for (let i = 0; i < scale.length; i++) {
-        const root = scale[i];
-        if (chord.startsWith(root)) {
-          const newIndex = (i + semitoneSteps + 12) % 12;
-          const newRoot = scale[newIndex];
-          const quality = chord.substring(root.length);
-          transposed = newRoot + quality;
-          break;
-        }
-      }
-
-      // Fix enharmonic: E# → F, B# → C, Fb → E, Cb → B
-      transposed = transposed.replace('E#', 'F');
-      transposed = transposed.replace('B#', 'C');
-      transposed = transposed.replace('Fb', 'E');
-      transposed = transposed.replace('Cb', 'B');
-
-      return `[${transposed}]`;
-    });
-  }
-  // ============================================
-  // TRANSPOSE FUNCTION
-  // ============================================
-  function transpose(steps) {
-    currentKey += steps;
-    keyDisplayEl.textContent = `Key: ${currentKey}`;
-
-    if (currentSongId) {
-      const song = songs.find(s => s.id === currentSongId);
-      if (song) {
-        displaySong(song);
-      }
-    }
-  }
-
-  // ============================================
-  // CHANGE FONT SIZE
+  // FONT SIZE
   // ============================================
   function changeFontSize(delta) {
     fontSize = Math.min(32, Math.max(10, fontSize + delta));
@@ -522,25 +602,20 @@
   }
 
   // ============================================
-  // AUTO-SCROLL FUNCTIONS
+  // AUTO-SCROLL
   // ============================================
   function startScroll() {
     const output = document.getElementById('output');
-    
     if (isScrolling) return;
     if (!output.innerHTML || output.innerHTML === 'Select a song to begin' || output.innerHTML === 'Loading songs...') return;
     if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) return;
-    
     isScrolling = true;
-    
     const playBtn = document.getElementById('playBtn');
     if (playBtn) {
       playBtn.textContent = '▶️';
       playBtn.style.background = '#2a5a2e';
     }
-    
     output.classList.add('scrolling');
-    
     scrollInterval = setInterval(() => {
       const output = document.getElementById('output');
       if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
@@ -556,15 +631,12 @@
       clearInterval(scrollInterval);
       scrollInterval = null;
     }
-    
     isScrolling = false;
-    
     const playBtn = document.getElementById('playBtn');
     if (playBtn) {
       playBtn.textContent = '▶';
       playBtn.style.background = '#1a1a2e';
     }
-    
     const output = document.getElementById('output');
     if (output) {
       output.classList.remove('scrolling');
@@ -580,20 +652,17 @@
   }
 
   // ============================================
-  // TAP TO STOP - BEZA TAP vs SCROLL
+  // TAP TO STOP
   // ============================================
   function setupTapToStop() {
     const output = document.getElementById('output');
     if (!output) return;
-    
     let touchStartY = 0;
     let isSwiping = false;
-    
     output.addEventListener('touchstart', function(e) {
       touchStartY = e.touches[0].clientY;
       isSwiping = false;
     }, { passive: true });
-    
     output.addEventListener('touchmove', function(e) {
       const touchEndY = e.touches[0].clientY;
       const diff = touchStartY - touchEndY;
@@ -601,14 +670,12 @@
         isSwiping = true;
       }
     }, { passive: true });
-    
     output.addEventListener('touchend', function(e) {
       if (!isSwiping && isScrolling) {
         stopScroll();
         e.preventDefault();
       }
     }, { passive: true });
-    
     output.addEventListener('click', function() {
       if (isScrolling) {
         stopScroll();
@@ -617,11 +684,10 @@
   }
 
   // ============================================
-  // TOGGLE FULLSCREEN
+  // FULLSCREEN
   // ============================================
   function toggleFullscreen() {
     const app = document.querySelector('.app');
-    
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
       app.classList.add('fullscreen-mode');
@@ -648,7 +714,6 @@
       e.preventDefault();
       toggleScroll();
     }
-
     if (e.key === 'ArrowUp' && isScrolling) {
       e.preventDefault();
       scrollSpeed = Math.min(scrollSpeed + 0.3, 3);
@@ -656,6 +721,11 @@
     if (e.key === 'ArrowDown' && isScrolling) {
       e.preventDefault();
       scrollSpeed = Math.max(scrollSpeed - 0.3, 0.3);
+    }
+    if (e.key === 'Escape') {
+      if (modal.style.display === 'flex') {
+        closeTransposePopup();
+      }
     }
   });
 
@@ -672,7 +742,12 @@
   document.addEventListener('DOMContentLoaded', function() {
     setupTapToStop();
     outputEl.style.fontSize = fontSize + 'px';
-    setupIdleTimer(); // Start auto-logout timer
+    setupIdleTimer();
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closeTransposePopup();
+      }
+    });
   });
 
   // ============================================
@@ -693,17 +768,12 @@
   console.log('Controls:');
   console.log('  ▶  - Start auto-scroll');
   console.log('  ⏹  - Stop auto-scroll');
+  console.log('  🎵 Transpose - Open key selector');
   console.log('  Tap (not swipe) on lyrics - Stop scrolling');
-  console.log('  Swipe/Scroll - Auto-scroll continues');
   console.log('  Space bar - Toggle scroll');
   console.log('  ↑/↓ arrows - Adjust scroll speed');
   console.log('  🔍 Search - Type to filter songs');
-  console.log('  ➕ Transpose +1 (Sharp)');
-  console.log('  ➖ Transpose -1 (Flat)');
   console.log('  ⛶ Fullscreen - Only lyrics & chords');
-  console.log('  🚪 Logout - Click to sign out');
-  console.log('  ⏰ Auto-logout - 30 minutes idle');
 </script>
-
 </body>
 </html>

@@ -219,7 +219,7 @@ html, body {
 }
 
 /* ============================================
-   OUTPUT - LYRICS (SCROLLABLE)
+   OUTPUT - LYRICS
    ============================================ */
 .output {
     flex: 1 1 auto !important;
@@ -440,7 +440,6 @@ html, body {
     font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-/* Three colors for Asli Busker Chords */
 .index-header h1 .color-asli {
     background: linear-gradient(135deg, #ffcc00 0%, #f5a623 100%);
     -webkit-background-clip: text;
@@ -558,7 +557,6 @@ html, body {
     transform: translateX(4px);
 }
 
-/* Admin Button */
 .admin-btn {
     background: linear-gradient(135deg, #2a1a4e, #3a2a6e);
     border: 1px solid rgba(74, 58, 142, 0.4);
@@ -573,7 +571,6 @@ html, body {
     box-shadow: 0 8px 30px rgba(74, 58, 142, 0.3);
 }
 
-/* Viewer Button */
 .viewer-btn {
     background: linear-gradient(135deg, #1a2a4e, #2a4a6e);
     border: 1px solid rgba(58, 106, 142, 0.4);
@@ -588,7 +585,6 @@ html, body {
     box-shadow: 0 8px 30px rgba(58, 106, 142, 0.3);
 }
 
-/* Dashboard Button */
 .dashboard-btn {
     background: linear-gradient(135deg, #1a3a2e, #2a5a4e) !important;
     border: 1px solid rgba(58, 142, 106, 0.4) !important;
@@ -667,6 +663,424 @@ html, body {
 }
 
 /* ============================================
+   TRANSPOSE POPUP MODAL
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: #1a1a2e;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    border: 1px solid #2a2a4e;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #2a2a4e;
+    flex-shrink: 0;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    color: #ffcc00;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.8rem;
+    cursor: pointer;
+    padding: 0 8px;
+    font-family: Arial, sans-serif;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-current-key {
+    font-family: Arial, sans-serif;
+    font-size: 1.1rem;
+    color: #aaa;
+    padding: 10px 0 16px 0;
+    border-bottom: 1px solid #2a2a4e;
+    margin-bottom: 16px;
+}
+
+.modal-enharmonic {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0 16px 0;
+    border-bottom: 1px solid #2a2a4e;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.modal-enharmonic span {
+    font-family: Arial, sans-serif;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #2a2a4e;
+    border-radius: 28px;
+    transition: 0.3s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background: #888;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: #ff8800;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(22px);
+    background: #fff;
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.key-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+.key-item {
+    padding: 10px 16px;
+    background: #151515;
+    border-radius: 8px;
+    color: #ccc;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.key-item:hover {
+    background: #2a2a4e;
+    color: #fff;
+}
+
+.key-item.highlight-key {
+    background: linear-gradient(135deg, #ffcc00, #ff8800) !important;
+    color: #0f0f0f !important;
+    font-weight: bold !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+}
+
+.key-item.highlight-key:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #2a2a4e;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.modal-cancel-btn {
+    background: #2a2a4e;
+    color: white;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    transition: background 0.2s;
+}
+
+.modal-cancel-btn:hover {
+    background: #3a3a6e;
+}
+
+/* ============================================
+   DASHBOARD PAGE
+   ============================================ */
+.dashboard-wrapper {
+    display: block !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto !important;
+    background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+    padding: 20px;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-card {
+    background: rgba(26, 26, 46, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 32px;
+    padding: 40px 35px;
+    max-width: 800px;
+    width: 100%;
+    min-height: auto !important;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+    margin: 0 auto;
+}
+
+.dashboard-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-header h2 {
+    font-size: 2rem;
+    margin: 0;
+    color: #ffcc00;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.dashboard-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    margin-top: 4px;
+    font-family: Arial, sans-serif;
+}
+
+.dashboard-divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ffcc00, #ff8800);
+    border-radius: 10px;
+    margin: 20px 0 25px;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: #1a1a2e;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #2a2a4e;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #ffcc00;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 4px;
+    font-family: Arial, sans-serif;
+}
+
+.dashboard-section {
+    margin-top: 25px;
+}
+
+.dashboard-section h3 {
+    color: #aaa;
+    font-size: 1.1rem;
+    font-family: Arial, sans-serif;
+    margin-bottom: 10px;
+}
+
+.user-list {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #151515;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 14px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    border: 1px solid #2a2a4e;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #2a2a4e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: bold;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.user-email {
+    font-size: 0.8rem;
+    color: #888;
+    font-family: Arial, sans-serif;
+}
+
+.user-login {
+    font-size: 0.7rem;
+    color: #666;
+    font-family: Arial, sans-serif;
+}
+
+.user-count {
+    font-size: 0.8rem;
+    color: #4fc3f7;
+    font-family: Arial, sans-serif;
+    white-space: nowrap;
+}
+
+.song-list-dashboard {
+    max-height: 250px;
+    overflow-y: auto;
+    background: #151515;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.song-item-dashboard {
+    padding: 10px 14px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    border: 1px solid #2a2a4e;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.dashboard-footer {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.back-btn {
+    background: #2a2a4e;
+    color: white;
+    padding: 12px 30px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    transition: background 0.3s;
+}
+
+.back-btn:hover {
+    background: #3a3a6e;
+}
+
+.back-btn:active {
+    transform: scale(0.96);
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
@@ -721,13 +1135,13 @@ html, body {
     .search-container {
         padding: 0 0 6px 0;
     }
-    
+
     #searchInput {
         padding: 8px 12px;
         font-size: 0.9rem;
         min-height: 38px;
     }
-    
+
     #clearSearchBtn {
         right: 6px;
         min-height: 38px;
@@ -770,6 +1184,68 @@ html, body {
     .fullscreen-mode .output {
         padding: 12px 8px !important;
     }
+
+    .modal-content {
+        max-width: 95%;
+        margin: 10px;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 16px 18px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .modal-body {
+        padding: 16px 18px;
+    }
+
+    .key-item {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+
+    .key-list-container {
+        max-height: 250px;
+    }
+
+    .modal-enharmonic {
+        gap: 8px;
+    }
+
+    .dashboard-card {
+        padding: 25px 20px;
+        border-radius: 24px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    .user-item {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .user-count {
+        width: 100%;
+        text-align: right;
+    }
+
+    .user-list {
+        max-height: 200px;
+    }
+
+    .song-list-dashboard {
+        max-height: 180px;
+    }
 }
 
 @media (max-width: 400px) {
@@ -801,6 +1277,27 @@ html, body {
 
     .fullscreen-mode .output {
         padding: 10px 6px !important;
+    }
+
+    .modal-content {
+        padding: 0;
+    }
+
+    .modal-header {
+        padding: 12px 14px;
+    }
+
+    .modal-body {
+        padding: 12px 14px;
+    }
+
+    .key-item {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+
+    .key-list-container {
+        max-height: 200px;
     }
 }
 
@@ -839,32 +1336,9 @@ html, body {
         max-width: 560px;
     }
 
-.index-header h1 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: -1px;
-  font-family: 'Segoe UI', Arial, sans-serif;
-}
-
-/* Three colors for Asli Busker Chords */
-.index-header h1 .color-asli {
-  background: linear-gradient(135deg, #ffcc00 0%, #f5a623 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.index-header h1 .color-busker {
-  background: linear-gradient(135deg, #ff8800 0%, #e65c00 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.index-header h1 .color-chords {
-  background: linear-gradient(135deg, #ff4400 0%, #cc0000 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+    .index-header h1 {
+        font-size: 3.2rem;
+    }
 
     .index-btn {
         padding: 22px 28px;
@@ -891,6 +1365,19 @@ html, body {
 
     .fullscreen-mode .lyric-row {
         font-size: 20px !important;
+    }
+
+    .modal-content {
+        max-width: 480px;
+    }
+
+    .key-item:hover {
+        background: #2a2a4e;
+        transform: scale(1.02);
+    }
+
+    .dashboard-card {
+        padding: 40px 35px;
     }
 }
 
