@@ -10,7 +10,7 @@
 html, body {
     height: 100%;
     height: 100dvh;
-    overflow: hidden;
+    overflow: auto !important;
     background: #0f0f0f;
     color: white;
     font-family: 'Courier New', Courier, 'Liberation Mono', monospace;
@@ -396,6 +396,7 @@ html, body {
     min-height: 100dvh;
     background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
     padding: 20px;
+    overflow-y: auto;
 }
 
 .index-card {
