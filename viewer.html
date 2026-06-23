@@ -58,8 +58,8 @@
 
   <!-- FLOATING CONTROL BAR -->
   <div class="floating-bar">
-    <button onclick="transposeSemitone(1)" title="Transpose +1 Semitone (Sharp)">➕</button>
-    <button onclick="transposeSemitone(-1)" title="Transpose -1 Semitone (Flat)">➖</button>
+    <button onclick="transposeSemitone(1)" title="Transpose +1 (Circle of Fifths)">➕</button>
+    <button onclick="transposeSemitone(-1)" title="Transpose -1 (Circle of Fifths)">➖</button>
     <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
     <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
     <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
@@ -97,6 +97,7 @@
     </div>
   </div>
 </div>
+
 <script>
   // ============================================
   // FIREBASE CONFIGURATION
@@ -891,3 +892,7 @@
   console.log('  ↑/↓ arrows - Adjust scroll speed');
   console.log('  🔍 Search - Type to filter songs');
   console.log('  ⛶ Fullscreen - Only lyrics & chords');
+</script>
+
+</body>
+</html>
