@@ -47,7 +47,7 @@
   <div id="sheetList" class="song-list"></div>
 
   <!-- OUTPUT - LEADSHEET RENDER -->
-  <div id="output" class="output" style="font-family: 'Courier New', monospace; font-size: 15px; line-height: 1.6; padding: 12px; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">Loading...</div>
+  <div id="output" class="output" style="font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.6; padding: 10px; white-space: pre; overflow-x: auto;">Loading...</div>
 
   <!-- LINK TO LYRIC VIEW -->
   <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
@@ -89,7 +89,7 @@
   let filteredSheets = [];
   let currentSheetId = null;
   let currentSheetData = null;
-  let fontSize = 15;
+  let fontSize = 14;
 
   // Auto-scroll variables
   let scrollInterval = null;
@@ -309,7 +309,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET - VERTICAL & WRAP
+  // RENDER LEADSHEET - VERTICAL WITH WRAP
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -318,38 +318,35 @@
       return;
     }
 
-    let lines = content.split('\n');
     let result = [];
-    let barWidth = 1; // Will be calculated
+    let lines = content.split('\n');
 
     for (let line of lines) {
       if (!line.trim()) continue;
-      
-      // Process each line
-      let processed = processLineVertical(line);
+      let processed = processLine(line);
       if (processed) {
         result.push(processed);
       }
     }
 
+    // Join with double newline for spacing between sections
     outputEl.innerHTML = result.join('\n\n');
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
 
   // ============================================
-  // PROCESS LINE - VERTICAL WITH WRAP
+  // PROCESS LINE - BREAK BY BAR
   // ============================================
-  function processLineVertical(line) {
-    let result = '';
+  function processLine(line) {
     let cleanLine = line;
+    let endingLine = '';
 
     // Check for endings
     let endingMatch = cleanLine.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/);
     if (endingMatch) {
       let ending = endingMatch[0];
-      let endingDisplay = ending.replace(/\[|\]/g, '');
-      result += endingDisplay + '─────────────────\n';
+      endingLine = ending.replace(/\[|\]/g, '') + '─────────────────';
       cleanLine = cleanLine.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
     }
 
@@ -372,7 +369,6 @@
 
     // Build chord row
     let chordRow = '';
-    let lastPos = 0;
     for (let chord of chords) {
       let pos = chord.position;
       // Adjust position for removed brackets
@@ -387,21 +383,22 @@
       chordRow += chord.chord;
     }
 
-    // Convert symbols in chords
+    // Convert symbols
     chordRow = chordRow.replace(/#/g, '♯');
     chordRow = chordRow.replace(/b/g, '♭');
     chordRow = chordRow.replace(/m7b5/g, 'ø');
     chordRow = chordRow.replace(/dim/g, '°');
 
-    // Convert symbols in structure
     structure = structure.replace(/\|\|:/g, '‖:');
     structure = structure.replace(/:\|\|/g, ':‖');
     structure = structure.replace(/\|/g, '│');
 
-    // For vertical format, we display chord row first, then structure
+    // Build final output
+    let result = '';
+    if (endingLine) {
+      result += endingLine + '\n';
+    }
     if (chordRow.trim()) {
-      // Split chord row into smaller chunks if too long
-      // But for vertical, we keep it as is and let CSS wrap
       result += chordRow + '\n';
     }
     result += structure;
@@ -413,7 +410,7 @@
   // FONT SIZE
   // ============================================
   function changeFontSize(delta) {
-    fontSize = Math.min(28, Math.max(10, fontSize + delta));
+    fontSize = Math.min(24, Math.max(10, fontSize + delta));
     applyFontSize(fontSize);
   }
 
