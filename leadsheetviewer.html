@@ -15,6 +15,50 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <style>
+    /* ============================================
+       FIX SCROLL FOR LEADSHEET VIEWER
+       ============================================ */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh; /* Android fix */
+      overflow: hidden;
+      background: #0f0f0f;
+      padding: 10px;
+      padding-bottom: 80px;
+    }
+
+    .header,
+    .search-container,
+    .song-list,
+    .floating-bar {
+      flex-shrink: 0;
+    }
+
+    #output {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      background: #1b1b1b;
+      padding: 15px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      border: 1px solid #2a2a2a;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .output.scrolling {
+      border-color: #4fc3f7;
+    }
+  </style>
 </head>
 <body>
 
@@ -47,7 +91,7 @@
   <div id="sheetList" class="song-list"></div>
 
   <!-- OUTPUT - LEADSHEET RENDER -->
-  <div id="output" class="output" style="font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.6; padding: 10px; white-space: pre; overflow-x: auto;">Loading...</div>
+  <div id="output" class="output">Loading...</div>
 
   <!-- LINK TO LYRIC VIEW -->
   <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
@@ -89,7 +133,7 @@
   let filteredSheets = [];
   let currentSheetId = null;
   let currentSheetData = null;
-  let fontSize = 14;
+  let fontSize = 15;
 
   // Auto-scroll variables
   let scrollInterval = null;
@@ -309,7 +353,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET - VERTICAL WITH WRAP
+  // RENDER LEADSHEET
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -318,99 +362,42 @@
       return;
     }
 
-    let result = [];
-    let lines = content.split('\n');
+    let rendered = content;
 
-    for (let line of lines) {
-      if (!line.trim()) continue;
-      let processed = processLine(line);
-      if (processed) {
-        result.push(processed);
-      }
-    }
+    // Replace bar lines and repeats
+    rendered = rendered.replace(/\|\|:/g, '‖:');
+    rendered = rendered.replace(/:\|\|/g, ':‖');
+    rendered = rendered.replace(/\|/g, '│');
+    
+    // Replace backslashes with beat markers
+    rendered = rendered.replace(/\\\\/g, '  \\  ');
+    
+    // Convert chord symbols
+    rendered = rendered.replace(/m7b5/g, 'ø');
+    rendered = rendered.replace(/dim/g, '°');
+    rendered = rendered.replace(/#/g, '♯');
+    rendered = rendered.replace(/b/g, '♭');
+    
+    // Process endings - [1va] etc with line
+    rendered = rendered.replace(/\[1,2,3,4va\]/g, '1,2,3,4va─────────────────');
+    rendered = rendered.replace(/\[1,2,3va\]/g, '1,2,3va─────────────────');
+    rendered = rendered.replace(/\[1,2va\]/g, '1,2va─────────────────');
+    rendered = rendered.replace(/\[1va\]/g, '1va─────────────────');
+    rendered = rendered.replace(/\[2va\]/g, '2va─────────────────');
+    rendered = rendered.replace(/\[3va\]/g, '3va─────────────────');
+    rendered = rendered.replace(/\[4va\]/g, '4va─────────────────');
+    rendered = rendered.replace(/\[\.\]/g, '');
 
-    // Join with double newline for spacing between sections
-    outputEl.innerHTML = result.join('\n\n');
+    outputEl.innerHTML = rendered;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
-  }
-
-  // ============================================
-  // PROCESS LINE - BREAK BY BAR
-  // ============================================
-  function processLine(line) {
-    let cleanLine = line;
-    let endingLine = '';
-
-    // Check for endings
-    let endingMatch = cleanLine.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/);
-    if (endingMatch) {
-      let ending = endingMatch[0];
-      endingLine = ending.replace(/\[|\]/g, '') + '─────────────────';
-      cleanLine = cleanLine.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
-    }
-
-    // Remove [.] markers
-    cleanLine = cleanLine.replace(/\[\.\]/g, '');
-
-    // Extract chords with their positions
-    let chords = [];
-    let match;
-    let chordRegex = /\[([^\]]+)\]/g;
-    while ((match = chordRegex.exec(cleanLine)) !== null) {
-      chords.push({
-        chord: match[1],
-        position: match.index
-      });
-    }
-
-    // Remove chord brackets to get structure
-    let structure = cleanLine.replace(/\[([^\]]+)\]/g, '');
-
-    // Build chord row
-    let chordRow = '';
-    for (let chord of chords) {
-      let pos = chord.position;
-      // Adjust position for removed brackets
-      for (let c of chords) {
-        if (c.position < pos) {
-          pos -= 2;
-        }
-      }
-      while (chordRow.length < pos) {
-        chordRow += ' ';
-      }
-      chordRow += chord.chord;
-    }
-
-    // Convert symbols
-    chordRow = chordRow.replace(/#/g, '♯');
-    chordRow = chordRow.replace(/b/g, '♭');
-    chordRow = chordRow.replace(/m7b5/g, 'ø');
-    chordRow = chordRow.replace(/dim/g, '°');
-
-    structure = structure.replace(/\|\|:/g, '‖:');
-    structure = structure.replace(/:\|\|/g, ':‖');
-    structure = structure.replace(/\|/g, '│');
-
-    // Build final output
-    let result = '';
-    if (endingLine) {
-      result += endingLine + '\n';
-    }
-    if (chordRow.trim()) {
-      result += chordRow + '\n';
-    }
-    result += structure;
-
-    return result;
   }
 
   // ============================================
   // FONT SIZE
   // ============================================
   function changeFontSize(delta) {
-    fontSize = Math.min(24, Math.max(10, fontSize + delta));
+    fontSize = Math.min(28, Math.max(10, fontSize + delta));
     applyFontSize(fontSize);
   }
 
@@ -469,6 +456,43 @@
   }
 
   // ============================================
+  // TAP TO STOP
+  // ============================================
+  function setupTapToStop() {
+    const output = document.getElementById('output');
+    if (!output) return;
+    
+    let touchStartY = 0;
+    let isSwiping = false;
+    
+    output.addEventListener('touchstart', function(e) {
+      touchStartY = e.touches[0].clientY;
+      isSwiping = false;
+    }, { passive: true });
+    
+    output.addEventListener('touchmove', function(e) {
+      const touchEndY = e.touches[0].clientY;
+      const diff = touchStartY - touchEndY;
+      if (Math.abs(diff) > 10) {
+        isSwiping = true;
+      }
+    }, { passive: true });
+    
+    output.addEventListener('touchend', function(e) {
+      if (!isSwiping && isScrolling) {
+        stopScroll();
+        e.preventDefault();
+      }
+    }, { passive: true });
+    
+    output.addEventListener('click', function() {
+      if (isScrolling) {
+        stopScroll();
+      }
+    });
+  }
+
+  // ============================================
   // FULLSCREEN
   // ============================================
   function toggleFullscreen() {
@@ -492,6 +516,27 @@
   });
 
   // ============================================
+  // KEYBOARD SHORTCUTS
+  // ============================================
+  document.addEventListener('keydown', function(e) {
+    if (e.key === ' ' || e.key === 'Space') {
+      e.preventDefault();
+      toggleScroll();
+    }
+    if (e.key === 'ArrowUp' && isScrolling) {
+      e.preventDefault();
+      scrollSpeed = Math.min(scrollSpeed + 0.3, 3);
+    }
+    if (e.key === 'ArrowDown' && isScrolling) {
+      e.preventDefault();
+      scrollSpeed = Math.max(scrollSpeed - 0.3, 0.3);
+    }
+    if (e.key === 'Escape') {
+      // Close any modals if needed
+    }
+  });
+
+  // ============================================
   // GO HOME
   // ============================================
   function goHome() {
@@ -502,6 +547,7 @@
   // INITIALIZE
   // ============================================
   document.addEventListener('DOMContentLoaded', function() {
+    setupTapToStop();
     outputEl.style.fontSize = fontSize + 'px';
     setupIdleTimer();
   });
@@ -524,6 +570,9 @@
   console.log('Controls:');
   console.log('  ▶  - Start auto-scroll');
   console.log('  ⏹  - Stop auto-scroll');
+  console.log('  Tap (not swipe) on lyrics - Stop scrolling');
+  console.log('  Space bar - Toggle scroll');
+  console.log('  ↑/↓ arrows - Adjust scroll speed');
   console.log('  🔍 Search - Type to filter leadsheets');
   console.log('  ⛶ Fullscreen - Only leadsheet');
 </script>
