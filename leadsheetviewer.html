@@ -309,7 +309,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET
+  // RENDER LEADSHEET WITH ENDING LINES
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -318,21 +318,45 @@
       return;
     }
 
-    // Basic render: just show the content with symbols
-    // We'll enhance this later with proper bar line rendering
     let rendered = content;
+
+    // Step 1: Process endings - find [1va], [1,2va], etc and [.]
+    // We need to build lines with proper spacing
+    const lines = rendered.split('\n');
+    let resultLines = [];
+    let inEnding = false;
+    let currentEndingLabel = '';
+    let endingStartPos = 0;
+
+    // First, process the content to handle endings
+    // For simplicity, we'll render the content with symbols
     
-    // Replace symbols for display
+    // Replace bar lines and repeats
     rendered = rendered.replace(/\|\|:/g, '‖:');
     rendered = rendered.replace(/:\|\|/g, ':‖');
     rendered = rendered.replace(/\|/g, '│');
-    rendered = rendered.replace(/\\\\/g, '  \\  ');
     
     // Convert chord symbols
     rendered = rendered.replace(/m7b5/g, 'ø');
     rendered = rendered.replace(/dim/g, '°');
     rendered = rendered.replace(/#/g, '♯');
     rendered = rendered.replace(/b/g, '♭');
+    
+    // Process ending markers - replace with lines
+    // Pattern: [1va], [1,2va], [1,2,3va], [1,2,3,4va]
+    rendered = rendered.replace(/\[1,2,3,4va\]/g, '1,2,3,4va─────────────────');
+    rendered = rendered.replace(/\[1,2,3va\]/g, '1,2,3va─────────────────');
+    rendered = rendered.replace(/\[1,2va\]/g, '1,2va─────────────────');
+    rendered = rendered.replace(/\[1va\]/g, '1va─────────────────');
+    rendered = rendered.replace(/\[2va\]/g, '2va─────────────────');
+    rendered = rendered.replace(/\[3va\]/g, '3va─────────────────');
+    rendered = rendered.replace(/\[4va\]/g, '4va─────────────────');
+    
+    // Remove [.] markers (they just mark the end of the line)
+    rendered = rendered.replace(/\[\.\]/g, '');
+    
+    // Clean up extra spaces
+    rendered = rendered.replace(/\s+/g, ' ');
     
     outputEl.innerHTML = rendered;
     outputEl.scrollTop = 0;
