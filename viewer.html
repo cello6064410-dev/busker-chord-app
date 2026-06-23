@@ -142,21 +142,21 @@
   // CIRCLE OF FIFTHS - KEY SIGNATURE DATA
   // ============================================
   const circleOfFifths = [
-    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0 },
-    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1 },
-    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2 },
-    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3 },
-    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4 },
-    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5 },
-    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6 },
-    { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7 },
-    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8 },
-    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9 },
-    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10 },
-    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11 },
-    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12 },
-    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13 },
-    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14 }
+    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0, keySig: 'b' },
+    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1, keySig: 'b' },
+    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2, keySig: 'b' },
+    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3, keySig: 'b' },
+    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4, keySig: 'b' },
+    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5, keySig: 'b' },
+    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6, keySig: 'b' },
+    { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7, keySig: '' },
+    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8, keySig: '#' },
+    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9, keySig: '#' },
+    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10, keySig: '#' },
+    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11, keySig: '#' },
+    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12, keySig: '#' },
+    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13, keySig: '#' },
+    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14, keySig: '#' }
   ];
 
   const enharmonicMap = {
@@ -185,7 +185,7 @@
   };
 
   // ============================================
-  // SCALES FOR TRANSPOSE
+  // SCALES FOR TRANSPOSE - BASED ON KEY SIGNATURE
   // ============================================
   const sharpScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const flatScale = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -461,14 +461,12 @@
   // TRANSPOSE FUNCTIONS
   // ============================================
   function transposeUp() {
-    // Move up in Circle of Fifths
     let newIndex = currentKeyIndex + 1;
     if (newIndex >= circleOfFifths.length) newIndex = circleOfFifths.length - 1;
     applyTranspose(newIndex);
   }
 
   function transposeDown() {
-    // Move down in Circle of Fifths
     let newIndex = currentKeyIndex - 1;
     if (newIndex < 0) newIndex = 0;
     applyTranspose(newIndex);
@@ -489,8 +487,10 @@
   }
 
   function transposeLyricsBySemitone(lyrics, semitoneOffset) {
-    // Use sharpScale for positive offset, flatScale for negative
-    const scale = semitoneOffset >= 0 ? sharpScale : flatScale;
+    // Determine which scale to use based on the target key signature
+    const targetKeyData = circleOfFifths[currentKeyIndex];
+    const useSharp = targetKeyData.keySig === '#';
+    const scale = useSharp ? sharpScale : flatScale;
     const steps = Math.abs(semitoneOffset) % 12;
     
     return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
@@ -505,11 +505,25 @@
           break;
         }
       }
-      // Fix enharmonic
-      transposed = transposed.replace('E#', 'F');
-      transposed = transposed.replace('B#', 'C');
-      transposed = transposed.replace('Fb', 'E');
-      transposed = transposed.replace('Cb', 'B');
+      
+      // Fix enharmonic based on key signature
+      if (useSharp) {
+        transposed = transposed.replace('E#', 'F');
+        transposed = transposed.replace('B#', 'C');
+        transposed = transposed.replace('Fb', 'E');
+        transposed = transposed.replace('Cb', 'B');
+      } else {
+        transposed = transposed.replace('Fb', 'E');
+        transposed = transposed.replace('Cb', 'B');
+        transposed = transposed.replace('E#', 'F');
+        transposed = transposed.replace('B#', 'C');
+      }
+      
+      // Fix A#b, D#b, G#b
+      transposed = transposed.replace('A#b', 'Bb');
+      transposed = transposed.replace('D#b', 'Eb');
+      transposed = transposed.replace('G#b', 'Ab');
+      
       return `[${transposed}]`;
     });
   }
