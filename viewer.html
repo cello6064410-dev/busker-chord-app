@@ -58,8 +58,8 @@
 
   <!-- FLOATING CONTROL BAR -->
   <div class="floating-bar">
-    <button onclick="transposeSemitone(1)" title="Transpose +1 (Circle of Fifths)">➕</button>
-    <button onclick="transposeSemitone(-1)" title="Transpose -1 (Circle of Fifths)">➖</button>
+    <button onclick="transposeUp()" title="Transpose Up (+7 semitone)">⬆</button>
+    <button onclick="transposeDown()" title="Transpose Down (-5 semitone)">⬇</button>
     <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
     <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
     <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
@@ -183,6 +183,12 @@
     '6♭': { major: 'G♭', minor: 'E♭m' },
     '7♭': { major: 'C♭', minor: 'A♭m' }
   };
+
+  // ============================================
+  // SCALES FOR TRANSPOSE
+  // ============================================
+  const sharpScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const flatScale = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
   // ============================================
   // DOM REFERENCES
@@ -396,7 +402,6 @@
     }
     songTitleEl.textContent = song.title || 'Untitled';
 
-    // Get key signature from song data
     const sig = song.keySignature || '0';
     const keyData = getKeyDataBySig(sig);
     
@@ -419,14 +424,22 @@
       return;
     }
     
-    // Transpose based on key index difference
-    const targetKeyData = circleOfFifths[currentKeyIndex];
+    // Calculate transpose steps based on key index difference
     const originalSig = song.keySignature || '0';
     const originalKeyData = getKeyDataBySig(originalSig);
     const steps = currentKeyIndex - originalKeyData.index;
     
-    if (steps !== 0) {
-      lyrics = transposeLyricsBySteps(lyrics, steps);
+    // Convert steps to semitone offset
+    // In Circle of Fifths: 1 step = 7 semitones (up) or 5 semitones (down)
+    let semitoneOffset = 0;
+    if (steps > 0) {
+      semitoneOffset = steps * 7; // Up
+    } else if (steps < 0) {
+      semitoneOffset = steps * 5; // Down
+    }
+    
+    if (semitoneOffset !== 0) {
+      lyrics = transposeLyricsBySemitone(lyrics, semitoneOffset);
     }
     
     lyrics = formatChordsAboveLyrics(lyrics);
@@ -447,13 +460,21 @@
   // ============================================
   // TRANSPOSE FUNCTIONS
   // ============================================
-  function transposeSemitone(steps) {
-    // Move in Circle of Fifths
-    let newIndex = currentKeyIndex + steps;
-    // Clamp to valid range
-    if (newIndex < 0) newIndex = 0;
+  function transposeUp() {
+    // Move up in Circle of Fifths
+    let newIndex = currentKeyIndex + 1;
     if (newIndex >= circleOfFifths.length) newIndex = circleOfFifths.length - 1;
-    
+    applyTranspose(newIndex);
+  }
+
+  function transposeDown() {
+    // Move down in Circle of Fifths
+    let newIndex = currentKeyIndex - 1;
+    if (newIndex < 0) newIndex = 0;
+    applyTranspose(newIndex);
+  }
+
+  function applyTranspose(newIndex) {
     currentKeyIndex = newIndex;
     const keyData = circleOfFifths[currentKeyIndex];
     currentKeyMajor = keyData.major;
@@ -467,23 +488,17 @@
     }
   }
 
-  function transposeLyricsBySteps(lyrics, steps) {
-    // Get the scale for the target key
-    const targetKeyData = circleOfFifths[currentKeyIndex];
-    const targetMajor = targetKeyData.major;
-    
-    // Build scale based on target key
-    const scale = buildScale(targetMajor);
-    
-    // If steps is negative, we need to transpose down
-    const semitoneSteps = ((steps % 12) + 12) % 12;
+  function transposeLyricsBySemitone(lyrics, semitoneOffset) {
+    // Use sharpScale for positive offset, flatScale for negative
+    const scale = semitoneOffset >= 0 ? sharpScale : flatScale;
+    const steps = Math.abs(semitoneOffset) % 12;
     
     return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
       let transposed = chord;
       for (let i = 0; i < scale.length; i++) {
         const root = scale[i];
         if (chord.startsWith(root)) {
-          const newIndex = (i + semitoneSteps + 12) % 12;
+          const newIndex = (i + steps + 12) % 12;
           const newRoot = scale[newIndex];
           const quality = chord.substring(root.length);
           transposed = newRoot + quality;
@@ -491,22 +506,12 @@
         }
       }
       // Fix enharmonic
-      transposed = transposed.replace('E♯', 'F');
-      transposed = transposed.replace('B♯', 'C');
-      transposed = transposed.replace('F♭', 'E');
-      transposed = transposed.replace('C♭', 'B');
+      transposed = transposed.replace('E#', 'F');
+      transposed = transposed.replace('B#', 'C');
+      transposed = transposed.replace('Fb', 'E');
+      transposed = transposed.replace('Cb', 'B');
       return `[${transposed}]`;
     });
-  }
-
-  function buildScale(root) {
-    // Major scale pattern: W W H W W W H
-    const notes = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-    const rootIndex = notes.indexOf(root);
-    if (rootIndex === -1) return notes;
-    
-    const pattern = [0, 2, 4, 5, 7, 9, 11];
-    return pattern.map(offset => notes[(rootIndex + offset) % 12]);
   }
 
   // ============================================
@@ -563,13 +568,8 @@
   }
 
   function selectKey(keyId) {
-    console.log('🔑 selectKey called with:', keyId);
-    
     let keyData = circleOfFifths.find(k => k.id === keyId);
-    if (!keyData) {
-      console.log('❌ Key not found:', keyId);
-      return;
-    }
+    if (!keyData) return;
 
     let selectedMajor = keyData.major;
     let selectedMinor = keyData.minor;
@@ -584,12 +584,9 @@
         selectedMinor = targetData.minor;
         selectedSig = targetData.sig;
         selectedIndex = targetData.index;
-        console.log('🔄 Enharmonic: using', selectedMajor, '/', selectedMinor);
       }
     }
 
-    console.log('✅ Applying new key:', selectedMajor, '/', selectedMinor);
-    
     currentKeyMajor = selectedMajor;
     currentKeyMinor = selectedMinor;
     currentKeySignature = selectedSig;
@@ -598,14 +595,7 @@
 
     if (currentSongId) {
       const song = songs.find(s => s.id === currentSongId);
-      if (song) {
-        console.log('🎵 Displaying song with new key');
-        displaySong(song);
-      } else {
-        console.log('❌ Song not found');
-      }
-    } else {
-      console.log('❌ No song selected');
+      if (song) displaySong(song);
     }
 
     closeTransposePopup();
@@ -884,9 +874,11 @@
 
   console.log('🎵 Song Viewer Pro loaded!');
   console.log('Controls:');
+  console.log('  ⬆  - Transpose Up (+7 semitone)');
+  console.log('  ⬇  - Transpose Down (-5 semitone)');
+  console.log('  🎵 Transpose - Open key selector');
   console.log('  ▶  - Start auto-scroll');
   console.log('  ⏹  - Stop auto-scroll');
-  console.log('  🎵 Transpose - Open key selector');
   console.log('  Tap (not swipe) on lyrics - Stop scrolling');
   console.log('  Space bar - Toggle scroll');
   console.log('  ↑/↓ arrows - Adjust scroll speed');
