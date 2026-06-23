@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Leadsheet Viewer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h2>📊 Leadsheet</h2>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
+        <button onclick="logoutUser()" class="logout-btn" title="Logout" style="background: #4a2a2a; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; min-width: 40px;">🚪</button>
+        <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px;">
+      <h3 id="sheetTitle" style="margin:0; font-family:Arial; color:#ffcc00;">No Leadsheet Selected</h3>
+      <span id="timeDisplay" style="color: #00ffcc; font-size: 0.9rem; font-family: Arial, sans-serif; background: #1a1a2e; padding: 2px 12px; border-radius: 12px; border: 1px solid #2a2a4e;">4/4</span>
+      <button onclick="toggleFullscreen()" title="Fullscreen" style="background: #2a2a4e; border: none; color: white; padding: 4px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 32px;">⛶</button>
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Search leadsheets..." oninput="filterSheets()">
+    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
+  </div>
+
+  <!-- SHEET LIST -->
+  <div id="sheetList" class="song-list"></div>
+
+  <!-- OUTPUT - LEADSHEET RENDER -->
+  <div id="output" class="output" style="font-family: 'Courier New', monospace; white-space: pre; font-size: 16px; line-height: 1.6; overflow-x: auto;">Loading...</div>
+
+  <!-- LINK TO LYRIC VIEW -->
+  <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
+    <a href="viewer.html" style="color: #4fc3f7; font-family: Arial, sans-serif; font-size: 0.9rem; text-decoration: none; padding: 8px 16px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4e; display: inline-block;">
+      📝 Switch to Lyric View
+    </a>
+  </div>
+
+  <!-- FLOATING CONTROL BAR -->
+  <div class="floating-bar">
+    <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
+    <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
+    <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
+    <button onclick="stopScroll()" title="Stop Auto-Scroll" id="stopBtn">⏹</button>
+  </div>
+
+</div>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+
+<script>
+  // ============================================
+  // GLOBAL VARIABLES
+  // ============================================
+  let sheets = [];
+  let filteredSheets = [];
+  let currentSheetId = null;
+  let currentSheetData = null;
+  let fontSize = 16;
+
+  // Auto-scroll variables
+  let scrollInterval = null;
+  let isScrolling = false;
+  let scrollSpeed = 0.4;
+
+  // Auto-logout timer
+  let logoutTimer = null;
+  const IDLE_TIMEOUT = 30 * 60 * 1000;
+
+  // Search results limit
+  const MAX_SEARCH_RESULTS = 10;
+  const DISPLAY_RESULTS = 5;
+
+  // ============================================
+  // DOM REFERENCES
+  // ============================================
+  const sheetListEl = document.getElementById('sheetList');
+  const outputEl = document.getElementById('output');
+  const sheetTitleEl = document.getElementById('sheetTitle');
+  const timeDisplayEl = document.getElementById('timeDisplay');
+  const playBtn = document.getElementById('playBtn');
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  const userNameEl = document.getElementById('userName');
+
+  // ============================================
+  // AUTH - CHECK LOGIN STATUS
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    console.log('✅ Logged in as:', user.displayName || user.email);
+    if (user.displayName) {
+      userNameEl.textContent = '👤 ' + user.displayName;
+      userNameEl.style.display = 'inline';
+    }
+    db.collection('users').doc(user.uid).set({
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+      loginCount: firebase.firestore.FieldValue.increment(1)
+    }, { merge: true }).catch(err => console.error('Error updating login:', err));
+    loadSheets();
+  });
+
+  // ============================================
+  // AUTO-LOGOUT
+  // ============================================
+  function resetLogoutTimer() {
+    if (logoutTimer) clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(function() {
+      console.log('⏰ Auto-logout: Idle for 30 minutes');
+      logoutUser();
+    }, IDLE_TIMEOUT);
+  }
+
+  function setupIdleTimer() {
+    const events = ['mousemove', 'mousedown', 'click', 'scroll', 'touchstart', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, resetLogoutTimer);
+    });
+    resetLogoutTimer();
+  }
+
+  function logoutUser() {
+    if (logoutTimer) clearTimeout(logoutTimer);
+    stopScroll();
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch(() => {
+      window.location.href = "login.html";
+    });
+  }
+
+  // ============================================
+  // LOAD LEADSHEETS
+  // ============================================
+  function loadSheets() {
+    outputEl.textContent = '⏳ Loading leadsheets...';
+    sheetListEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
+
+    db.collection('leadsheets')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        sheets = [];
+        sheetListEl.innerHTML = '';
+        if (snapshot.empty) {
+          outputEl.textContent = '📭 No leadsheets found. Go to Admin to create one.';
+          sheetListEl.innerHTML = `
+            <div class="empty-text">
+              📭 No leadsheets found<br>
+              <small>Go to Admin to create your first leadsheet!</small>
+            </div>
+          `;
+          return;
+        }
+        snapshot.forEach((doc) => {
+          const sheet = { id: doc.id, ...doc.data() };
+          sheets.push(sheet);
+        });
+        outputEl.textContent = 'Select a leadsheet to view';
+        sheetListEl.innerHTML = `
+          <div class="empty-text">
+            🔍 Type a leadsheet title to search
+          </div>
+        `;
+        console.log(`✅ ${sheets.length} leadsheets loaded`);
+      })
+      .catch((error) => {
+        console.error('Error loading leadsheets:', error);
+        outputEl.textContent = '❌ Error loading leadsheets. Please refresh.';
+        sheetListEl.innerHTML = `
+          <div class="error-text">
+            ❌ Error loading leadsheets<br>
+            <small>${error.message}</small>
+          </div>
+        `;
+      });
+  }
+
+  // ============================================
+  // SEARCH / FILTER
+  // ============================================
+  function filterSheets() {
+    const query = searchInput.value.toLowerCase().trim();
+    if (query.length > 0) {
+      clearSearchBtn.style.display = 'block';
+    } else {
+      clearSearchBtn.style.display = 'none';
+    }
+    if (query === '') {
+      sheetListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 Type a leadsheet title to search
+        </div>
+      `;
+      return;
+    }
+    const results = sheets.filter(sheet =>
+      sheet.title && sheet.title.toLowerCase().includes(query)
+    );
+    const limitedResults = results.slice(0, MAX_SEARCH_RESULTS);
+    renderSheetList(limitedResults, results.length);
+  }
+
+  function renderSheetList(results, totalFound) {
+    sheetListEl.innerHTML = '';
+    if (results.length === 0) {
+      sheetListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 No leadsheets found matching "<span id="searchTerm">${searchInput.value}</span>"
+        </div>
+      `;
+      return;
+    }
+    const resultCount = document.createElement('div');
+    resultCount.className = 'result-count';
+    resultCount.textContent = `Showing ${results.length} of ${totalFound} results`;
+    sheetListEl.appendChild(resultCount);
+    const displayResults = results.slice(0, DISPLAY_RESULTS);
+    const hiddenResults = results.slice(DISPLAY_RESULTS);
+    displayResults.forEach((sheet) => {
+      const btn = createSheetButton(sheet);
+      sheetListEl.appendChild(btn);
+    });
+    if (hiddenResults.length > 0) {
+      const hint = document.createElement('div');
+      hint.className = 'scroll-hint';
+      hint.textContent = `⬇️ ${hiddenResults.length} more results (scroll down)`;
+      sheetListEl.appendChild(hint);
+      hiddenResults.forEach((sheet) => {
+        const btn = createSheetButton(sheet);
+        btn.className += ' hidden-result';
+        sheetListEl.appendChild(btn);
+      });
+    }
+  }
+
+  function createSheetButton(sheet) {
+    const btn = document.createElement('button');
+    btn.textContent = sheet.title || 'Untitled';
+    btn.className = 'song-item';
+    btn.setAttribute('data-id', sheet.id);
+    btn.onclick = () => selectSheet(sheet.id);
+    return btn;
+  }
+
+  function clearSearch() {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    sheetListEl.innerHTML = `
+      <div class="empty-text">
+        🔍 Type a leadsheet title to search
+      </div>
+    `;
+    searchInput.focus();
+  }
+
+  // ============================================
+  // SELECT SHEET
+  // ============================================
+  function selectSheet(sheetId) {
+    stopScroll();
+    currentSheetId = sheetId;
+    const sheet = sheets.find(s => s.id === sheetId);
+    if (!sheet) {
+      outputEl.textContent = 'Leadsheet not found';
+      return;
+    }
+    currentSheetData = sheet;
+    sheetTitleEl.textContent = sheet.title || 'Untitled';
+    timeDisplayEl.textContent = sheet.timeSignature || '4/4';
+    
+    renderLeadsheet(sheet);
+  }
+
+  // ============================================
+  // RENDER LEADSHEET
+  // ============================================
+  function renderLeadsheet(sheet) {
+    let content = sheet.content || '';
+    if (!content) {
+      outputEl.textContent = 'No content';
+      return;
+    }
+
+    // Basic render: just show the content with symbols
+    // We'll enhance this later with proper bar line rendering
+    let rendered = content;
+    
+    // Replace symbols for display
+    rendered = rendered.replace(/\|\|:/g, '‖:');
+    rendered = rendered.replace(/:\|\|/g, ':‖');
+    rendered = rendered.replace(/\|/g, '│');
+    rendered = rendered.replace(/\\\\/g, '  \\  ');
+    
+    // Convert chord symbols
+    rendered = rendered.replace(/m7b5/g, 'ø');
+    rendered = rendered.replace(/dim/g, '°');
+    rendered = rendered.replace(/#/g, '♯');
+    rendered = rendered.replace(/b/g, '♭');
+    
+    outputEl.innerHTML = rendered;
+    outputEl.scrollTop = 0;
+    applyFontSize(fontSize);
+  }
+
+  // ============================================
+  // FONT SIZE
+  // ============================================
+  function changeFontSize(delta) {
+    fontSize = Math.min(32, Math.max(10, fontSize + delta));
+    applyFontSize(fontSize);
+  }
+
+  function applyFontSize(size) {
+    outputEl.style.fontSize = size + 'px';
+  }
+
+  // ============================================
+  // AUTO-SCROLL
+  // ============================================
+  function startScroll() {
+    const output = document.getElementById('output');
+    if (isScrolling) return;
+    if (!output.innerHTML || output.innerHTML === 'Loading...' || output.innerHTML === 'Select a leadsheet to view') return;
+    if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) return;
+    isScrolling = true;
+    const playBtn = document.getElementById('playBtn');
+    if (playBtn) {
+      playBtn.textContent = '▶️';
+      playBtn.style.background = '#2a5a2e';
+    }
+    output.classList.add('scrolling');
+    scrollInterval = setInterval(() => {
+      const output = document.getElementById('output');
+      if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
+        stopScroll();
+        return;
+      }
+      output.scrollTop += scrollSpeed;
+    }, 50);
+  }
+
+  function stopScroll() {
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+    isScrolling = false;
+    const playBtn = document.getElementById('playBtn');
+    if (playBtn) {
+      playBtn.textContent = '▶';
+      playBtn.style.background = '#1a1a2e';
+    }
+    const output = document.getElementById('output');
+    if (output) {
+      output.classList.remove('scrolling');
+    }
+  }
+
+  function toggleScroll() {
+    if (isScrolling) {
+      stopScroll();
+    } else {
+      startScroll();
+    }
+  }
+
+  // ============================================
+  // FULLSCREEN
+  // ============================================
+  function toggleFullscreen() {
+    const app = document.querySelector('.app');
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      app.classList.add('fullscreen-mode');
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      app.classList.remove('fullscreen-mode');
+    }
+  }
+
+  document.addEventListener('fullscreenchange', function() {
+    const app = document.querySelector('.app');
+    if (!document.fullscreenElement) {
+      app.classList.remove('fullscreen-mode');
+    }
+  });
+
+  // ============================================
+  // GO HOME
+  // ============================================
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    outputEl.style.fontSize = fontSize + 'px';
+    setupIdleTimer();
+  });
+
+  // ============================================
+  // CLEANUP
+  // ============================================
+  window.addEventListener('beforeunload', function() {
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+      logoutTimer = null;
+    }
+  });
+
+  console.log('📊 Leadsheet Viewer loaded!');
+  console.log('Controls:');
+  console.log('  ▶  - Start auto-scroll');
+  console.log('  ⏹  - Stop auto-scroll');
+  console.log('  🔍 Search - Type to filter leadsheets');
+  console.log('  ⛶ Fullscreen - Only leadsheet');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Create Leadsheet</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<div class="app" style="padding-bottom: 80px;">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h2>📊 Leadsheet</h2>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+      </div>
+    </div>
+    <p style="color: #888; font-size: 0.9rem; font-family: Arial, sans-serif;">Create chord chart with bar lines</p>
+  </div>
+
+  <!-- TITLE -->
+  <div class="search-container">
+    <input type="text" id="titleInput" placeholder="🎵 Song Title..." style="flex:1; padding: 10px 14px; background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 10px; color: white; font-size: 1rem; font-family: Arial, sans-serif; min-height: 44px;">
+  </div>
+
+  <!-- TIME SIGNATURE -->
+  <div class="search-container" style="gap: 12px;">
+    <label style="color: #aaa; font-family: Arial, sans-serif;">Time:</label>
+    <button onclick="setTime('4/4')" class="time-btn" id="time44" style="background: #2a5a2e; border: none; color: white; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif;">4/4</button>
+    <button onclick="setTime('3/4')" class="time-btn" id="time34" style="background: #2a2a4e; border: none; color: white; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif;">3/4</button>
+    <span id="timeDisplay" style="color: #ffcc00; font-family: Arial, sans-serif;">4/4</span>
+  </div>
+
+  <!-- INPUT -->
+  <div class="search-container" style="flex-direction: column; align-items: stretch; padding: 8px 0;">
+    <label style="color: #aaa; font-family: Arial, sans-serif; font-size: 0.9rem;">Leadsheet Code:</label>
+    <textarea id="input" rows="8" style="width:100%; padding: 12px; background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 10px; color: white; font-size: 1rem; font-family: 'Courier New', monospace; resize: vertical; min-height: 150px;" placeholder='Example: ||:[C]\\|[G]\\|[Am]\\|[F]\\:|| [1va][C]\\|[G]\\[.] :|| [2va][C]\\|[G]\\[.] ||'></textarea>
+    <small style="color: #666; font-family: Arial, sans-serif;">Use: [Chord] \ for beats, | for bar lines, ||: :|| for repeats, [1va] [2va] for endings, [.] to end</small>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="button-group" style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; padding:16px; background:#2a2a4e; border-radius:12px; margin:12px 0; border:2px solid #ffcc00;">
+    <button onclick="insertSymbol('|')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">│</button>
+    <button onclick="insertSymbol('||:')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">‖:</button>
+    <button onclick="insertSymbol(':||')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">:‖</button>
+    <button onclick="insertSymbol('[1va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">1va</button>
+    <button onclick="insertSymbol('[2va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">2va</button>
+    <button onclick="insertSymbol('[3va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">3va</button>
+    <button onclick="insertSymbol('[4va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">4va</button>
+    <button onclick="insertSymbol('[.]')" style="padding:8px 16px; background:#4a2a2a; border:1px solid #6e4a4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">[.]</button>
+    <button onclick="insertSymbol('\\\\')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">\</button>
+    <button onclick="insertSymbol(' ')">␣</button>
+  </div>
+
+  <!-- SAVE / CLEAR / BACK -->
+  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:12px 0;">
+    <button onclick="saveLeadsheet()" style="background:#00c853; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">💾 Save</button>
+    <button onclick="clearForm()" style="background:#4a4a4a; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">🔄 Clear</button>
+    <button onclick="goHome()" style="background:#2a4a6e; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">⬅ Back</button>
+  </div>
+
+  <div id="statusMessage" style="padding:12px; border-radius:10px; text-align:center; font-family:Arial; margin-top:10px;"></div>
+
+</div>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const inputEl = document.getElementById('input');
+  const titleEl = document.getElementById('titleInput');
+  const statusMsg = document.getElementById('statusMessage');
+  let currentTime = '4/4';
+
+  // ============================================
+  // INSERT SYMBOL
+  // ============================================
+  function insertSymbol(sym) {
+    const start = inputEl.selectionStart;
+    const end = inputEl.selectionEnd;
+    const text = inputEl.value;
+    inputEl.value = text.substring(0, start) + sym + text.substring(end);
+    inputEl.focus();
+    inputEl.selectionStart = inputEl.selectionEnd = start + sym.length;
+  }
+
+  // ============================================
+  // SET TIME SIGNATURE
+  // ============================================
+  function setTime(time) {
+    currentTime = time;
+    document.getElementById('timeDisplay').textContent = time;
+    document.getElementById('time44').style.background = time === '4/4' ? '#2a5a2e' : '#2a2a4e';
+    document.getElementById('time34').style.background = time === '3/4' ? '#2a5a2e' : '#2a2a4e';
+  }
+
+  // ============================================
+  // SAVE LEADSHEET
+  // ============================================
+  function saveLeadsheet() {
+    const title = titleEl.value.trim();
+    const content = inputEl.value.trim();
+
+    if (!title) {
+      statusMsg.textContent = '⚠️ Please enter a title';
+      statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
+      return;
+    }
+
+    if (!content) {
+      statusMsg.textContent = '⚠️ Please enter leadsheet content';
+      statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
+      return;
+    }
+
+    const data = {
+      title: title,
+      content: content,
+      timeSignature: currentTime,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    statusMsg.textContent = '⏳ Saving...';
+    statusMsg.style.cssText = 'background:rgba(79,195,247,0.2); color:#4fc3f7; border:1px solid #4fc3f7; padding:12px; border-radius:10px;';
+
+    db.collection('leadsheets').add(data)
+      .then(() => {
+        statusMsg.textContent = '✅ Leadsheet saved successfully!';
+        statusMsg.style.cssText = 'background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853; padding:12px; border-radius:10px;';
+        clearForm();
+      })
+      .catch(err => {
+        statusMsg.textContent = '❌ Error: ' + err.message;
+        statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
+      });
+  }
+
+  // ============================================
+  // CLEAR FORM
+  // ============================================
+  function clearForm() {
+    titleEl.value = '';
+    inputEl.value = '';
+    statusMsg.textContent = '';
+    statusMsg.style.cssText = '';
+  }
+
+  // ============================================
+  // GO HOME
+  // ============================================
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
+  // CHECK AUTH
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      // For admin, we rely on password protection from index.html
+      // But we can redirect if not logged in
+    }
+  });
+</script>
+
+</body>
+</html>
