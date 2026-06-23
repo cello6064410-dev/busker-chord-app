@@ -397,20 +397,26 @@
   }
 
   // ============================================
-  // CONVERT CHORD SYMBOLS
+  // CONVERT CHORD SYMBOLS (kecuali <br>)
   // ============================================
-  function convertChordSymbols(chord) {
+  function convertChordSymbols(text) {
+    // Jangan convert <br>
+    text = text.replace(/<br>/g, '<<BR>>');
+    
     // m7b5 → ø (half-diminished)
-    chord = chord.replace(/m7b5/g, 'ø');
+    text = text.replace(/m7b5/g, 'ø');
     // dim → ° (fully diminished)
-    chord = chord.replace(/dim/g, '°');
+    text = text.replace(/dim/g, '°');
     // # → ♯ (sharp)
-    chord = chord.replace(/#/g, '♯');
-    // b → ♭ (flat)
-    chord = chord.replace(/b/g, '♭');
-    return chord;
+    text = text.replace(/#/g, '♯');
+    // b → ♭ (flat) — tapi jangan convert dalam <br>
+    text = text.replace(/b/g, '♭');
+    
+    // Restore <br>
+    text = text.replace(/<<BR>>/g, '<br>');
+    
+    return text;
   }
-
   // ============================================
   // DISPLAY SONG
   // ============================================
