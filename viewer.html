@@ -117,7 +117,7 @@
   let songs = [];
   let filteredSongs = [];
   let currentSongId = null;
-  let currentKey = 0;
+  let currentKeyIndex = 7; // Default C = index 7
   let currentKeyMajor = 'C';
   let currentKeyMinor = 'Am';
   let currentKeySignature = '0';
@@ -138,24 +138,24 @@
   const DISPLAY_RESULTS = 5;
 
   // ============================================
-  // KEY SIGNATURE DATA
+  // CIRCLE OF FIFTHS - KEY SIGNATURE DATA
   // ============================================
-  const allKeys = [
-    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭' },
-    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭' },
-    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭' },
-    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭' },
-    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭' },
-    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭' },
-    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭' },
-    { id: '0',   major: 'C',  minor: 'Am',  sig: '0' },
-    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯' },
-    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯' },
-    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯' },
-    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯' },
-    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯' },
-    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯' },
-    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯' }
+  const circleOfFifths = [
+    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0 },
+    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1 },
+    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2 },
+    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3 },
+    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4 },
+    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5 },
+    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6 },
+    { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7 },
+    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8 },
+    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9 },
+    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10 },
+    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11 },
+    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12 },
+    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13 },
+    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14 }
   ];
 
   const enharmonicMap = {
@@ -163,24 +163,6 @@
     '7♯': { targetId: '5♭', label: 'C♯ / D♭' },
     '6♭': { targetId: '6♯', label: 'G♭ / F♯' },
     '7♭': { targetId: '5♯', label: 'C♭ / B' }
-  };
-
-  const keyMap = {
-    'C':  { sig: '0',  minor: 'Am' },
-    'G':  { sig: '1♯', minor: 'Em' },
-    'D':  { sig: '2♯', minor: 'Bm' },
-    'A':  { sig: '3♯', minor: 'F♯m' },
-    'E':  { sig: '4♯', minor: 'C♯m' },
-    'B':  { sig: '5♯', minor: 'G♯m' },
-    'F♯': { sig: '6♯', minor: 'D♯m' },
-    'C♯': { sig: '7♯', minor: 'A♯m' },
-    'F':  { sig: '1♭', minor: 'Dm' },
-    'B♭': { sig: '2♭', minor: 'Gm' },
-    'E♭': { sig: '3♭', minor: 'Cm' },
-    'A♭': { sig: '4♭', minor: 'Fm' },
-    'D♭': { sig: '5♭', minor: 'B♭m' },
-    'G♭': { sig: '6♭', minor: 'E♭m' },
-    'C♭': { sig: '7♭', minor: 'A♭m' }
   };
 
   const sigToKey = {
@@ -394,6 +376,13 @@
   }
 
   // ============================================
+  // GET KEY DATA BY SIGNATURE
+  // ============================================
+  function getKeyDataBySig(sig) {
+    return circleOfFifths.find(k => k.sig === sig) || circleOfFifths[7];
+  }
+
+  // ============================================
   // SELECT SONG
   // ============================================
   function selectSong(songId) {
@@ -406,19 +395,15 @@
     }
     songTitleEl.textContent = song.title || 'Untitled';
 
-    if (song.keyMajor && song.keyMinor) {
-      currentKeyMajor = song.keyMajor;
-      currentKeyMinor = song.keyMinor;
-      currentKeySignature = song.keySignature || '0';
-    } else {
-      const sig = song.keySignature || '0';
-      const keyData = sigToKey[sig] || { major: 'C', minor: 'Am' };
-      currentKeyMajor = keyData.major;
-      currentKeyMinor = keyData.minor;
-      currentKeySignature = sig;
-    }
+    // Get key signature from song data
+    const sig = song.keySignature || '0';
+    const keyData = getKeyDataBySig(sig);
+    
+    currentKeyMajor = keyData.major;
+    currentKeyMinor = keyData.minor;
+    currentKeySignature = sig;
+    currentKeyIndex = keyData.index;
 
-    currentKey = 0;
     updateKeyDisplay();
     displaySong(song);
   }
@@ -432,9 +417,17 @@
       outputEl.innerHTML = '<div class="no-lyrics">No lyrics available</div>';
       return;
     }
-    if (currentKey !== 0) {
-      lyrics = transposeLyricsBySemitone(lyrics, currentKey);
+    
+    // Transpose based on key index difference
+    const targetKeyData = circleOfFifths[currentKeyIndex];
+    const originalSig = song.keySignature || '0';
+    const originalKeyData = getKeyDataBySig(originalSig);
+    const steps = currentKeyIndex - originalKeyData.index;
+    
+    if (steps !== 0) {
+      lyrics = transposeLyricsBySteps(lyrics, steps);
     }
+    
     lyrics = formatChordsAboveLyrics(lyrics);
     outputEl.innerHTML = lyrics;
     outputEl.scrollTop = 0;
@@ -445,39 +438,27 @@
   // UPDATE KEY DISPLAY
   // ============================================
   function updateKeyDisplay() {
-    const displayKey = getDisplayKey();
-    keyDisplayEl.textContent = `Key: ${displayKey}`;
-    modalCurrentKey.textContent = displayKey;
-  }
-
-  function getDisplayKey() {
-    let major = currentKeyMajor;
-    let minor = currentKeyMinor;
-
-    if (isEnharmonicMode) {
-      const sig = currentKeySignature;
-      if (enharmonicMap[sig]) {
-        const target = enharmonicMap[sig];
-        const targetData = allKeys.find(k => k.id === target.targetId);
-        if (targetData) {
-          major = targetData.major;
-          minor = targetData.minor;
-        }
-      }
-    }
-
-    const offset = currentKey;
-    if (offset === 0) {
-      return `${major} / ${minor}`;
-    }
-    return `${major} / ${minor} ${offset > 0 ? '+' : ''}${offset}`;
+    const keyData = circleOfFifths[currentKeyIndex];
+    keyDisplayEl.textContent = `Key: ${keyData.major} / ${keyData.minor} (${keyData.sig})`;
+    modalCurrentKey.textContent = `${keyData.major} / ${keyData.minor}`;
   }
 
   // ============================================
   // TRANSPOSE FUNCTIONS
   // ============================================
   function transposeSemitone(steps) {
-    currentKey += steps;
+    // Move in Circle of Fifths
+    let newIndex = currentKeyIndex + steps;
+    // Clamp to valid range
+    if (newIndex < 0) newIndex = 0;
+    if (newIndex >= circleOfFifths.length) newIndex = circleOfFifths.length - 1;
+    
+    currentKeyIndex = newIndex;
+    const keyData = circleOfFifths[currentKeyIndex];
+    currentKeyMajor = keyData.major;
+    currentKeyMinor = keyData.minor;
+    currentKeySignature = keyData.sig;
+    
     updateKeyDisplay();
     if (currentSongId) {
       const song = songs.find(s => s.id === currentSongId);
@@ -485,14 +466,17 @@
     }
   }
 
-  function transposeLyricsBySemitone(lyrics, steps) {
-    const sharpScale = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-    const flatScale = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
-
-    const useSharp = steps >= 0;
-    const scale = useSharp ? sharpScale : flatScale;
+  function transposeLyricsBySteps(lyrics, steps) {
+    // Get the scale for the target key
+    const targetKeyData = circleOfFifths[currentKeyIndex];
+    const targetMajor = targetKeyData.major;
+    
+    // Build scale based on target key
+    const scale = buildScale(targetMajor);
+    
+    // If steps is negative, we need to transpose down
     const semitoneSteps = ((steps % 12) + 12) % 12;
-
+    
     return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
       let transposed = chord;
       for (let i = 0; i < scale.length; i++) {
@@ -505,12 +489,23 @@
           break;
         }
       }
+      // Fix enharmonic
       transposed = transposed.replace('E♯', 'F');
       transposed = transposed.replace('B♯', 'C');
       transposed = transposed.replace('F♭', 'E');
       transposed = transposed.replace('C♭', 'B');
       return `[${transposed}]`;
     });
+  }
+
+  function buildScale(root) {
+    // Major scale pattern: W W H W W W H
+    const notes = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+    const rootIndex = notes.indexOf(root);
+    if (rootIndex === -1) return notes;
+    
+    const pattern = [0, 2, 4, 5, 7, 9, 11];
+    return pattern.map(offset => notes[(rootIndex + offset) % 12]);
   }
 
   // ============================================
@@ -528,13 +523,13 @@
 
   function renderKeyList() {
     keyListContainer.innerHTML = '';
-    let keysToRender = allKeys;
+    let keysToRender = circleOfFifths;
 
     if (isEnharmonicMode) {
-      keysToRender = allKeys.map(k => {
+      keysToRender = circleOfFifths.map(k => {
         if (enharmonicMap[k.id]) {
           const target = enharmonicMap[k.id];
-          const targetData = allKeys.find(k2 => k2.id === target.targetId);
+          const targetData = circleOfFifths.find(k2 => k2.id === target.targetId);
           if (targetData) {
             return { ...k, major: targetData.major, minor: targetData.minor, id: k.id + '_enh' };
           }
@@ -543,10 +538,10 @@
       });
     }
 
-    keysToRender.forEach((key, index) => {
+    keysToRender.forEach((key) => {
       const div = document.createElement('div');
       div.className = 'key-item';
-      const isCurrent = (key.major === currentKeyMajor && key.minor === currentKeyMinor) ||
+      const isCurrent = key.id === circleOfFifths[currentKeyIndex].id ||
                         (enharmonicMap[key.id] && isEnharmonicMode);
       if (isCurrent) {
         div.classList.add('highlight-key');
@@ -554,7 +549,7 @@
       let label = `${key.sig}  ${key.major} / ${key.minor}`;
       if (enharmonicMap[key.id] && isEnharmonicMode) {
         const target = enharmonicMap[key.id];
-        const targetData = allKeys.find(k => k.id === target.targetId);
+        const targetData = circleOfFifths.find(k => k.id === target.targetId);
         if (targetData) {
           label += ` (${targetData.major} / ${targetData.minor})`;
         }
@@ -569,7 +564,7 @@
   function selectKey(keyId) {
     console.log('🔑 selectKey called with:', keyId);
     
-    let keyData = allKeys.find(k => k.id === keyId);
+    let keyData = circleOfFifths.find(k => k.id === keyId);
     if (!keyData) {
       console.log('❌ Key not found:', keyId);
       return;
@@ -578,51 +573,26 @@
     let selectedMajor = keyData.major;
     let selectedMinor = keyData.minor;
     let selectedSig = keyData.sig;
+    let selectedIndex = keyData.index;
 
     if (isEnharmonicMode && enharmonicMap[keyId]) {
       const target = enharmonicMap[keyId];
-      const targetData = allKeys.find(k => k.id === target.targetId);
+      const targetData = circleOfFifths.find(k => k.id === target.targetId);
       if (targetData) {
         selectedMajor = targetData.major;
         selectedMinor = targetData.minor;
         selectedSig = targetData.sig;
+        selectedIndex = targetData.index;
         console.log('🔄 Enharmonic: using', selectedMajor, '/', selectedMinor);
       }
     }
 
     console.log('✅ Applying new key:', selectedMajor, '/', selectedMinor);
     
-    // Calculate semitone offset from original key signature
-    const song = songs.find(s => s.id === currentSongId);
-    if (song && song.keySignature) {
-      const originalSig = song.keySignature;
-      const originalKey = allKeys.find(k => k.sig === originalSig);
-      const newKey = allKeys.find(k => k.sig === selectedSig);
-      
-      if (originalKey && newKey) {
-        const originalIndex = allKeys.indexOf(originalKey);
-        const newIndex = allKeys.indexOf(newKey);
-        const semitoneDiff = newIndex - originalIndex;
-        currentKey = semitoneDiff;
-        console.log('🔄 Semitone offset:', currentKey);
-      } else {
-        currentKey = 0;
-      }
-    } else {
-      // Fallback: use the key signature index
-      const newKey = allKeys.find(k => k.sig === selectedSig);
-      if (newKey) {
-        const targetIndex = allKeys.indexOf(newKey);
-        const currentIndex = allKeys.findIndex(k => k.sig === currentKeySignature);
-        currentKey = targetIndex - (currentIndex >= 0 ? currentIndex : 0);
-      } else {
-        currentKey = 0;
-      }
-    }
-
     currentKeyMajor = selectedMajor;
     currentKeyMinor = selectedMinor;
     currentKeySignature = selectedSig;
+    currentKeyIndex = selectedIndex;
     updateKeyDisplay();
 
     if (currentSongId) {
@@ -921,6 +891,3 @@
   console.log('  ↑/↓ arrows - Adjust scroll speed');
   console.log('  🔍 Search - Type to filter songs');
   console.log('  ⛶ Fullscreen - Only lyrics & chords');
-</script>
-</body>
-</html>
