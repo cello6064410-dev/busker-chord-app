@@ -47,7 +47,7 @@
   <div id="sheetList" class="song-list"></div>
 
   <!-- OUTPUT - LEADSHEET RENDER -->
-  <div id="output" class="output" style="font-family: 'Courier New', monospace; white-space: pre-wrap; font-size: 16px; line-height: 1.8; overflow-x: auto;">Loading...</div>
+  <div id="output" class="output" style="font-family: 'Courier New', monospace; font-size: 15px; line-height: 1.6; padding: 12px; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">Loading...</div>
 
   <!-- LINK TO LYRIC VIEW -->
   <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
@@ -89,7 +89,7 @@
   let filteredSheets = [];
   let currentSheetId = null;
   let currentSheetData = null;
-  let fontSize = 16;
+  let fontSize = 15;
 
   // Auto-scroll variables
   let scrollInterval = null;
@@ -309,7 +309,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET - VERTICAL FORMAT
+  // RENDER LEADSHEET - VERTICAL & WRAP
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -318,48 +318,45 @@
       return;
     }
 
-    // Parse the content
-    let rendered = '';
     let lines = content.split('\n');
-    
-    // For each line, process the chords and bars
+    let result = [];
+    let barWidth = 1; // Will be calculated
+
     for (let line of lines) {
       if (!line.trim()) continue;
       
-      // Process the line to extract chords and bar structure
-      rendered += processLine(line) + '\n\n';
+      // Process each line
+      let processed = processLineVertical(line);
+      if (processed) {
+        result.push(processed);
+      }
     }
 
-    outputEl.innerHTML = rendered;
+    outputEl.innerHTML = result.join('\n\n');
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
 
   // ============================================
-  // PROCESS LINE - VERTICAL FORMAT
+  // PROCESS LINE - VERTICAL WITH WRAP
   // ============================================
-  function processLine(line) {
-    // First, extract all chords with their positions
-    // Format: [C], [G], [Am], etc.
-    // Also handle endings: [1va], [1,2va], [1,2,3va], [1,2,3,4va]
-    // And bars: |, ||:, :||
-    
+  function processLineVertical(line) {
     let result = '';
-    
+    let cleanLine = line;
+
     // Check for endings
-    let endingMatch = line.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/);
+    let endingMatch = cleanLine.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/);
     if (endingMatch) {
       let ending = endingMatch[0];
       let endingDisplay = ending.replace(/\[|\]/g, '');
-      // Add ending line
       result += endingDisplay + '─────────────────\n';
+      cleanLine = cleanLine.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
     }
-    
-    // Remove ending markers from line
-    let cleanLine = line.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
+
+    // Remove [.] markers
     cleanLine = cleanLine.replace(/\[\.\]/g, '');
-    
-    // Extract all chords with their positions
+
+    // Extract chords with their positions
     let chords = [];
     let match;
     let chordRegex = /\[([^\]]+)\]/g;
@@ -369,53 +366,46 @@
         position: match.index
       });
     }
-    
-    // Remove all chords from the line to get the structure
+
+    // Remove chord brackets to get structure
     let structure = cleanLine.replace(/\[([^\]]+)\]/g, '');
-    
-    // Now we need to render: ending line (if any), chords above beats, then structure
-    // For the chord row, we need to place chords at the right positions
+
+    // Build chord row
     let chordRow = '';
-    let structureRow = '';
     let lastPos = 0;
-    
-    // Build the structure row (bars and beats)
-    structureRow = structure;
-    
-    // Build the chord row
     for (let chord of chords) {
-      // Find the position of the chord in the structure
       let pos = chord.position;
-      // Adjust for removed brackets
-      let adjustedPos = pos;
+      // Adjust position for removed brackets
       for (let c of chords) {
         if (c.position < pos) {
-          adjustedPos -= 2; // Remove [ and ]
+          pos -= 2;
         }
       }
-      // Place chord at the right position
-      while (chordRow.length < adjustedPos) {
+      while (chordRow.length < pos) {
         chordRow += ' ';
       }
       chordRow += chord.chord;
     }
-    
-    // Convert symbols
+
+    // Convert symbols in chords
     chordRow = chordRow.replace(/#/g, '♯');
     chordRow = chordRow.replace(/b/g, '♭');
     chordRow = chordRow.replace(/m7b5/g, 'ø');
     chordRow = chordRow.replace(/dim/g, '°');
-    
-    structureRow = structureRow.replace(/\|\|:/g, '‖:');
-    structureRow = structureRow.replace(/:\|\|/g, ':‖');
-    structureRow = structureRow.replace(/\|/g, '│');
-    
-    // Build the final output: chord row first, then structure row
+
+    // Convert symbols in structure
+    structure = structure.replace(/\|\|:/g, '‖:');
+    structure = structure.replace(/:\|\|/g, ':‖');
+    structure = structure.replace(/\|/g, '│');
+
+    // For vertical format, we display chord row first, then structure
     if (chordRow.trim()) {
+      // Split chord row into smaller chunks if too long
+      // But for vertical, we keep it as is and let CSS wrap
       result += chordRow + '\n';
     }
-    result += structureRow;
-    
+    result += structure;
+
     return result;
   }
 
@@ -423,7 +413,7 @@
   // FONT SIZE
   // ============================================
   function changeFontSize(delta) {
-    fontSize = Math.min(32, Math.max(10, fontSize + delta));
+    fontSize = Math.min(28, Math.max(10, fontSize + delta));
     applyFontSize(fontSize);
   }
 
