@@ -1,3 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Song Viewer Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h2>🎵 Song Viewer</h2>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
+        <button onclick="logoutUser()" class="logout-btn" title="Logout" style="background: #4a2a2a; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; min-width: 40px;">🚪</button>
+        <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px;">
+      <h3 id="songTitle" style="margin:0;">No Song Selected</h3>
+      <span id="keyDisplay" style="color: #00ffcc; font-size: 0.9rem; font-family: Arial, sans-serif; background: #1a1a2e; padding: 2px 12px; border-radius: 12px; border: 1px solid #2a2a4e;">Key: 0</span>
+      <button onclick="openTransposePopup()" id="transposeBtn" title="Transpose" style="background: #2a2a4e; border: none; color: white; padding: 4px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 32px;">🎵 Transpose</button>
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
+    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
+  </div>
+
+  <!-- SONG LIST -->
+  <div id="songList" class="song-list"></div>
+
+  <!-- LYRICS OUTPUT -->
+  <div id="output" class="output">Loading songs...</div>
+
+  <!-- LINK TO ALL SONGS LIST -->
+  <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
+    <a href="list.html" style="color: #4fc3f7; font-family: Arial, sans-serif; font-size: 0.9rem; text-decoration: none; padding: 8px 16px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4e; display: inline-block;">
+      📋 All Songs
+    </a>
+  </div>
+
+  <!-- FLOATING CONTROL BAR -->
+  <div class="floating-bar">
+    <button onclick="transposeSemitone(1)" title="Transpose +1 Semitone (Sharp)">➕</button>
+    <button onclick="transposeSemitone(-1)" title="Transpose -1 Semitone (Flat)">➖</button>
+    <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
+    <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
+    <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
+    <button onclick="stopScroll()" title="Stop Auto-Scroll" id="stopBtn">⏹</button>
+    <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+  </div>
+</div>
+
+<!-- TRANSPOSE POPUP MODAL -->
+<div id="transposeModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🎵 Transpose</h2>
+      <button onclick="closeTransposePopup()" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-current-key">
+        <span>Current Key: </span>
+        <span id="modalCurrentKey" style="color: #ffcc00; font-weight: bold;">C / Am</span>
+      </div>
+      <div class="modal-enharmonic">
+        <label class="toggle-switch">
+          <input type="checkbox" id="enharmonicToggle" onchange="toggleEnharmonic()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span id="enharmonicLabel" style="color: #888; font-size: 0.9rem;">Enharmonic: OFF</span>
+        <span style="color: #666; font-size: 0.8rem; margin-left: 8px;">(6♯/7♯/6♭/7♭ only)</span>
+      </div>
+      <div id="keyListContainer" class="key-list-container">
+        <!-- Key list will be rendered here -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeTransposePopup()" class="modal-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+
 <script>
   // ============================================
   // GLOBAL VARIABLES
@@ -775,5 +890,6 @@
   console.log('  🔍 Search - Type to filter songs');
   console.log('  ⛶ Fullscreen - Only lyrics & chords');
 </script>
+
 </body>
 </html>
