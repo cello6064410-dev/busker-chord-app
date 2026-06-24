@@ -586,117 +586,99 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET - SETIAP BAR BARIS BARU
+  // RENDER LEADSHEET - BETUL
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
     if (!content) { outputEl.textContent = 'No content'; return; }
 
-    // Parse content into bars
-    let bars = [];
-    let currentBar = '';
-    let inChord = false;
-    let chordBuffer = '';
-    let i = 0;
-
-    // First, extract all chords and structure
-    let processed = '';
-    let sectionMarker = '';
-    let endingLine = '';
-    let chords = [];
-    let beats = [];
-
-    // Simple parsing: split by |
-    let parts = content.split('|');
-    let result = [];
-
-    for (let part of parts) {
-      if (part.trim() === '') continue;
-      
-      // Check for section marker: a., b., etc.
-      let sectionMatch = part.match(/^([a-d])\./);
-      let section = sectionMatch ? sectionMatch[1] + '.' : '';
-      
-      // Check for ending markers
-      let endingMatch = part.match(/\[1va\]|\[2va\]|\[1,2va\]|\[1,2,3va\]|\[1,2,3,4va\]/);
-      let ending = endingMatch ? endingMatch[0] : '';
-      
-      // Extract chords: [C], [G], etc.
-      let chordMatches = part.match(/\[([^\]]+)\]/g) || [];
-      let chordNames = chordMatches.map(c => c.replace(/[\[\]]/g, ''));
-      
-      // Extract beats: count backslashes
-      let beatCount = (part.match(/\\\\/g) || []).length;
-      
-      // Build the bar
-      let bar = {
-        section: section,
-        ending: ending,
-        chords: chordNames,
-        beats: beatCount,
-        raw: part
-      };
-      bars.push(bar);
-    }
-
-    // Now render each bar with proper formatting
-    let outputLines = [];
+    // Step 1: Split by | to get bars
+    let bars = content.split('|').filter(b => b.trim() !== '');
     
-    // Build chord line (baris pertama)
-    let chordLine = '';
-    let beatLine = '';
+    let result = [];
+    let chordLines = [];
+    let beatLines = [];
+    let endingLines = [];
+    let hasEnding = false;
     
     for (let bar of bars) {
-      // Add section marker
-      if (bar.section) {
-        chordLine += bar.section + '  ';
-        beatLine += '||  ';
+      // Check for section marker: a., b., etc.
+      let section = '';
+      let barContent = bar;
+      let sectionMatch = bar.match(/^([a-d])\./);
+      if (sectionMatch) {
+        section = sectionMatch[1] + '.';
+        barContent = bar.replace(/^[a-d]\./, '');
+      }
+      
+      // Check for ending markers
+      let ending = '';
+      let endingMatch = barContent.match(/\[1va\]|\[2va\]|\[1,2va\]|\[1,2,3va\]|\[1,2,3,4va\]/);
+      if (endingMatch) {
+        ending = endingMatch[0];
+        barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
+        hasEnding = true;
+      }
+      
+      // Remove [.] marker
+      barContent = barContent.replace(/\[\.\]/g, '');
+      
+      // Extract chords
+      let chordMatches = barContent.match(/\[([^\]]+)\]/g) || [];
+      let chordNames = chordMatches.map(c => c.replace(/[\[\]]/g, ''));
+      
+      // Count beats (single backslash)
+      let beatCount = (barContent.match(/\\\\/g) || []).length;
+      if (beatCount === 0) beatCount = 4; // default to 4/4
+      
+      // Build chord line for this bar
+      let chordLine = '';
+      if (section) {
+        chordLine += section + '  ';
+      }
+      if (ending) {
+        let endingDisplay = ending.replace(/\[|\]/g, '');
+        // Store ending for later
+        endingLines.push({ bar: chordLine, ending: endingDisplay });
       }
       
       // Add chords with spacing
-      for (let chord of bar.chords) {
-        // Convert symbols
+      for (let chord of chordNames) {
         let displayChord = chord.replace(/#/g, '♯').replace(/b/g, '♭').replace(/m7b5/g, 'ø').replace(/dim/g, '°');
-        // Add spacing based on chord length
+        // For slash chords, keep the slash
         let spacing = Math.max(4, displayChord.length + 2);
         chordLine += displayChord + ' '.repeat(spacing - displayChord.length);
-        // Add beats
-        beatLine += '\\' + ' '.repeat(spacing - 1);
       }
       
-      // Add bar line
-      chordLine += '| ';
-      beatLine += '| ';
+      // Build beat line
+      let beatLine = '';
+      if (section) {
+        beatLine += '||  ';
+      }
+      for (let i = 0; i < beatCount; i++) {
+        beatLine += '\\' + ' '.repeat(3);
+      }
+      
+      chordLines.push(chordLine);
+      beatLines.push(beatLine);
     }
-    
-    // Clean up
-    chordLine = chordLine.trim();
-    beatLine = beatLine.trim();
     
     // Build final output
     let finalOutput = '';
     
-    // Check for endings
-    let hasEnding = bars.some(b => b.ending);
+    // Add ending lines if any
     if (hasEnding) {
-      // Add ending line first
-      let endingText = '';
-      for (let bar of bars) {
-        if (bar.ending) {
-          let endingDisplay = bar.ending.replace(/\[|\]/g, '');
-          endingText += endingDisplay + '───────────────── ';
-        } else {
-          endingText += ' '.repeat(20);
-        }
+      for (let ending of endingLines) {
+        finalOutput += ending.ending + '───────────────── ';
       }
-      finalOutput += endingText.trim() + '\n';
+      finalOutput += '\n';
     }
     
-    // Add chord line
-    finalOutput += chordLine + '\n';
+    // Add chord lines
+    finalOutput += chordLines.join(' | ') + '\n';
     
-    // Add beat line
-    finalOutput += beatLine;
+    // Add beat lines
+    finalOutput += beatLines.join(' | ');
     
     outputEl.innerHTML = finalOutput;
     outputEl.scrollTop = 0;
