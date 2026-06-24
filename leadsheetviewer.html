@@ -42,6 +42,9 @@
       flex-shrink: 0;
     }
 
+    /* ============================================
+       OUTPUT - FLEX WRAP AUTO TURUN KE BAWAH
+       ============================================ */
     #output {
       flex: 1;
       overflow-y: auto;
@@ -53,9 +56,19 @@
       font-family: 'Courier New', monospace;
       font-size: 16px;
       line-height: 2.2;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 4px 6px;
+    }
+
+    #output .bar-unit {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      white-space: nowrap;
+      background: transparent;
+      padding: 2px 0;
     }
 
     .output.scrolling {
@@ -69,8 +82,10 @@
     .beat { color: #ff6b6b; }
     .repeat { color: #cc88ff; }
     .ending { color: #ff922b; }
-    .ending-dot { color: #ff922b; }
 
+    /* ============================================
+       HEADER
+       ============================================ */
     .header {
       text-align: center;
       padding: 5px 0;
@@ -279,7 +294,7 @@
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
-      #output { font-size: 14px; padding: 10px; }
+      #output { font-size: 14px; padding: 10px; gap: 2px 4px; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -318,7 +333,7 @@
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output { font-size: 12px; padding: 8px; }
+      #output { font-size: 12px; padding: 8px; gap: 2px 3px; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -328,7 +343,7 @@
 
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output { font-size: 16px; padding: 15px 20px; }
+      #output { font-size: 16px; padding: 15px 20px; gap: 4px 8px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -544,7 +559,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — SATU BARIS, WARNA
+  // RENDER LEADSHEET — FLEX WRAP
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -567,23 +582,32 @@
     // 3. Chord brackets: [C] → <span class="chord">C</span>
     rendered = rendered.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
 
-    // 4. Barline: | → <span class="barline">|</span>
-    rendered = rendered.replace(/\|/g, '<span class="barline">|</span>');
-
-    // 5. Section marker: (a), (b) → <span class="section">(a)</span>
+    // 4. Section marker: (a), (b) → <span class="section">(a)</span>
     rendered = rendered.replace(/\(([a-d])\)/g, '<span class="section">($1)</span>');
 
-    // 6. Beat: ---- → <span class="beat">----</span>
+    // 5. Beat: ---- → <span class="beat">----</span>
     rendered = rendered.replace(/----/g, '<span class="beat">----</span>');
 
-    // 7. Repeat signs
+    // 6. Repeat signs
     rendered = rendered.replace(/\|:/g, '<span class="repeat">|:</span>');
     rendered = rendered.replace(/:\|/g, '<span class="repeat">:|</span>');
 
-    // 8. Ending dots: ............ → <span class="ending-dot">............</span>
-    rendered = rendered.replace(/\.\.\.\.\.\.\.\.\.\.\.\./g, '<span class="ending-dot">............</span>');
+    // 7. Barline: | → </span><span class="bar-unit">|</span>
+    // Split by | to create bar units
+    let bars = rendered.split('|');
+    let html = '';
+    for (let i = 0; i < bars.length; i++) {
+      let bar = bars[i];
+      if (bar.trim() !== '' || i === 0) {
+        if (i > 0) {
+          html += `<span class="bar-unit"><span class="barline">|</span>${bar}</span>`;
+        } else {
+          html += `<span class="bar-unit">${bar}</span>`;
+        }
+      }
+    }
 
-    outputEl.innerHTML = rendered;
+    outputEl.innerHTML = html;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
