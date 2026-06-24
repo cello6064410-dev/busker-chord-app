@@ -17,24 +17,28 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
-    /* ============================================
-       FIX SCROLL FOR LEADSHEET VIEWER
-       ============================================ */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #0f0f0f;
+      color: white;
+      font-family: 'Courier New', monospace;
+    }
+
     .app {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      height: 100dvh; /* Android fix */
+      height: 100dvh;
       overflow: hidden;
-      background: #0f0f0f;
       padding: 10px;
       padding-bottom: 80px;
+      background: #0f0f0f;
     }
 
-    .header,
-    .search-container,
-    .song-list,
-    .floating-bar {
+    .header, .search-container, .song-list, .floating-bar, .link-row {
       flex-shrink: 0;
     }
 
@@ -46,17 +50,304 @@
       padding: 15px;
       border-radius: 10px;
       font-family: 'Courier New', monospace;
-      font-size: 15px;
-      line-height: 1.6;
+      font-size: 14px;
+      line-height: 1.8;
       border: 1px solid #2a2a2a;
       white-space: pre-wrap;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      word-break: break-word;
     }
 
     .output.scrolling {
       border-color: #4fc3f7;
+    }
+
+    .header {
+      text-align: center;
+      padding: 5px 0;
+      margin-bottom: 8px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 5px;
+    }
+
+    .header h2 {
+      font-size: 1.1rem;
+      margin: 0;
+      color: #ffcc00;
+      font-family: Arial, sans-serif;
+    }
+
+    #sheetTitle {
+      color: #ffcc00;
+      font-size: 1rem;
+      margin: 4px 0;
+      font-weight: normal;
+      font-family: Arial, sans-serif;
+    }
+
+    #timeDisplay {
+      color: #00ffcc;
+      font-size: 0.9rem;
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      padding: 2px 12px;
+      border-radius: 12px;
+      border: 1px solid #2a2a4e;
+    }
+
+    .home-btn {
+      background: #2a2a4e;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      min-height: 40px;
+      min-width: 40px;
+    }
+
+    .logout-btn {
+      background: #4a2a2a !important;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      min-height: 40px;
+      min-width: 40px;
+    }
+
+    .search-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 0 8px 0;
+      position: relative;
+    }
+
+    #searchInput {
+      flex: 1;
+      padding: 10px 14px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4e;
+      border-radius: 10px;
+      color: white;
+      font-size: 1rem;
+      font-family: Arial, sans-serif;
+      outline: none;
+      min-height: 44px;
+    }
+
+    #searchInput:focus {
+      border-color: #4fc3f7;
+    }
+
+    #searchInput::placeholder {
+      color: #666;
+    }
+
+    #clearSearchBtn {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 8px 10px;
+      min-height: 44px;
+      min-width: 44px;
+      display: none;
+    }
+
+    .song-list {
+      max-height: 160px;
+      overflow-y: auto;
+      background: #151515;
+      border-radius: 10px;
+      padding: 5px;
+      margin-bottom: 8px;
+    }
+
+    .song-list button {
+      width: 100%;
+      margin: 3px 0;
+      padding: 10px 12px;
+      text-align: left;
+      background: #1a1a2e;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      min-height: 40px;
+      font-family: Arial, sans-serif;
+    }
+
+    .song-list button:active {
+      background: #2a2a4e;
+    }
+
+    .loading-text, .empty-text, .error-text {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+      font-family: Arial, sans-serif;
+    }
+
+    .error-text {
+      color: #ff4444;
+    }
+
+    .result-count {
+      color: #888;
+      font-size: 0.8rem;
+      padding: 8px 10px 4px 10px;
+      font-family: Arial, sans-serif;
+      border-bottom: 1px solid #2a2a2a;
+      margin-bottom: 4px;
+    }
+
+    .scroll-hint {
+      color: #666;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 6px;
+      font-family: Arial, sans-serif;
+      border-top: 1px solid #2a2a2a;
+      margin-top: 4px;
+      animation: pulse 2s infinite;
+    }
+
+    .hidden-result {
+      display: block;
+    }
+
+    .floating-bar {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      background: rgba(15, 15, 15, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 8px 12px;
+      border-radius: 14px;
+      z-index: 9999;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+      border: 1px solid #2a2a2a;
+      flex-wrap: nowrap;
+    }
+
+    .floating-bar button {
+      font-size: 1rem;
+      padding: 8px 12px;
+      min-width: 44px;
+      min-height: 44px;
+      background: #1a1a2e;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .floating-bar button:active {
+      background: #2a2a4e;
+      transform: scale(0.92);
+    }
+
+    .link-row {
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .link-row a {
+      color: #4fc3f7;
+      font-family: Arial, sans-serif;
+      font-size: 0.9rem;
+      text-decoration: none;
+      padding: 8px 16px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      border: 1px solid #2a2a4e;
+      display: inline-block;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .app { padding: 8px; padding-bottom: 80px; }
+      .song-list { max-height: 120px; }
+      .floating-bar {
+        bottom: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        border-radius: 0;
+        justify-content: space-around;
+        padding: 8px 5px;
+        gap: 4px;
+        border: none;
+        border-top: 1px solid #2a2a2a;
+        background: rgba(15,15,15,0.95);
+      }
+      .floating-bar button {
+        flex: 1;
+        font-size: 1.1rem;
+        padding: 12px 0;
+        min-height: 48px;
+        min-width: 0;
+        margin: 0 2px;
+      }
+      #searchInput {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        min-height: 38px;
+      }
+      #clearSearchBtn {
+        right: 6px;
+        min-height: 38px;
+        min-width: 38px;
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .app { padding: 5px; padding-bottom: 75px; }
+      .header h2 { font-size: 0.9rem; }
+      #sheetTitle { font-size: 0.85rem; }
+      #output { font-size: 12px; padding: 10px; }
+      .floating-bar button {
+        font-size: 0.9rem;
+        padding: 10px 0;
+        min-height: 42px;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .app { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+      #output { font-size: 15px; min-height: 300px; }
+      .song-list { max-height: 200px; }
+      .floating-bar { gap: 10px; padding: 10px 20px; }
+      .floating-bar button { padding: 10px 18px; min-width: 50px; }
+      .floating-bar button:hover { background: #2a2a4e; }
     }
   </style>
 </head>
@@ -70,13 +361,13 @@
       <h2>📊 Leadsheet</h2>
       <div style="display: flex; gap: 8px; align-items: center;">
         <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
-        <button onclick="logoutUser()" class="logout-btn" title="Logout" style="background: #4a2a2a; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; min-width: 40px;">🚪</button>
+        <button onclick="logoutUser()" class="logout-btn" title="Logout">🚪</button>
         <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
       </div>
     </div>
     <div style="display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px;">
       <h3 id="sheetTitle" style="margin:0; font-family:Arial; color:#ffcc00;">No Leadsheet Selected</h3>
-      <span id="timeDisplay" style="color: #00ffcc; font-size: 0.9rem; font-family: Arial, sans-serif; background: #1a1a2e; padding: 2px 12px; border-radius: 12px; border: 1px solid #2a2a4e;">4/4</span>
+      <span id="timeDisplay">4/4</span>
       <button onclick="toggleFullscreen()" title="Fullscreen" style="background: #2a2a4e; border: none; color: white; padding: 4px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 32px;">⛶</button>
     </div>
   </div>
@@ -90,14 +381,12 @@
   <!-- SHEET LIST -->
   <div id="sheetList" class="song-list"></div>
 
-  <!-- OUTPUT - LEADSHEET RENDER -->
+  <!-- OUTPUT -->
   <div id="output" class="output">Loading...</div>
 
   <!-- LINK TO LYRIC VIEW -->
-  <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
-    <a href="viewer.html" style="color: #4fc3f7; font-family: Arial, sans-serif; font-size: 0.9rem; text-decoration: none; padding: 8px 16px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4e; display: inline-block;">
-      📝 Switch to Lyric View
-    </a>
+  <div class="link-row">
+    <a href="viewer.html">📝 Switch to Lyric View</a>
   </div>
 
   <!-- FLOATING CONTROL BAR -->
@@ -132,19 +421,12 @@
   let sheets = [];
   let filteredSheets = [];
   let currentSheetId = null;
-  let currentSheetData = null;
-  let fontSize = 15;
-
-  // Auto-scroll variables
+  let fontSize = 14;
   let scrollInterval = null;
   let isScrolling = false;
   let scrollSpeed = 0.4;
-
-  // Auto-logout timer
   let logoutTimer = null;
   const IDLE_TIMEOUT = 30 * 60 * 1000;
-
-  // Search results limit
   const MAX_SEARCH_RESULTS = 10;
   const DISPLAY_RESULTS = 5;
 
@@ -161,13 +443,10 @@
   const userNameEl = document.getElementById('userName');
 
   // ============================================
-  // AUTH - CHECK LOGIN STATUS
+  // AUTH
   // ============================================
   auth.onAuthStateChanged(function(user) {
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
+    if (!user) { window.location.href = "login.html"; return; }
     console.log('✅ Logged in as:', user.displayName || user.email);
     if (user.displayName) {
       userNameEl.textContent = '👤 ' + user.displayName;
@@ -192,8 +471,7 @@
   }
 
   function setupIdleTimer() {
-    const events = ['mousemove', 'mousedown', 'click', 'scroll', 'touchstart', 'keydown'];
-    events.forEach(event => {
+    ['mousemove', 'mousedown', 'click', 'scroll', 'touchstart', 'keydown'].forEach(event => {
       document.addEventListener(event, resetLogoutTimer);
     });
     resetLogoutTimer();
@@ -202,11 +480,7 @@
   function logoutUser() {
     if (logoutTimer) clearTimeout(logoutTimer);
     stopScroll();
-    auth.signOut().then(() => {
-      window.location.href = "login.html";
-    }).catch(() => {
-      window.location.href = "login.html";
-    });
+    auth.signOut().then(() => { window.location.href = "login.html"; }).catch(() => { window.location.href = "login.html"; });
   }
 
   // ============================================
@@ -216,43 +490,26 @@
     outputEl.textContent = '⏳ Loading leadsheets...';
     sheetListEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
 
-    db.collection('leadsheets')
-      .orderBy('title')
-      .get()
+    db.collection('leadsheets').orderBy('title').get()
       .then((snapshot) => {
         sheets = [];
         sheetListEl.innerHTML = '';
         if (snapshot.empty) {
           outputEl.textContent = '📭 No leadsheets found. Go to Admin to create one.';
-          sheetListEl.innerHTML = `
-            <div class="empty-text">
-              📭 No leadsheets found<br>
-              <small>Go to Admin to create your first leadsheet!</small>
-            </div>
-          `;
+          sheetListEl.innerHTML = '<div class="empty-text">📭 No leadsheets found<br><small>Go to Admin to create your first leadsheet!</small></div>';
           return;
         }
         snapshot.forEach((doc) => {
-          const sheet = { id: doc.id, ...doc.data() };
-          sheets.push(sheet);
+          sheets.push({ id: doc.id, ...doc.data() });
         });
         outputEl.textContent = 'Select a leadsheet to view';
-        sheetListEl.innerHTML = `
-          <div class="empty-text">
-            🔍 Type a leadsheet title to search
-          </div>
-        `;
+        sheetListEl.innerHTML = '<div class="empty-text">🔍 Type a leadsheet title to search</div>';
         console.log(`✅ ${sheets.length} leadsheets loaded`);
       })
       .catch((error) => {
         console.error('Error loading leadsheets:', error);
         outputEl.textContent = '❌ Error loading leadsheets. Please refresh.';
-        sheetListEl.innerHTML = `
-          <div class="error-text">
-            ❌ Error loading leadsheets<br>
-            <small>${error.message}</small>
-          </div>
-        `;
+        sheetListEl.innerHTML = '<div class="error-text">❌ Error loading leadsheets<br><small>' + error.message + '</small></div>';
       });
   }
 
@@ -261,22 +518,12 @@
   // ============================================
   function filterSheets() {
     const query = searchInput.value.toLowerCase().trim();
-    if (query.length > 0) {
-      clearSearchBtn.style.display = 'block';
-    } else {
-      clearSearchBtn.style.display = 'none';
-    }
+    clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
     if (query === '') {
-      sheetListEl.innerHTML = `
-        <div class="empty-text">
-          🔍 Type a leadsheet title to search
-        </div>
-      `;
+      sheetListEl.innerHTML = '<div class="empty-text">🔍 Type a leadsheet title to search</div>';
       return;
     }
-    const results = sheets.filter(sheet =>
-      sheet.title && sheet.title.toLowerCase().includes(query)
-    );
+    const results = sheets.filter(s => s.title && s.title.toLowerCase().includes(query));
     const limitedResults = results.slice(0, MAX_SEARCH_RESULTS);
     renderSheetList(limitedResults, results.length);
   }
@@ -284,17 +531,13 @@
   function renderSheetList(results, totalFound) {
     sheetListEl.innerHTML = '';
     if (results.length === 0) {
-      sheetListEl.innerHTML = `
-        <div class="empty-text">
-          🔍 No leadsheets found matching "<span id="searchTerm">${searchInput.value}</span>"
-        </div>
-      `;
+      sheetListEl.innerHTML = '<div class="empty-text">🔍 No leadsheets found matching "<span id="searchTerm">' + searchInput.value + '</span>"</div>';
       return;
     }
-    const resultCount = document.createElement('div');
-    resultCount.className = 'result-count';
-    resultCount.textContent = `Showing ${results.length} of ${totalFound} results`;
-    sheetListEl.appendChild(resultCount);
+    const count = document.createElement('div');
+    count.className = 'result-count';
+    count.textContent = 'Showing ' + results.length + ' of ' + totalFound + ' results';
+    sheetListEl.appendChild(count);
     const displayResults = results.slice(0, DISPLAY_RESULTS);
     const hiddenResults = results.slice(DISPLAY_RESULTS);
     displayResults.forEach((sheet) => {
@@ -304,7 +547,7 @@
     if (hiddenResults.length > 0) {
       const hint = document.createElement('div');
       hint.className = 'scroll-hint';
-      hint.textContent = `⬇️ ${hiddenResults.length} more results (scroll down)`;
+      hint.textContent = '⬇️ ' + hiddenResults.length + ' more results (scroll down)';
       sheetListEl.appendChild(hint);
       hiddenResults.forEach((sheet) => {
         const btn = createSheetButton(sheet);
@@ -326,11 +569,7 @@
   function clearSearch() {
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';
-    sheetListEl.innerHTML = `
-      <div class="empty-text">
-        🔍 Type a leadsheet title to search
-      </div>
-    `;
+    sheetListEl.innerHTML = '<div class="empty-text">🔍 Type a leadsheet title to search</div>';
     searchInput.focus();
   }
 
@@ -339,56 +578,127 @@
   // ============================================
   function selectSheet(sheetId) {
     stopScroll();
-    currentSheetId = sheetId;
     const sheet = sheets.find(s => s.id === sheetId);
-    if (!sheet) {
-      outputEl.textContent = 'Leadsheet not found';
-      return;
-    }
-    currentSheetData = sheet;
+    if (!sheet) { outputEl.textContent = 'Leadsheet not found'; return; }
     sheetTitleEl.textContent = sheet.title || 'Untitled';
     timeDisplayEl.textContent = sheet.timeSignature || '4/4';
-    
     renderLeadsheet(sheet);
   }
 
   // ============================================
-  // RENDER LEADSHEET
+  // RENDER LEADSHEET - SETIAP BAR BARIS BARU
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
-    if (!content) {
-      outputEl.textContent = 'No content';
-      return;
+    if (!content) { outputEl.textContent = 'No content'; return; }
+
+    // Parse content into bars
+    let bars = [];
+    let currentBar = '';
+    let inChord = false;
+    let chordBuffer = '';
+    let i = 0;
+
+    // First, extract all chords and structure
+    let processed = '';
+    let sectionMarker = '';
+    let endingLine = '';
+    let chords = [];
+    let beats = [];
+
+    // Simple parsing: split by |
+    let parts = content.split('|');
+    let result = [];
+
+    for (let part of parts) {
+      if (part.trim() === '') continue;
+      
+      // Check for section marker: a., b., etc.
+      let sectionMatch = part.match(/^([a-d])\./);
+      let section = sectionMatch ? sectionMatch[1] + '.' : '';
+      
+      // Check for ending markers
+      let endingMatch = part.match(/\[1va\]|\[2va\]|\[1,2va\]|\[1,2,3va\]|\[1,2,3,4va\]/);
+      let ending = endingMatch ? endingMatch[0] : '';
+      
+      // Extract chords: [C], [G], etc.
+      let chordMatches = part.match(/\[([^\]]+)\]/g) || [];
+      let chordNames = chordMatches.map(c => c.replace(/[\[\]]/g, ''));
+      
+      // Extract beats: count backslashes
+      let beatCount = (part.match(/\\\\/g) || []).length;
+      
+      // Build the bar
+      let bar = {
+        section: section,
+        ending: ending,
+        chords: chordNames,
+        beats: beatCount,
+        raw: part
+      };
+      bars.push(bar);
     }
 
-    let rendered = content;
-
-    // Replace bar lines and repeats
-    rendered = rendered.replace(/\|\|:/g, '‖:');
-    rendered = rendered.replace(/:\|\|/g, ':‖');
-    rendered = rendered.replace(/\|/g, '│');
+    // Now render each bar with proper formatting
+    let outputLines = [];
     
-    // Replace backslashes with beat markers
-    rendered = rendered.replace(/\\\\/g, '  \\  ');
+    // Build chord line (baris pertama)
+    let chordLine = '';
+    let beatLine = '';
     
-    // Convert chord symbols
-    rendered = rendered.replace(/m7b5/g, 'ø');
-    rendered = rendered.replace(/dim/g, '°');
-    rendered = rendered.replace(/#/g, '♯');
-    rendered = rendered.replace(/b/g, '♭');
+    for (let bar of bars) {
+      // Add section marker
+      if (bar.section) {
+        chordLine += bar.section + '  ';
+        beatLine += '||  ';
+      }
+      
+      // Add chords with spacing
+      for (let chord of bar.chords) {
+        // Convert symbols
+        let displayChord = chord.replace(/#/g, '♯').replace(/b/g, '♭').replace(/m7b5/g, 'ø').replace(/dim/g, '°');
+        // Add spacing based on chord length
+        let spacing = Math.max(4, displayChord.length + 2);
+        chordLine += displayChord + ' '.repeat(spacing - displayChord.length);
+        // Add beats
+        beatLine += '\\' + ' '.repeat(spacing - 1);
+      }
+      
+      // Add bar line
+      chordLine += '| ';
+      beatLine += '| ';
+    }
     
-    // Process endings - [1va] etc with line
-    rendered = rendered.replace(/\[1,2,3,4va\]/g, '1,2,3,4va─────────────────');
-    rendered = rendered.replace(/\[1,2,3va\]/g, '1,2,3va─────────────────');
-    rendered = rendered.replace(/\[1,2va\]/g, '1,2va─────────────────');
-    rendered = rendered.replace(/\[1va\]/g, '1va─────────────────');
-    rendered = rendered.replace(/\[2va\]/g, '2va─────────────────');
-    rendered = rendered.replace(/\[3va\]/g, '3va─────────────────');
-    rendered = rendered.replace(/\[4va\]/g, '4va─────────────────');
-    rendered = rendered.replace(/\[\.\]/g, '');
-
-    outputEl.innerHTML = rendered;
+    // Clean up
+    chordLine = chordLine.trim();
+    beatLine = beatLine.trim();
+    
+    // Build final output
+    let finalOutput = '';
+    
+    // Check for endings
+    let hasEnding = bars.some(b => b.ending);
+    if (hasEnding) {
+      // Add ending line first
+      let endingText = '';
+      for (let bar of bars) {
+        if (bar.ending) {
+          let endingDisplay = bar.ending.replace(/\[|\]/g, '');
+          endingText += endingDisplay + '───────────────── ';
+        } else {
+          endingText += ' '.repeat(20);
+        }
+      }
+      finalOutput += endingText.trim() + '\n';
+    }
+    
+    // Add chord line
+    finalOutput += chordLine + '\n';
+    
+    // Add beat line
+    finalOutput += beatLine;
+    
+    outputEl.innerHTML = finalOutput;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
@@ -409,86 +719,52 @@
   // AUTO-SCROLL
   // ============================================
   function startScroll() {
-    const output = document.getElementById('output');
     if (isScrolling) return;
-    if (!output.innerHTML || output.innerHTML === 'Loading...' || output.innerHTML === 'Select a leadsheet to view') return;
-    if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) return;
+    if (!outputEl.innerHTML || outputEl.innerHTML === 'Loading...' || outputEl.innerHTML === 'Select a leadsheet to view' || outputEl.innerHTML === 'No content') return;
+    if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) return;
     isScrolling = true;
-    const playBtn = document.getElementById('playBtn');
-    if (playBtn) {
-      playBtn.textContent = '▶️';
-      playBtn.style.background = '#2a5a2e';
-    }
-    output.classList.add('scrolling');
+    playBtn.textContent = '▶️';
+    playBtn.style.background = '#2a5a2e';
+    outputEl.classList.add('scrolling');
     scrollInterval = setInterval(() => {
-      const output = document.getElementById('output');
-      if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
+      if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
         stopScroll();
         return;
       }
-      output.scrollTop += scrollSpeed;
+      outputEl.scrollTop += scrollSpeed;
     }, 50);
   }
 
   function stopScroll() {
-    if (scrollInterval) {
-      clearInterval(scrollInterval);
-      scrollInterval = null;
-    }
+    if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
     isScrolling = false;
-    const playBtn = document.getElementById('playBtn');
-    if (playBtn) {
-      playBtn.textContent = '▶';
-      playBtn.style.background = '#1a1a2e';
-    }
-    const output = document.getElementById('output');
-    if (output) {
-      output.classList.remove('scrolling');
-    }
+    playBtn.textContent = '▶';
+    playBtn.style.background = '#1a1a2e';
+    outputEl.classList.remove('scrolling');
   }
 
   function toggleScroll() {
-    if (isScrolling) {
-      stopScroll();
-    } else {
-      startScroll();
-    }
+    if (isScrolling) { stopScroll(); } else { startScroll(); }
   }
 
   // ============================================
   // TAP TO STOP
   // ============================================
   function setupTapToStop() {
-    const output = document.getElementById('output');
-    if (!output) return;
-    
-    let touchStartY = 0;
-    let isSwiping = false;
-    
-    output.addEventListener('touchstart', function(e) {
+    let touchStartY = 0, isSwiping = false;
+    outputEl.addEventListener('touchstart', function(e) {
       touchStartY = e.touches[0].clientY;
       isSwiping = false;
     }, { passive: true });
-    
-    output.addEventListener('touchmove', function(e) {
-      const touchEndY = e.touches[0].clientY;
-      const diff = touchStartY - touchEndY;
-      if (Math.abs(diff) > 10) {
-        isSwiping = true;
-      }
+    outputEl.addEventListener('touchmove', function(e) {
+      const diff = touchStartY - e.touches[0].clientY;
+      if (Math.abs(diff) > 10) { isSwiping = true; }
     }, { passive: true });
-    
-    output.addEventListener('touchend', function(e) {
-      if (!isSwiping && isScrolling) {
-        stopScroll();
-        e.preventDefault();
-      }
+    outputEl.addEventListener('touchend', function(e) {
+      if (!isSwiping && isScrolling) { stopScroll(); e.preventDefault(); }
     }, { passive: true });
-    
-    output.addEventListener('click', function() {
-      if (isScrolling) {
-        stopScroll();
-      }
+    outputEl.addEventListener('click', function() {
+      if (isScrolling) { stopScroll(); }
     });
   }
 
@@ -501,47 +777,29 @@
       document.documentElement.requestFullscreen().catch(() => {});
       app.classList.add('fullscreen-mode');
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      if (document.exitFullscreen) { document.exitFullscreen(); }
       app.classList.remove('fullscreen-mode');
     }
   }
 
   document.addEventListener('fullscreenchange', function() {
     const app = document.querySelector('.app');
-    if (!document.fullscreenElement) {
-      app.classList.remove('fullscreen-mode');
-    }
+    if (!document.fullscreenElement) { app.classList.remove('fullscreen-mode'); }
   });
 
   // ============================================
   // KEYBOARD SHORTCUTS
   // ============================================
   document.addEventListener('keydown', function(e) {
-    if (e.key === ' ' || e.key === 'Space') {
-      e.preventDefault();
-      toggleScroll();
-    }
-    if (e.key === 'ArrowUp' && isScrolling) {
-      e.preventDefault();
-      scrollSpeed = Math.min(scrollSpeed + 0.3, 3);
-    }
-    if (e.key === 'ArrowDown' && isScrolling) {
-      e.preventDefault();
-      scrollSpeed = Math.max(scrollSpeed - 0.3, 0.3);
-    }
-    if (e.key === 'Escape') {
-      // Close any modals if needed
-    }
+    if (e.key === ' ' || e.key === 'Space') { e.preventDefault(); toggleScroll(); }
+    if (e.key === 'ArrowUp' && isScrolling) { e.preventDefault(); scrollSpeed = Math.min(scrollSpeed + 0.3, 3); }
+    if (e.key === 'ArrowDown' && isScrolling) { e.preventDefault(); scrollSpeed = Math.max(scrollSpeed - 0.3, 0.3); }
   });
 
   // ============================================
   // GO HOME
   // ============================================
-  function goHome() {
-    window.location.href = "index.html";
-  }
+  function goHome() { window.location.href = "index.html"; }
 
   // ============================================
   // INITIALIZE
@@ -552,29 +810,17 @@
     setupIdleTimer();
   });
 
-  // ============================================
-  // CLEANUP
-  // ============================================
   window.addEventListener('beforeunload', function() {
-    if (scrollInterval) {
-      clearInterval(scrollInterval);
-      scrollInterval = null;
-    }
-    if (logoutTimer) {
-      clearTimeout(logoutTimer);
-      logoutTimer = null;
-    }
+    if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
+    if (logoutTimer) { clearTimeout(logoutTimer); logoutTimer = null; }
   });
 
   console.log('📊 Leadsheet Viewer loaded!');
-  console.log('Controls:');
   console.log('  ▶  - Start auto-scroll');
   console.log('  ⏹  - Stop auto-scroll');
-  console.log('  Tap (not swipe) on lyrics - Stop scrolling');
+  console.log('  Tap on lyrics - Stop scrolling');
   console.log('  Space bar - Toggle scroll');
   console.log('  ↑/↓ arrows - Adjust scroll speed');
-  console.log('  🔍 Search - Type to filter leadsheets');
-  console.log('  ⛶ Fullscreen - Only leadsheet');
 </script>
 
 </body>
