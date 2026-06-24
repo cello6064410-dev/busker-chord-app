@@ -18,7 +18,7 @@
 
   <style>
     /* ============================================
-       FIX SCROLL - PENTING!
+       FIX SCROLL
        ============================================ */
     html, body {
       margin: 0;
@@ -34,34 +34,26 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      height: 100dvh; /* Android fix */
+      height: 100dvh;
       overflow: hidden;
       padding: 10px;
       padding-bottom: 80px;
       background: #0f0f0f;
     }
 
-    /* ELEMEN LAIN - JANGAN COMPRESS */
-    .header,
-    .search-container,
-    .song-list,
-    .link-row,
-    .floating-bar {
+    .header, .search-container, .song-list, .link-row, .floating-bar {
       flex-shrink: 0;
     }
 
-    /* ============================================
-       FIX PALING CRITICAL - #OUTPUT
-       ============================================ */
     #output {
-      flex: 1;              /* isi ruang baki */
-      overflow-y: auto;     /* enable vertical scroll */
-      min-height: 0;        /* 🔥 WAJIB untuk flexbox scroll fix */
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
       background: #1b1b1b;
       padding: 15px;
       border-radius: 10px;
       font-family: 'Courier New', monospace;
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.8;
       border: 1px solid #2a2a2a;
       white-space: pre-wrap;
@@ -74,7 +66,29 @@
     }
 
     /* ============================================
-       HEADER STYLING
+       WARNINGS
+       ============================================ */
+    .chord {
+      color: #ffcc00;
+    }
+    .barline {
+      color: #4fc3f7;
+    }
+    .beat {
+      color: #ff6b6b;
+    }
+    .section {
+      color: #51cf66;
+    }
+    .repeat {
+      color: #cc88ff;
+    }
+    .ending {
+      color: #ff922b;
+    }
+
+    /* ============================================
+       HEADER
        ============================================ */
     .header {
       text-align: center;
@@ -447,7 +461,7 @@
   let sheets = [];
   let filteredSheets = [];
   let currentSheetId = null;
-  let fontSize = 14;
+  let fontSize = 15;
   let scrollInterval = null;
   let isScrolling = false;
   let scrollSpeed = 0.4;
@@ -612,100 +626,35 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET
+  // RENDER LEADSHEET - DENGAN WARNA
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
     if (!content) { outputEl.textContent = 'No content'; return; }
 
-    // Split by | to get bars
-    let bars = content.split('|').filter(b => b.trim() !== '');
-    
-    let chordLines = [];
-    let beatLines = [];
-    let endingLines = [];
-    let hasEnding = false;
-    let sections = [];
-    
-    for (let bar of bars) {
-      let barContent = bar;
-      
-      // Check for section marker: a., b., etc.
-      let section = '';
-      let sectionMatch = bar.match(/^([a-d])\./);
-      if (sectionMatch) {
-        section = sectionMatch[1] + '.';
-        barContent = bar.replace(/^[a-d]\./, '');
-        sections.push(section);
-      }
-      
-      // Check for ending markers
-      let ending = '';
-      let endingMatch = barContent.match(/\[1va\]|\[2va\]|\[1,2va\]|\[1,2,3va\]|\[1,2,3,4va\]/);
-      if (endingMatch) {
-        ending = endingMatch[0];
-        barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
-        hasEnding = true;
-        endingLines.push(ending.replace(/\[|\]/g, '') + '─────────────────');
-      }
-      
-      // Remove [.] marker
-      barContent = barContent.replace(/\[\.\]/g, '');
-      
-      // Extract chords
-      let chordMatches = barContent.match(/\[([^\]]+)\]/g) || [];
-      let chordNames = chordMatches.map(c => c.replace(/[\[\]]/g, ''));
-      
-      // Count beats (single backslash)
-      let beatCount = (barContent.match(/\\\\/g) || []).length;
-      if (beatCount === 0) beatCount = 4; // default to 4/4
-      
-      // Build chord line for this bar
-      let chordLine = '';
-      if (section) {
-        chordLine += section + '  ';
-      }
-      
-      // Add chords with spacing
-      for (let chord of chordNames) {
-        let displayChord = chord.replace(/#/g, '♯').replace(/b/g, '♭').replace(/m7b5/g, 'ø').replace(/dim/g, '°');
-        // For slash chords, keep the slash
-        let spacing = Math.max(4, displayChord.length + 2);
-        chordLine += displayChord + ' '.repeat(spacing - displayChord.length);
-      }
-      
-      // Build beat line
-      let beatLine = '';
-      if (section) {
-        beatLine += '||  ';
-      }
-      for (let i = 0; i < beatCount; i++) {
-        beatLine += '\\' + ' '.repeat(3);
-      }
-      
-      chordLines.push(chordLine);
-      beatLines.push(beatLine);
-    }
-    
-    // Build final output with newlines
-    let finalOutput = '';
-    
-    // Add ending lines if any
-    if (hasEnding) {
-      for (let ending of endingLines) {
-        finalOutput += ending + ' ';
-      }
-      finalOutput += '\n';
-    }
-    
-    // Add chord lines
-    finalOutput += chordLines.join(' | ') + '\n';
-    
-    // Add beat lines
-    finalOutput += beatLines.join(' | ');
-    
-    // Replace newlines with <br> for HTML display
-    outputEl.innerHTML = finalOutput.replace(/\n/g, '<br>');
+    // Escape HTML
+    let rendered = content;
+
+    // Replace chords: [C] → <span class="chord">C</span>
+    rendered = rendered.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
+
+    // Replace bar lines: | → <span class="barline">|</span>
+    rendered = rendered.replace(/\|/g, '<span class="barline">|</span>');
+
+    // Replace beats: \ → <span class="beat">\</span>
+    rendered = rendered.replace(/\\/g, '<span class="beat">\\</span>');
+
+    // Replace section markers: a., b., etc. → <span class="section">a.</span>
+    rendered = rendered.replace(/([a-d])\./g, '<span class="section">$1.</span>');
+
+    // Replace repeat signs
+    rendered = rendered.replace(/\|:/g, '<span class="repeat">|:</span>');
+    rendered = rendered.replace(/:\|/g, '<span class="repeat">:|</span>');
+
+    // Replace ending lines: 1va─── etc. → <span class="ending">$&</span>
+    rendered = rendered.replace(/(1va|2va|1,2va|1,2,3va|1,2,3,4va)(─+)/g, '<span class="ending">$1$2</span>');
+
+    outputEl.innerHTML = rendered;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
