@@ -17,6 +17,9 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
+    /* ============================================
+       FIX SCROLL - PENTING!
+       ============================================ */
     html, body {
       margin: 0;
       padding: 0;
@@ -31,21 +34,29 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      height: 100dvh;
+      height: 100dvh; /* Android fix */
       overflow: hidden;
       padding: 10px;
       padding-bottom: 80px;
       background: #0f0f0f;
     }
 
-    .header, .search-container, .song-list, .floating-bar, .link-row {
+    /* ELEMEN LAIN - JANGAN COMPRESS */
+    .header,
+    .search-container,
+    .song-list,
+    .link-row,
+    .floating-bar {
       flex-shrink: 0;
     }
 
+    /* ============================================
+       FIX PALING CRITICAL - #OUTPUT
+       ============================================ */
     #output {
-      flex: 1;
-      overflow-y: auto;
-      min-height: 0;
+      flex: 1;              /* isi ruang baki */
+      overflow-y: auto;     /* enable vertical scroll */
+      min-height: 0;        /* 🔥 WAJIB untuk flexbox scroll fix */
       background: #1b1b1b;
       padding: 15px;
       border-radius: 10px;
@@ -62,6 +73,9 @@
       border-color: #4fc3f7;
     }
 
+    /* ============================================
+       HEADER STYLING
+       ============================================ */
     .header {
       text-align: center;
       padding: 5px 0;
@@ -124,6 +138,9 @@
       min-width: 40px;
     }
 
+    /* ============================================
+       SEARCH BAR
+       ============================================ */
     .search-container {
       display: flex;
       align-items: center;
@@ -167,6 +184,9 @@
       display: none;
     }
 
+    /* ============================================
+       SONG LIST
+       ============================================ */
     .song-list {
       max-height: 160px;
       overflow-y: auto;
@@ -230,6 +250,9 @@
       display: block;
     }
 
+    /* ============================================
+       FLOATING BAR
+       ============================================ */
     .floating-bar {
       position: fixed;
       bottom: 12px;
@@ -292,6 +315,9 @@
       50% { opacity: 1; }
     }
 
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
@@ -378,7 +404,7 @@
     <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
   </div>
 
-  <!-- SHEET LIST -->
+  <!-- SONG LIST -->
   <div id="sheetList" class="song-list"></div>
 
   <!-- OUTPUT -->
@@ -586,7 +612,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET - DENGAN NEWLINE
+  // RENDER LEADSHEET
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
