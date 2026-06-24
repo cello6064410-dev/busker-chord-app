@@ -42,86 +42,35 @@
       flex-shrink: 0;
     }
 
-    /* ============================================
-       OUTPUT - FLEX WRAP
-       ============================================ */
     #output {
       flex: 1;
       overflow-y: auto;
       min-height: 0;
       background: #1b1b1b;
-      padding: 15px 10px;
+      padding: 15px 15px;
       border-radius: 10px;
       border: 1px solid #2a2a2a;
-      display: flex;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      gap: 4px 0;
-    }
-
-    #output .bar {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      min-width: 60px;
-      flex-shrink: 0;
       font-family: 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      padding: 2px 0;
-      background: transparent;
-    }
-
-    /* Barline NIPIS — guna teks, bukan border */
-    #output .bar .line3 .barline {
-      color: #4fc3f7;
-    }
-
-    #output .bar .line3 .barline-double {
-      color: #4fc3f7;
-      font-weight: bold;
-    }
-
-    #output .bar .line1 {
-      color: #ff922b;
-      font-size: 0.85em;
-      min-height: 1.4em;
-      white-space: nowrap;
-    }
-
-    #output .bar .line2 {
-      color: #ffcc00;
-      font-size: 0.95em;
-      min-height: 1.4em;
-      white-space: nowrap;
-    }
-
-    #output .bar .line2 .section {
-      color: #51cf66;
-    }
-
-    #output .bar .line3 {
-      color: #4fc3f7;
-      font-size: 0.95em;
-      min-height: 1.4em;
-      white-space: nowrap;
-    }
-
-    #output .bar .line3 .beat {
-      color: #ff6b6b;
-    }
-
-    #output .bar .line3 .repeat {
-      color: #cc88ff;
+      font-size: 16px;
+      line-height: 2.2;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     .output.scrolling {
       border-color: #4fc3f7;
     }
 
-    /* ============================================
-       HEADER
-       ============================================ */
+    /* Warna Elemen */
+    .barline { color: #4fc3f7; }
+    .section { color: #51cf66; }
+    .chord { color: #ffcc00; }
+    .beat { color: #ff6b6b; }
+    .repeat { color: #cc88ff; }
+    .ending { color: #ff922b; }
+    .ending-dot { color: #ff922b; }
+
     .header {
       text-align: center;
       padding: 5px 0;
@@ -330,6 +279,7 @@
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
+      #output { font-size: 14px; padding: 10px; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -362,18 +312,13 @@
         min-width: 38px;
         font-size: 1rem;
       }
-      #output .bar {
-        min-width: 50px;
-        font-size: 12px;
-        padding: 2px 0;
-      }
     }
 
     @media (max-width: 400px) {
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output .bar { font-size: 10px; min-width: 40px; padding: 1px 0; }
+      #output { font-size: 12px; padding: 8px; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -383,7 +328,7 @@
 
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output .bar { font-size: 15px; min-width: 80px; padding: 4px 0; }
+      #output { font-size: 16px; padding: 15px 20px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -460,7 +405,7 @@
   // ============================================
   let sheets = [];
   let currentSheetId = null;
-  let fontSize = 14;
+  let fontSize = 16;
   let scrollInterval = null;
   let isScrolling = false;
   let scrollSpeed = 0.4;
@@ -599,105 +544,46 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — FLEX WRAP + BARRINE NIPIS
+  // RENDER LEADSHEET — SATU BARIS, WARNA
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
     if (!content) { outputEl.innerHTML = 'No content'; return; }
 
-    // Split by | to get bars
-    let bars = content.split('|').filter(b => b.trim() !== '');
+    let rendered = content;
 
-    let outputHTML = '';
+    // 1. Process endings: [1va] → 1va............ (titik)
+    rendered = rendered.replace(/\[1,2,3,4va\]/g, '1,2,3,4va............');
+    rendered = rendered.replace(/\[1,2,3va\]/g, '1,2,3va............');
+    rendered = rendered.replace(/\[1,2va\]/g, '1,2va............');
+    rendered = rendered.replace(/\[1va\]/g, '1va............');
+    rendered = rendered.replace(/\[2va\]/g, '2va............');
+    rendered = rendered.replace(/\[3va\]/g, '3va............');
+    rendered = rendered.replace(/\[4va\]/g, '4va............');
 
-    for (let bar of bars) {
-      let barContent = bar;
+    // 2. Remove [.] markers
+    rendered = rendered.replace(/\[\.\]/g, '');
 
-      // Check for section marker: (a), (b), etc.
-      let section = '';
-      let sectionMatch = bar.match(/\(([a-d])\)/);
-      if (sectionMatch) {
-        section = '(' + sectionMatch[1] + ')';
-        barContent = barContent.replace(/\([a-d]\)/, '');
-      }
+    // 3. Chord brackets: [C] → <span class="chord">C</span>
+    rendered = rendered.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
 
-      // Check for ending markers
-      let ending = '';
-      let endingMatch = barContent.match(/\[1va\]|\[2va\]|\[1,2va\]|\[1,2,3va\]|\[1,2,3,4va\]/);
-      if (endingMatch) {
-        ending = endingMatch[0];
-        barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
-      }
+    // 4. Barline: | → <span class="barline">|</span>
+    rendered = rendered.replace(/\|/g, '<span class="barline">|</span>');
 
-      // Remove [.] marker
-      barContent = barContent.replace(/\[\.\]/g, '');
+    // 5. Section marker: (a), (b) → <span class="section">(a)</span>
+    rendered = rendered.replace(/\(([a-d])\)/g, '<span class="section">($1)</span>');
 
-      // Extract chords
-      let chordMatches = barContent.match(/\[([^\]]+)\]/g) || [];
-      let chordNames = chordMatches.map(c => c.replace(/[\[\]]/g, ''));
+    // 6. Beat: ---- → <span class="beat">----</span>
+    rendered = rendered.replace(/----/g, '<span class="beat">----</span>');
 
-      // Count beats (////)
-      let beatCount = (barContent.match(/\/\/\/\//g) || []).length;
-      if (beatCount === 0) beatCount = 4;
+    // 7. Repeat signs
+    rendered = rendered.replace(/\|:/g, '<span class="repeat">|:</span>');
+    rendered = rendered.replace(/:\|/g, '<span class="repeat">:|</span>');
 
-      // Build line1: ending
-      let line1 = '';
-      if (ending) {
-        line1 = ending.replace(/\[|\]/g, '') + '────────────';
-      }
+    // 8. Ending dots: ............ → <span class="ending-dot">............</span>
+    rendered = rendered.replace(/\.\.\.\.\.\.\.\.\.\.\.\./g, '<span class="ending-dot">............</span>');
 
-      // Build line2: section + chords
-      let line2 = '';
-      if (section) {
-        line2 += '<span class="section">' + section + '</span> ';
-      }
-      for (let chord of chordNames) {
-        let displayChord = chord.replace(/#/g, '♯').replace(/b/g, '♭').replace(/m7b5/g, 'ø').replace(/dim/g, '°');
-        line2 += displayChord + ' ';
-      }
-
-      // Build line3: barline (nipis) + beats
-      let line3 = '';
-
-      // Check if this bar has a section marker → double bar
-      let isDoubleBar = section ? true : false;
-
-      // Left barline
-      if (isDoubleBar) {
-        line3 += '<span class="barline-double">||</span> ';
-      } else {
-        line3 += '<span class="barline">|</span> ';
-      }
-
-      // Beats
-      for (let i = 0; i < beatCount; i++) {
-        line3 += '<span class="beat">/</span> ';
-      }
-
-      // Right barline
-      if (isDoubleBar) {
-        line3 += ' <span class="barline-double">||</span>';
-      } else {
-        line3 += ' <span class="barline">|</span>';
-      }
-
-      // Check for repeat signs
-      if (barContent.includes(':')) {
-        line3 = line3.replace(/\|/g, '<span class="repeat">|</span>');
-        line3 = line3.replace(/:/g, '<span class="repeat">:</span>');
-      }
-
-      // Build bar HTML
-      outputHTML += `
-        <div class="bar">
-          <div class="line1">${line1}</div>
-          <div class="line2">${line2}</div>
-          <div class="line3">${line3}</div>
-        </div>
-      `;
-    }
-
-    outputEl.innerHTML = outputHTML;
+    outputEl.innerHTML = rendered;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
@@ -711,9 +597,7 @@
   }
 
   function applyFontSize(size) {
-    document.querySelectorAll('#output .bar').forEach(el => {
-      el.style.fontSize = size + 'px';
-    });
+    outputEl.style.fontSize = size + 'px';
   }
 
   // ============================================
