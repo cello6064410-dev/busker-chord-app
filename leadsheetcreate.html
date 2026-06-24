@@ -25,51 +25,54 @@
         <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
       </div>
     </div>
-    <p style="color: #888; font-size: 0.9rem; font-family: Arial, sans-serif;">Create chord chart with bar lines</p>
+    <p style="color: #888; font-size: 0.9rem; font-family: Arial, sans-serif;">Create, edit, or delete leadsheets</p>
   </div>
 
-  <!-- TITLE -->
+  <!-- SEARCH BAR -->
   <div class="search-container">
-    <input type="text" id="titleInput" placeholder="🎵 Song Title..." style="flex:1; padding: 10px 14px; background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 10px; color: white; font-size: 1rem; font-family: Arial, sans-serif; min-height: 44px;">
+    <input type="text" id="searchInput" placeholder="🔍 Search leadsheets..." oninput="filterLeadsheets()">
+    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
   </div>
 
-  <!-- TIME SIGNATURE -->
-  <div class="search-container" style="gap: 12px;">
-    <label style="color: #aaa; font-family: Arial, sans-serif;">Time:</label>
-    <button onclick="setTime('4/4')" class="time-btn" id="time44" style="background: #2a5a2e; border: none; color: white; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif;">4/4</button>
-    <button onclick="setTime('3/4')" class="time-btn" id="time34" style="background: #2a2a4e; border: none; color: white; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif;">3/4</button>
-    <span id="timeDisplay" style="color: #ffcc00; font-family: Arial, sans-serif;">4/4</span>
-  </div>
+  <!-- LEADSHEET LIST -->
+  <div id="leadsheetList" class="song-list"></div>
 
-  <!-- INPUT -->
-  <div class="search-container" style="flex-direction: column; align-items: stretch; padding: 8px 0;">
-    <label style="color: #aaa; font-family: Arial, sans-serif; font-size: 0.9rem;">Leadsheet Code:</label>
-    <textarea id="input" rows="8" style="width:100%; padding: 12px; background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 10px; color: white; font-size: 1rem; font-family: 'Courier New', monospace; resize: vertical; min-height: 150px;" placeholder='Example: ||:[C]\\|[G]\\|[Am]\\|[F]\\:|| [1va][C]\\|[G]\\[.] :|| [2va][C]\\|[G]\\[.] ||'></textarea>
-    <small style="color: #666; font-family: Arial, sans-serif;">Use: [Chord] \ for beats, | for bar lines, ||: :|| for repeats, [1va] [2va] for endings, [.] to end</small>
-  </div>
+  <hr style="border-color: #2a2a4e; margin: 15px 0;">
 
-  <!-- BUTTONS -->
-  <div class="button-group" style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; padding:16px; background:#2a2a4e; border-radius:12px; margin:12px 0; border:2px solid #ffcc00;">
-    <button onclick="insertSymbol('|')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">│</button>
-    <button onclick="insertSymbol('||:')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">‖:</button>
-    <button onclick="insertSymbol(':||')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">:‖</button>
-    <button onclick="insertSymbol('[1va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">1va</button>
-    <button onclick="insertSymbol('[2va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">2va</button>
-    <button onclick="insertSymbol('[3va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">3va</button>
-    <button onclick="insertSymbol('[4va]')" style="padding:8px 16px; background:#2a4a2e; border:1px solid #4a6e4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">4va</button>
-    <button onclick="insertSymbol('[.]')" style="padding:8px 16px; background:#4a2a2a; border:1px solid #6e4a4a; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:0.9rem;">[.]</button>
-    <button onclick="insertSymbol('\\\\')" style="padding:8px 16px; background:#1a1a2e; border:1px solid #4a4a6e; border-radius:8px; color:white; cursor:pointer; font-family:Arial; font-size:1rem;">\</button>
-    <button onclick="insertSymbol(' ')">␣</button>
-  </div>
+  <!-- FORM -->
+  <div style="display: flex; flex-direction: column; gap: 12px;">
 
-  <!-- SAVE / CLEAR / BACK -->
-  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:12px 0;">
-    <button onclick="saveLeadsheet()" style="background:#00c853; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">💾 Save</button>
-    <button onclick="clearForm()" style="background:#4a4a4a; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">🔄 Clear</button>
-    <button onclick="goHome()" style="background:#2a4a6e; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">⬅ Back</button>
-  </div>
+    <!-- Title -->
+    <div>
+      <label style="color: #aaa; font-family: Arial, sans-serif; font-size: 0.9rem;">🎵 Title</label>
+      <input type="text" id="titleInput" placeholder="Enter leadsheet title..." style="width:100%; padding: 10px 14px; background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 10px; color: white; font-size: 1rem; font-family: Arial, sans-serif; min-height: 44px;">
+    </div>
 
-  <div id="statusMessage" style="padding:12px; border-radius:10px; text-align:center; font-family:Arial; margin-top:10px;"></div>
+    <!-- Time Signature -->
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <label style="color: #aaa; font-family: Arial, sans-serif;">Time:</label>
+      <button onclick="setTime('4/4')" class="time-btn" id="time44" style="background: #2a5a2e; border: none; color: white; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif;">4/4</button>
+      <button onclick="setTime('3/4')" class="time-btn" id="time34" style="background: #2a2a4e; border: none; color: white; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif;">3/4</button>
+      <span id="timeDisplay" style="color: #ffcc00; font-family: Arial, sans-serif;">4/4</span>
+    </div>
+
+    <!-- Content -->
+    <div>
+      <label style="color: #aaa; font-family: Arial, sans-serif; font-size: 0.9rem;">📝 Leadsheet Code</label>
+      <textarea id="contentInput" rows="8" style="width:100%; padding: 12px; background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 10px; color: white; font-size: 1rem; font-family: 'Courier New', monospace; resize: vertical; min-height: 150px;" placeholder='Example: |a.|[C]\\|[G]\\|[Am]\\|[F]\\|'></textarea>
+      <small style="color: #666; font-family: Arial, sans-serif;">Use: [C] for chords, \ for beats, | for bar lines, |a.| for section</small>
+    </div>
+
+    <!-- Buttons -->
+    <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; padding:12px; background:#2a2a4e; border-radius:12px; border:2px solid #ffcc00;">
+      <button onclick="saveLeadsheet()" id="saveBtn" style="background:#00c853; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">💾 Save</button>
+      <button onclick="clearForm()" style="background:#4a4a4a; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">🔄 Clear</button>
+      <button onclick="deleteLeadsheet()" id="deleteBtn" style="background:#6e2a2a; color:#fff; border:none; padding:12px 30px; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer; display:none;">🗑️ Delete</button>
+    </div>
+
+    <!-- Status -->
+    <div id="statusMessage" style="padding:12px; border-radius:10px; text-align:center; font-family:Arial; min-height:44px;"></div>
+  </div>
 
 </div>
 
@@ -86,47 +89,177 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+</script>
 
-  const inputEl = document.getElementById('input');
-  const titleEl = document.getElementById('titleInput');
-  const statusMsg = document.getElementById('statusMessage');
+<script>
+  // ============================================
+  // GLOBAL VARIABLES
+  // ============================================
+  let allLeadsheets = [];
+  let filteredLeadsheets = [];
+  let currentEditId = null;
   let currentTime = '4/4';
+  const MAX_SEARCH_RESULTS = 10;
+  const DISPLAY_RESULTS = 5;
 
   // ============================================
-  // INSERT SYMBOL
+  // DOM REFERENCES
   // ============================================
-  function insertSymbol(sym) {
-    const start = inputEl.selectionStart;
-    const end = inputEl.selectionEnd;
-    const text = inputEl.value;
-    inputEl.value = text.substring(0, start) + sym + text.substring(end);
-    inputEl.focus();
-    inputEl.selectionStart = inputEl.selectionEnd = start + sym.length;
-  }
+  const listEl = document.getElementById('leadsheetList');
+  const titleInput = document.getElementById('titleInput');
+  const contentInput = document.getElementById('contentInput');
+  const statusMsg = document.getElementById('statusMessage');
+  const saveBtn = document.getElementById('saveBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  const timeDisplay = document.getElementById('timeDisplay');
 
   // ============================================
-  // SET TIME SIGNATURE
+  // AUTH
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    loadLeadsheets();
+  });
+
+  // ============================================
+  // SET TIME
   // ============================================
   function setTime(time) {
     currentTime = time;
-    document.getElementById('timeDisplay').textContent = time;
+    timeDisplay.textContent = time;
     document.getElementById('time44').style.background = time === '4/4' ? '#2a5a2e' : '#2a2a4e';
     document.getElementById('time34').style.background = time === '3/4' ? '#2a5a2e' : '#2a2a4e';
+  }
+
+  // ============================================
+  // LOAD LEADSHEETS
+  // ============================================
+  function loadLeadsheets() {
+    listEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
+
+    db.collection('leadsheets')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        allLeadsheets = [];
+        listEl.innerHTML = '';
+        if (snapshot.empty) {
+          listEl.innerHTML = '<div class="empty-text">📭 No leadsheets found. Create one below.</div>';
+          return;
+        }
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          allLeadsheets.push({ id: doc.id, ...data });
+        });
+        filteredLeadsheets = [...allLeadsheets];
+        renderList(filteredLeadsheets, filteredLeadsheets.length);
+      })
+      .catch((err) => {
+        console.error('Error loading leadsheets:', err);
+        listEl.innerHTML = '<div class="error-text">❌ Error loading leadsheets</div>';
+      });
+  }
+
+  // ============================================
+  // SEARCH / FILTER
+  // ============================================
+  function filterLeadsheets() {
+    const query = searchInput.value.toLowerCase().trim();
+    clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
+    if (query === '') {
+      filteredLeadsheets = [...allLeadsheets];
+    } else {
+      filteredLeadsheets = allLeadsheets.filter(s => s.title && s.title.toLowerCase().includes(query));
+    }
+    renderList(filteredLeadsheets, filteredLeadsheets.length);
+  }
+
+  function renderList(results, totalFound) {
+    listEl.innerHTML = '';
+    if (results.length === 0) {
+      listEl.innerHTML = '<div class="empty-text">🔍 No leadsheets found</div>';
+      return;
+    }
+    const count = document.createElement('div');
+    count.className = 'result-count';
+    count.textContent = 'Showing ' + results.length + ' of ' + totalFound + ' results';
+    listEl.appendChild(count);
+    const displayResults = results.slice(0, DISPLAY_RESULTS);
+    const hiddenResults = results.slice(DISPLAY_RESULTS);
+    displayResults.forEach((sheet) => {
+      const item = createListItem(sheet);
+      listEl.appendChild(item);
+    });
+    if (hiddenResults.length > 0) {
+      const hint = document.createElement('div');
+      hint.className = 'scroll-hint';
+      hint.textContent = '⬇️ ' + hiddenResults.length + ' more results (scroll down)';
+      listEl.appendChild(hint);
+      hiddenResults.forEach((sheet) => {
+        const item = createListItem(sheet);
+        item.className += ' hidden-result';
+        listEl.appendChild(item);
+      });
+    }
+  }
+
+  function createListItem(sheet) {
+    const div = document.createElement('div');
+    div.className = 'admin-song-item';
+    div.innerHTML = `
+      <span class="song-title">${sheet.title || 'Untitled'}</span>
+      <div class="admin-btn-group">
+        <button class="edit-btn" onclick="loadForEdit('${sheet.id}')">✏️ Edit</button>
+        <button class="delete-btn" onclick="confirmDelete('${sheet.id}')">🗑️ Delete</button>
+      </div>
+    `;
+    return div;
+  }
+
+  function clearSearch() {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    filteredLeadsheets = [...allLeadsheets];
+    renderList(filteredLeadsheets, filteredLeadsheets.length);
+    searchInput.focus();
+  }
+
+  // ============================================
+  // LOAD FOR EDIT
+  // ============================================
+  function loadForEdit(id) {
+    const sheet = allLeadsheets.find(s => s.id === id);
+    if (!sheet) {
+      statusMsg.textContent = '❌ Leadsheet not found';
+      statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
+      return;
+    }
+    currentEditId = id;
+    titleInput.value = sheet.title || '';
+    contentInput.value = sheet.content || '';
+    if (sheet.timeSignature) {
+      setTime(sheet.timeSignature);
+    }
+    saveBtn.textContent = '✏️ Update';
+    deleteBtn.style.display = 'inline-block';
+    statusMsg.textContent = '✅ Editing: ' + (sheet.title || 'Untitled');
+    statusMsg.style.cssText = 'background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853; padding:12px; border-radius:10px;';
+    titleInput.focus();
   }
 
   // ============================================
   // SAVE LEADSHEET
   // ============================================
   function saveLeadsheet() {
-    const title = titleEl.value.trim();
-    const content = inputEl.value.trim();
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
 
     if (!title) {
       statusMsg.textContent = '⚠️ Please enter a title';
       statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
       return;
     }
-
     if (!content) {
       statusMsg.textContent = '⚠️ Please enter leadsheet content';
       statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
@@ -137,18 +270,26 @@
       title: title,
       content: content,
       timeSignature: currentTime,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
+
+    let promise;
+    if (currentEditId) {
+      promise = db.collection('leadsheets').doc(currentEditId).update(data);
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      promise = db.collection('leadsheets').add(data);
+    }
 
     statusMsg.textContent = '⏳ Saving...';
     statusMsg.style.cssText = 'background:rgba(79,195,247,0.2); color:#4fc3f7; border:1px solid #4fc3f7; padding:12px; border-radius:10px;';
 
-    db.collection('leadsheets').add(data)
+    promise
       .then(() => {
         statusMsg.textContent = '✅ Leadsheet saved successfully!';
         statusMsg.style.cssText = 'background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853; padding:12px; border-radius:10px;';
         clearForm();
+        loadLeadsheets();
       })
       .catch(err => {
         statusMsg.textContent = '❌ Error: ' + err.message;
@@ -157,13 +298,50 @@
   }
 
   // ============================================
+  // CONFIRM DELETE
+  // ============================================
+  function confirmDelete(id) {
+    if (!confirm('Delete this leadsheet permanently?')) return;
+    statusMsg.textContent = '⏳ Deleting...';
+    statusMsg.style.cssText = 'background:rgba(79,195,247,0.2); color:#4fc3f7; border:1px solid #4fc3f7; padding:12px; border-radius:10px;';
+    db.collection('leadsheets').doc(id).delete()
+      .then(() => {
+        statusMsg.textContent = '✅ Leadsheet deleted!';
+        statusMsg.style.cssText = 'background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853; padding:12px; border-radius:10px;';
+        if (currentEditId === id) clearForm();
+        loadLeadsheets();
+      })
+      .catch(err => {
+        statusMsg.textContent = '❌ Delete failed: ' + err.message;
+        statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
+      });
+  }
+
+  // ============================================
+  // DELETE BUTTON (from form)
+  // ============================================
+  function deleteLeadsheet() {
+    if (!currentEditId) {
+      statusMsg.textContent = '⚠️ No leadsheet selected to delete';
+      statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
+      return;
+    }
+    confirmDelete(currentEditId);
+  }
+
+  // ============================================
   // CLEAR FORM
   // ============================================
   function clearForm() {
-    titleEl.value = '';
-    inputEl.value = '';
+    currentEditId = null;
+    titleInput.value = '';
+    contentInput.value = '';
+    setTime('4/4');
+    saveBtn.textContent = '💾 Save';
+    deleteBtn.style.display = 'none';
     statusMsg.textContent = '';
     statusMsg.style.cssText = '';
+    titleInput.focus();
   }
 
   // ============================================
@@ -172,16 +350,6 @@
   function goHome() {
     window.location.href = "index.html";
   }
-
-  // ============================================
-  // CHECK AUTH
-  // ============================================
-  auth.onAuthStateChanged(function(user) {
-    if (!user) {
-      // For admin, we rely on password protection from index.html
-      // But we can redirect if not logged in
-    }
-  });
 </script>
 
 </body>
