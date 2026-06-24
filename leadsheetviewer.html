@@ -56,8 +56,8 @@
       white-space: pre-wrap;
     }
 
-    /* Baris atas — FLOW (section, 1va) */
-    #output .line-flow {
+    /* Flow line — atas (section, 1va) */
+    .flow-line {
       color: #ff922b;
       font-size: 0.85em;
       min-height: 1.4em;
@@ -69,8 +69,8 @@
       margin-bottom: 2px;
     }
 
-    /* Baris bawah — STAY (chords, beats, barline) */
-    #output .line-stay {
+    /* Stay line — bawah (chords, beats, barline) */
+    .stay-line {
       color: #ffffff;
       font-size: 1em;
       min-height: 1.4em;
@@ -568,48 +568,7 @@
   }
 
   // ============================================
-  // TOKENIZER
-  // ============================================
-  function tokenize(input) {
-    const regex = /\|\:|\:\||\|\||\||\{.*?\}|\([a-z]\)|\[.*?\]|----/gi;
-    let tokens = [];
-    let match;
-
-    while ((match = regex.exec(input)) !== null) {
-      let value = match[0];
-
-      if (value === '|:') {
-        tokens.push({ type: 'REPEAT_START' });
-      } else if (value === ':|') {
-        tokens.push({ type: 'REPEAT_END' });
-      } else if (value === '||') {
-        tokens.push({ type: 'DOUBLE_BAR' });
-      } else if (value === '|') {
-        tokens.push({ type: 'BAR' });
-      } else if (value === '----') {
-        tokens.push({ type: 'BEAT' });
-      } else if (/^\([a-z]\)$/i.test(value)) {
-        tokens.push({ type: 'SECTION', value });
-      } else if (/^\{.*\}$/.test(value)) {
-        let inner = value.slice(1, -1);
-        if (inner === '.') {
-          tokens.push({ type: 'FLOW_STOP' });
-        } else if (/^[\d,]+va$/i.test(inner)) {
-          tokens.push({ type: 'FLOW_START', value: inner.replace(/va/i, '') });
-        } else {
-          tokens.push({ type: 'FLOW', value: inner });
-        }
-      } else if (/^\[.*\]$/.test(value)) {
-        let inner = value.slice(1, -1);
-        tokens.push({ type: 'CHORD', value: inner });
-      }
-    }
-
-    return tokens;
-  }
-
-  // ============================================
-  // RENDER — FLOW DI ATAS, STAY DI BAWAH
+  // RENDER LEADSHEET — SCAN CHAR BY CHAR (SAMA MACAM VIEWER.HTML)
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -618,95 +577,110 @@
       return;
     }
 
-    let tokens = tokenize(content);
-
     let flowLine = '';
     let stayLine = '';
 
     let currentFlow = null;
     let justStarted = false;
 
-    for (let t of tokens) {
-      // === FLOW START ===
-      if (t.type === 'FLOW_START') {
-        currentFlow = t.value;
-        justStarted = true;
+    let i = 0;
+    while (i < content.length) {
+      // Check for (a) — section marker (flow)
+      if (content[i] === '(' && i + 2 < content.length && content[i + 2] === ')') {
+        let section = content.substring(i, i + 3);
+        flowLine += section;
+        stayLine += ' '.repeat(3);
+        i += 3;
         continue;
       }
 
-      // === FLOW STOP ===
-      if (t.type === 'FLOW_STOP') {
-        currentFlow = null;
-        continue;
-      }
-
-      // === SECTION — FLOW ===
-      if (t.type === 'SECTION') {
-        let text = t.value;
-        flowLine += text;
-        stayLine += ' '.repeat(text.length);
-        continue;
-      }
-
-      // === BARLINE ===
-      if (t.type === 'BAR') {
-        flowLine += ' ';
-        stayLine += '|';
-        continue;
-      }
-
-      // === REPEAT START ===
-      if (t.type === 'REPEAT_START') {
-        flowLine += '  ';
-        stayLine += '|:';
-        continue;
-      }
-
-      // === REPEAT END ===
-      if (t.type === 'REPEAT_END') {
-        flowLine += '  ';
-        stayLine += ':|';
-        continue;
-      }
-
-      // === DOUBLE BAR ===
-      if (t.type === 'DOUBLE_BAR') {
-        flowLine += '  ';
-        stayLine += '||';
-        continue;
-      }
-
-      // === CHORD ===
-      if (t.type === 'CHORD') {
-        let text = t.value;
-        stayLine += text;
-
-        if (currentFlow) {
-          if (justStarted) {
-            flowLine += currentFlow;
-            if (text.length > 1) {
-              flowLine += '.'.repeat(text.length - 1);
-            }
-            justStarted = false;
+      // Check for {1va}, {2va}, etc. — flow start
+      if (content[i] === '{') {
+        let j = content.indexOf('}', i);
+        if (j !== -1) {
+          let inner = content.substring(i + 1, j);
+          if (inner !== '.') {
+            currentFlow = inner.replace(/va/i, '');
+            justStarted = true;
           } else {
-            flowLine += '.'.repeat(text.length);
+            // {.} — flow stop
+            currentFlow = null;
           }
-        } else {
-          flowLine += ' '.repeat(text.length);
+          i = j + 1;
+          continue;
         }
+      }
+
+      // Check for [chord] — stay inside bar
+      if (content[i] === '[') {
+        let j = content.indexOf(']', i);
+        if (j !== -1) {
+          let chord = content.substring(i + 1, j);
+          stayLine += chord;
+          if (currentFlow) {
+            if (justStarted) {
+              flowLine += currentFlow;
+              if (chord.length > 1) {
+                flowLine += '.'.repeat(chord.length - 1);
+              }
+              justStarted = false;
+            } else {
+              flowLine += '.'.repeat(chord.length);
+            }
+          } else {
+            flowLine += ' '.repeat(chord.length);
+          }
+          i = j + 1;
+          continue;
+        }
+      }
+
+      // Check for ---- (beat)
+      if (content[i] === '-' && i + 3 < content.length && content[i + 1] === '-' && content[i + 2] === '-' && content[i + 3] === '-') {
+        stayLine += '----';
+        if (currentFlow) {
+          flowLine += '....';
+        } else {
+          flowLine += '    ';
+        }
+        i += 4;
         continue;
       }
 
-      // === BEAT ===
-      if (t.type === 'BEAT') {
-        stayLine += '-';
-        if (currentFlow) {
-          flowLine += '.';
-        } else {
-          flowLine += ' ';
-        }
+      // Check for |: (repeat start)
+      if (content[i] === '|' && i + 1 < content.length && content[i + 1] === ':') {
+        stayLine += '|:';
+        flowLine += '  ';
+        i += 2;
         continue;
       }
+
+      // Check for :| (repeat end)
+      if (content[i] === ':' && i + 1 < content.length && content[i + 1] === '|') {
+        stayLine += ':|';
+        flowLine += '  ';
+        i += 2;
+        continue;
+      }
+
+      // Check for || (double bar)
+      if (content[i] === '|' && i + 1 < content.length && content[i + 1] === '|') {
+        stayLine += '||';
+        flowLine += '  ';
+        i += 2;
+        continue;
+      }
+
+      // Check for | (barline)
+      if (content[i] === '|') {
+        stayLine += '|';
+        flowLine += ' ';
+        i++;
+        continue;
+      }
+
+      // Ignore other characters (spaces, etc.)
+      i++;
     }
 
     // Color stay line
@@ -715,19 +689,18 @@
       .replace(/\|:/g, '<span class="repeat">|:</span>')
       .replace(/:\|/g, '<span class="repeat">:|</span>')
       .replace(/\|\|/g, '<span class="barline">||</span>')
-      .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
       .replace(/([A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>')
       .replace(/-/g, '<span class="beat">-</span>');
 
-    // Flow line color
+    // Color flow line
     let flowHTML = flowLine
       .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
       .replace(/(\d+va)/g, '<span class="flow">$1</span>')
       .replace(/\./g, '<span class="flow">.</span>');
 
     let html = `
-      <div class="line-flow">${flowHTML}</div>
-      <div class="line-stay">${stayHTML}</div>
+      <div class="flow-line">${flowHTML}</div>
+      <div class="stay-line">${stayHTML}</div>
     `;
 
     outputEl.innerHTML = html;
