@@ -17,6 +17,9 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
+    /* ============================================
+       LEADSHEET KHAS CSS
+       ============================================ */
     html, body {
       margin: 0;
       padding: 0;
@@ -52,11 +55,11 @@
       border: 1px solid #2a2a2a;
       font-family: 'Courier New', monospace;
       font-size: 16px;
-      line-height: 1.8;
+      line-height: 1.6;
       white-space: pre-wrap;
     }
 
-    /* Flow line — atas (section, 1va) */
+    /* === FLOW LINE — ATAS (section, 1va) === */
     .flow-line {
       color: #ff922b;
       font-size: 0.85em;
@@ -69,7 +72,7 @@
       margin-bottom: 2px;
     }
 
-    /* Stay line — bawah (chords, beats, barline) */
+    /* === STAY LINE — BAWAH (chords, beats, barline) === */
     .stay-line {
       color: #ffffff;
       font-size: 1em;
@@ -80,13 +83,13 @@
       letter-spacing: 0;
     }
 
-    /* Warna */
-    .chord { color: #ffcc00; }
-    .beat { color: #ff6b6b; }
-    .barline { color: #4fc3f7; }
-    .repeat { color: #cc88ff; }
-    .section { color: #51cf66; }
-    .flow { color: #ff922b; }
+    /* === WARNA ELEMEN === */
+    .chord { color: #ffcc00; }      /* Emas */
+    .beat { color: #ff6b6b; }        /* Merah */
+    .barline { color: #4fc3f7; }     /* Biru */
+    .repeat { color: #cc88ff; }      /* Ungu */
+    .section { color: #51cf66; }     /* Hijau */
+    .flow { color: #ff922b; }        /* Oren */
 
     .output.scrolling {
       border-color: #4fc3f7;
@@ -568,7 +571,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — SCAN CHAR BY CHAR (SAMA MACAM VIEWER.HTML)
+  // RENDER LEADSHEET — FLOW + STAY SELARI
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -580,21 +583,22 @@
     let flowLine = '';
     let stayLine = '';
 
-    let currentFlow = null;
+    let currentFlow = null;      // "1", "2", "1,2", dll
     let justStarted = false;
 
     let i = 0;
     while (i < content.length) {
-      // Check for (a) — section marker (flow)
+
+      // === 1. SECTION MARKER (a) — FLOW ===
       if (content[i] === '(' && i + 2 < content.length && content[i + 2] === ')') {
         let section = content.substring(i, i + 3);
         flowLine += section;
-        stayLine += ' '.repeat(3);
+        stayLine += '   ';  // 3 spaces
         i += 3;
         continue;
       }
 
-      // Check for {1va}, {2va}, etc. — flow start
+      // === 2. FLOW START {1va} ===
       if (content[i] === '{') {
         let j = content.indexOf('}', i);
         if (j !== -1) {
@@ -611,7 +615,7 @@
         }
       }
 
-      // Check for [chord] — stay inside bar
+      // === 3. CHORD [C] — STAY ===
       if (content[i] === '[') {
         let j = content.indexOf(']', i);
         if (j !== -1) {
@@ -635,8 +639,9 @@
         }
       }
 
-      // Check for ---- (beat)
-      if (content[i] === '-' && i + 3 < content.length && content[i + 1] === '-' && content[i + 2] === '-' && content[i + 3] === '-') {
+      // === 4. BEAT ---- ===
+      if (content[i] === '-' && i + 3 < content.length &&
+          content[i+1] === '-' && content[i+2] === '-' && content[i+3] === '-') {
         stayLine += '----';
         if (currentFlow) {
           flowLine += '....';
@@ -647,31 +652,31 @@
         continue;
       }
 
-      // Check for |: (repeat start)
-      if (content[i] === '|' && i + 1 < content.length && content[i + 1] === ':') {
+      // === 5. REPEAT START |: ===
+      if (content[i] === '|' && i + 1 < content.length && content[i+1] === ':') {
         stayLine += '|:';
         flowLine += '  ';
         i += 2;
         continue;
       }
 
-      // Check for :| (repeat end)
-      if (content[i] === ':' && i + 1 < content.length && content[i + 1] === '|') {
+      // === 6. REPEAT END :| ===
+      if (content[i] === ':' && i + 1 < content.length && content[i+1] === '|') {
         stayLine += ':|';
         flowLine += '  ';
         i += 2;
         continue;
       }
 
-      // Check for || (double bar)
-      if (content[i] === '|' && i + 1 < content.length && content[i + 1] === '|') {
+      // === 7. DOUBLE BAR || ===
+      if (content[i] === '|' && i + 1 < content.length && content[i+1] === '|') {
         stayLine += '||';
         flowLine += '  ';
         i += 2;
         continue;
       }
 
-      // Check for | (barline)
+      // === 8. BARLINE | ===
       if (content[i] === '|') {
         stayLine += '|';
         flowLine += ' ';
@@ -679,11 +684,11 @@
         continue;
       }
 
-      // Ignore other characters (spaces, etc.)
+      // === 9. OTHER CHARACTERS ===
       i++;
     }
 
-    // Color stay line
+    // === COLOR STAY LINE ===
     let stayHTML = stayLine
       .replace(/\|/g, '<span class="barline">|</span>')
       .replace(/\|:/g, '<span class="repeat">|:</span>')
@@ -692,7 +697,7 @@
       .replace(/([A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>')
       .replace(/-/g, '<span class="beat">-</span>');
 
-    // Color flow line
+    // === COLOR FLOW LINE ===
     let flowHTML = flowLine
       .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
       .replace(/(\d+va)/g, '<span class="flow">$1</span>')
