@@ -18,7 +18,7 @@
 
   <style>
     /* ============================================
-       LEADSHEET KHAS CSS
+       LEADSHEET KHAS CSS — BRACKET THERAPUNG
        ============================================ */
     html, body {
       margin: 0;
@@ -45,69 +45,152 @@
       flex-shrink: 0;
     }
 
-    /* ============================================
-       OUTPUT — FLEX WRAP, SETIAP BAR SATU UNIT
-       ============================================ */
     #output {
       flex: 1;
       overflow-y: auto;
       min-height: 0;
       background: #1b1b1b;
-      padding: 15px 10px;
+      padding: 15px 15px;
       border-radius: 10px;
       border: 1px solid #2a2a2a;
       font-family: 'Courier New', monospace;
       font-size: 16px;
       line-height: 1.6;
-      display: flex;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      gap: 4px 6px;
     }
 
-    /* Setiap bar = satu unit */
-    .bar-unit {
+    /* ============================================
+       SYSTEM — GRID 4 BAR PER LINE
+       ============================================ */
+    .system {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      width: 100%;
+      padding-top: 28px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #1a1a2e;
+      position: relative;
+    }
+
+    /* ============================================
+       MEASURE — SATU BAR
+       ============================================ */
+    .measure {
+      position: relative;
+      padding: 8px 6px;
+      border-right: 1px solid #2a2a4e;
+      min-height: 60px;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      background: transparent;
-      padding: 2px 4px;
-      border-left: 1px solid #2a2a4e;
-      border-right: 1px solid #2a2a4e;
-      min-width: 40px;
-      flex-shrink: 0;
+      justify-content: flex-end;
     }
 
-    /* Flow line — atas (section, 1va) */
-    .flow-line {
-      color: #ff922b;
-      font-size: 0.8em;
-      min-height: 1.2em;
-      padding: 0;
-      font-family: 'Courier New', monospace;
-      white-space: nowrap;
-      letter-spacing: 0;
+    .measure:last-child {
+      border-right: none;
     }
 
-    /* Stay line — bawah (chords, beats, barline) */
-    .stay-line {
-      color: #ffffff;
+    /* ============================================
+       CHORD WRAPPER
+       ============================================ */
+    .chord-wrapper {
+      height: 24px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      flex-wrap: wrap;
+    }
+
+    .chord {
+      color: #ffcc00;
+      font-weight: bold;
       font-size: 0.95em;
-      min-height: 1.2em;
-      padding: 0;
-      font-family: 'Courier New', monospace;
-      white-space: nowrap;
-      letter-spacing: 0;
     }
 
-    /* === WARNA ELEMEN === */
-    .chord { color: #ffcc00; }
-    .beat { color: #ff6b6b; }
-    .barline { color: #4fc3f7; }
-    .repeat { color: #cc88ff; }
-    .section { color: #51cf66; }
-    .flow { color: #ff922b; }
+    /* ============================================
+       BEAT
+       ============================================ */
+    .beat {
+      color: #ff6b6b;
+      font-size: 0.9em;
+    }
 
+    /* ============================================
+       BARLINE
+       ============================================ */
+    .barline {
+      color: #4fc3f7;
+    }
+
+    .repeat {
+      color: #cc88ff;
+    }
+
+    .section {
+      color: #51cf66;
+    }
+
+    /* ============================================
+       VOLTA BRACKET — TERAPUNG DI ATAS
+       ============================================ */
+    .volta {
+      position: absolute;
+      top: -22px;
+      left: -4px;
+      right: 0;
+      height: 14px;
+      border-top: 2px solid #ff922b;
+      border-left: 2px solid #ff922b;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ff922b;
+      padding-left: 6px;
+      line-height: 10px;
+      pointer-events: none;
+      z-index: 10;
+      white-space: nowrap;
+      overflow: visible;
+    }
+
+    /* Right hook for the last bar */
+    .volta::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 8px;
+      border-right: 2px solid #ff922b;
+    }
+
+    /* Continuous volta — no left border */
+    .volta.continue {
+      border-left: none;
+      padding-left: 0;
+    }
+
+    .volta.continue::after {
+      right: 0;
+      border-right: 2px solid #ff922b;
+    }
+
+    /* No right hook for middle bars */
+    .volta.middle {
+      border-left: none;
+      padding-left: 0;
+    }
+
+    .volta.middle::after {
+      display: none;
+    }
+
+    /* No left hook for continue bars */
+    .volta.no-left {
+      border-left: none;
+      padding-left: 0;
+    }
+
+    /* ============================================
+       SCROLLING STATE
+       ============================================ */
     .output.scrolling {
       border-color: #4fc3f7;
     }
@@ -323,10 +406,12 @@
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
-      #output { font-size: 14px; padding: 10px; gap: 2px 4px; }
-      .bar-unit { min-width: 30px; padding: 2px 3px; }
-      .flow-line { font-size: 0.75em; }
-      .stay-line { font-size: 0.9em; }
+      #output { font-size: 14px; padding: 10px; }
+      .system { padding-top: 24px; gap: 0; }
+      .measure { padding: 4px 4px; min-height: 50px; }
+      .chord-wrapper { height: 20px; }
+      .chord { font-size: 0.85em; }
+      .volta { font-size: 9px; top: -18px; height: 12px; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -365,10 +450,12 @@
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output { font-size: 12px; padding: 8px; gap: 2px 3px; }
-      .bar-unit { min-width: 20px; padding: 1px 2px; }
-      .flow-line { font-size: 0.7em; }
-      .stay-line { font-size: 0.85em; }
+      #output { font-size: 12px; padding: 8px; }
+      .system { padding-top: 20px; }
+      .measure { padding: 2px 2px; min-height: 40px; }
+      .chord-wrapper { height: 16px; }
+      .chord { font-size: 0.75em; }
+      .volta { font-size: 8px; top: -15px; height: 10px; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -378,8 +465,11 @@
 
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output { font-size: 16px; padding: 15px 20px; gap: 4px 8px; }
-      .bar-unit { min-width: 60px; padding: 4px 8px; }
+      #output { font-size: 16px; padding: 15px 20px; }
+      .system { padding-top: 32px; }
+      .measure { padding: 10px 8px; min-height: 70px; }
+      .chord-wrapper { height: 28px; }
+      .volta { font-size: 12px; top: -26px; height: 16px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -595,7 +685,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — SETIAP BAR SATU UNIT
+  // RENDER LEADSHEET — BRACKET THERAPUNG
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -608,136 +698,120 @@
     let bars = content.split('|').filter(b => b.trim() !== '');
 
     let html = '';
-    let currentFlow = null;
-    let justStarted = false;
+    let voltaState = null;      // "1", "2", "1,2", dll
+    let voltaStartIndex = -1;   // Bar index where volta started
+    let currentSystem = [];
+    let systemIndex = 0;
+    const BARS_PER_SYSTEM = 4;
 
-    for (let bar of bars) {
-      let flowLine = '';
-      let stayLine = '';
+    for (let i = 0; i < bars.length; i++) {
+      let bar = bars[i];
       let barContent = bar;
 
       // Check for section marker (a) at start
       let sectionMatch = barContent.match(/^\(([a-d])\)/);
+      let section = '';
       if (sectionMatch) {
-        flowLine += '(' + sectionMatch[1] + ')';
-        stayLine += '   ';
+        section = '(' + sectionMatch[1] + ')';
         barContent = barContent.replace(/^\([a-d]\)/, '');
       }
 
-      // Process the bar content for chords, beats, flow
-      let i = 0;
-      while (i < barContent.length) {
-        // Check for {1va} — flow start
-        if (barContent[i] === '{') {
-          let j = barContent.indexOf('}', i);
-          if (j !== -1) {
-            let inner = barContent.substring(i + 1, j);
-            if (inner !== '.') {
-              currentFlow = inner.replace(/va/i, '');
-              justStarted = true;
-            } else {
-              // {.} — flow stop
-              currentFlow = null;
-            }
-            i = j + 1;
-            continue;
-          }
-        }
-
-        // Check for [chord]
-        if (barContent[i] === '[') {
-          let j = barContent.indexOf(']', i);
-          if (j !== -1) {
-            let chord = barContent.substring(i + 1, j);
-            stayLine += chord;
-            if (currentFlow) {
-              if (justStarted) {
-                flowLine += currentFlow;
-                if (chord.length > 1) {
-                  flowLine += '.'.repeat(chord.length - 1);
-                }
-                justStarted = false;
-              } else {
-                flowLine += '.'.repeat(chord.length);
-              }
-            } else {
-              flowLine += ' '.repeat(chord.length);
-            }
-            i = j + 1;
-            continue;
-          }
-        }
-
-        // Check for ----
-        if (barContent[i] === '-' && i + 3 < barContent.length &&
-            barContent[i+1] === '-' && barContent[i+2] === '-' && barContent[i+3] === '-') {
-          stayLine += '----';
-          if (currentFlow) {
-            flowLine += '....';
-          } else {
-            flowLine += '    ';
-          }
-          i += 4;
-          continue;
-        }
-
-        // Check for |:
-        if (barContent[i] === '|' && i + 1 < barContent.length && barContent[i+1] === ':') {
-          stayLine += '|:';
-          flowLine += '  ';
-          i += 2;
-          continue;
-        }
-
-        // Check for :|
-        if (barContent[i] === ':' && i + 1 < barContent.length && barContent[i+1] === '|') {
-          stayLine += ':|';
-          flowLine += '  ';
-          i += 2;
-          continue;
-        }
-
-        // Check for ||
-        if (barContent[i] === '|' && i + 1 < barContent.length && barContent[i+1] === '|') {
-          stayLine += '||';
-          flowLine += '  ';
-          i += 2;
-          continue;
-        }
-
-        // Regular | barline
-        if (barContent[i] === '|') {
-          stayLine += '|';
-          flowLine += ' ';
-          i++;
-          continue;
-        }
-
-        // Other characters (spaces, etc.)
-        i++;
+      // Check for {1va}, {2va}
+      let voltaMatch = barContent.match(/\{([\d,]+)va\}/);
+      if (voltaMatch) {
+        voltaState = voltaMatch[1];
+        voltaStartIndex = i;
+        barContent = barContent.replace(/\{[\d,]+va\}/, '');
       }
 
-      // Color the lines
-      let stayHTML = stayLine
-        .replace(/\|/g, '<span class="barline">|</span>')
-        .replace(/\|:/g, '<span class="repeat">|:</span>')
-        .replace(/:\|/g, '<span class="repeat">:|</span>')
-        .replace(/\|\|/g, '<span class="barline">||</span>')
-        .replace(/([A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>')
-        .replace(/-/g, '<span class="beat">-</span>');
+      // Check for {.}
+      if (barContent.includes('{.'}')) {
+        barContent = barContent.replace(/\{\.\}/, '');
+        // End volta
+        voltaState = null;
+      }
 
-      let flowHTML = flowLine
-        .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
-        .replace(/(\d+va)/g, '<span class="flow">$1</span>')
-        .replace(/\./g, '<span class="flow">.</span>');
+      // Extract chords: [C], [Fm], etc.
+      let chordMatches = barContent.match(/\[([^\]]+)\]/g) || [];
+      let chordNames = chordMatches.map(c => c.replace(/[\[\]]/g, ''));
 
-      // Build bar unit
-      html += `
-        <div class="bar-unit">
-          <div class="flow-line">${flowHTML}</div>
-          <div class="stay-line">${stayHTML}</div>
+      // Remove chords from content to get beats
+      let beatContent = barContent.replace(/\[([^\]]+)\]/g, '');
+      let beatCount = (beatContent.match(/----/g) || []).length;
+      if (beatCount === 0) beatCount = 4;
+
+      // Build measure HTML
+      let chordHTML = chordNames.map(ch => `<span class="chord">${ch}</span>`).join(' ');
+      let beatHTML = '';
+      for (let b = 0; b < beatCount; b++) {
+        beatHTML += '<span class="beat">-</span>';
+      }
+
+      // Check for repeats
+      let hasRepeatStart = barContent.includes('|:');
+      let hasRepeatEnd = barContent.includes(':|');
+      let hasDoubleBar = barContent.includes('||');
+
+      let barlineHTML = '';
+      if (hasRepeatStart) barlineHTML += '<span class="repeat">|:</span>';
+      if (hasRepeatEnd) barlineHTML += '<span class="repeat">:|</span>';
+      if (hasDoubleBar) barlineHTML += '<span class="barline">||</span>';
+      if (!hasRepeatStart && !hasRepeatEnd && !hasDoubleBar) {
+        barlineHTML = '<span class="barline">|</span>';
+      }
+
+      let measureHTML = `
+        <div class="measure" data-bar-index="${i}">
+          ${section ? `<div class="section" style="position:absolute;top:-18px;left:2px;font-size:0.8em;color:#51cf66;">${section}</div>` : ''}
+          <div class="chord-wrapper">${chordHTML}</div>
+          <div>${beatHTML} ${barlineHTML}</div>
         </div>
       `;
+
+      currentSystem.push(measureHTML);
+
+      // If system is full or last bar
+      if (currentSystem.length === BARS_PER_SYSTEM || i === bars.length - 1) {
+        // Check if there's an active volta spanning this system
+        let voltaHTML = '';
+        if (voltaState && voltaStartIndex !== -1) {
+          let startInSystem = voltaStartIndex - (systemIndex * BARS_PER_SYSTEM);
+          let endInSystem = currentSystem.length - 1;
+          let span = endInSystem - startInSystem + 1;
+
+          // Only show volta if it starts in this system
+          if (startInSystem >= 0 && startInSystem < currentSystem.length) {
+            let leftHook = startInSystem === 0 ? 'border-left:2px solid #ff922b;' : '';
+            let rightHook = endInSystem === currentSystem.length - 1 ? 'border-right:2px solid #ff922b;' : '';
+
+            // Calculate position and width
+            let gridColumnStart = startInSystem + 1;
+            let gridColumnEnd = startInSystem + span + 1;
+
+            voltaHTML = `
+              <div class="volta" style="
+                grid-column: ${gridColumnStart} / ${gridColumnEnd};
+                ${leftHook}
+                ${rightHook}
+              ">
+                ${startInSystem === 0 ? voltaState + '.' : ''}
+              </div>
+            `;
+          }
+        }
+
+        // Build system
+        let systemHTML = `
+          <div class="system" style="position:relative;">
+            ${voltaHTML}
+            ${currentSystem.join('')}
+          </div>
+        `;
+
+        html += systemHTML;
+        currentSystem = [];
+        systemIndex++;
+      }
     }
 
     outputEl.innerHTML = html;
