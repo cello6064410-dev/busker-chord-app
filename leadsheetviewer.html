@@ -586,29 +586,31 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET - BETUL
+  // RENDER LEADSHEET - DENGAN NEWLINE
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
     if (!content) { outputEl.textContent = 'No content'; return; }
 
-    // Step 1: Split by | to get bars
+    // Split by | to get bars
     let bars = content.split('|').filter(b => b.trim() !== '');
     
-    let result = [];
     let chordLines = [];
     let beatLines = [];
     let endingLines = [];
     let hasEnding = false;
+    let sections = [];
     
     for (let bar of bars) {
+      let barContent = bar;
+      
       // Check for section marker: a., b., etc.
       let section = '';
-      let barContent = bar;
       let sectionMatch = bar.match(/^([a-d])\./);
       if (sectionMatch) {
         section = sectionMatch[1] + '.';
         barContent = bar.replace(/^[a-d]\./, '');
+        sections.push(section);
       }
       
       // Check for ending markers
@@ -618,6 +620,7 @@
         ending = endingMatch[0];
         barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
         hasEnding = true;
+        endingLines.push(ending.replace(/\[|\]/g, '') + '─────────────────');
       }
       
       // Remove [.] marker
@@ -635,11 +638,6 @@
       let chordLine = '';
       if (section) {
         chordLine += section + '  ';
-      }
-      if (ending) {
-        let endingDisplay = ending.replace(/\[|\]/g, '');
-        // Store ending for later
-        endingLines.push({ bar: chordLine, ending: endingDisplay });
       }
       
       // Add chords with spacing
@@ -663,13 +661,13 @@
       beatLines.push(beatLine);
     }
     
-    // Build final output
+    // Build final output with newlines
     let finalOutput = '';
     
     // Add ending lines if any
     if (hasEnding) {
       for (let ending of endingLines) {
-        finalOutput += ending.ending + '───────────────── ';
+        finalOutput += ending + ' ';
       }
       finalOutput += '\n';
     }
@@ -680,7 +678,8 @@
     // Add beat lines
     finalOutput += beatLines.join(' | ');
     
-    outputEl.innerHTML = finalOutput;
+    // Replace newlines with <br> for HTML display
+    outputEl.innerHTML = finalOutput.replace(/\n/g, '<br>');
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
