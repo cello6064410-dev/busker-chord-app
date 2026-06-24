@@ -56,20 +56,24 @@
       white-space: pre-wrap;
     }
 
-    #output .line-top {
+    /* Baris atas — FLOW (section, 1va) */
+    #output .line-flow {
       color: #ff922b;
       font-size: 0.85em;
-      min-height: 1.2em;
+      min-height: 1.4em;
       padding: 2px 0;
       font-family: 'Courier New', monospace;
       white-space: pre-wrap;
       letter-spacing: 0;
+      border-bottom: 1px solid #2a2a4e;
+      margin-bottom: 2px;
     }
 
-    #output .line-bottom {
+    /* Baris bawah — STAY (chords, beats, barline) */
+    #output .line-stay {
       color: #ffffff;
       font-size: 1em;
-      min-height: 1.2em;
+      min-height: 1.4em;
       padding: 2px 0;
       font-family: 'Courier New', monospace;
       white-space: pre-wrap;
@@ -77,12 +81,12 @@
     }
 
     /* Warna */
-    .chord { color: #ffcc00; }        /* Emas */
-    .beat { color: #ff6b6b; }          /* Merah */
-    .barline { color: #4fc3f7; }       /* Biru */
-    .repeat { color: #cc88ff; }        /* Ungu */
-    .section { color: #51cf66; }       /* Hijau */
-    .flow { color: #ff922b; }          /* Oren */
+    .chord { color: #ffcc00; }
+    .beat { color: #ff6b6b; }
+    .barline { color: #4fc3f7; }
+    .repeat { color: #cc88ff; }
+    .section { color: #51cf66; }
+    .flow { color: #ff922b; }
 
     .output.scrolling {
       border-color: #4fc3f7;
@@ -564,10 +568,9 @@
   }
 
   // ============================================
-  // TOKENIZER — NEW SYSTEM
+  // TOKENIZER
   // ============================================
   function tokenize(input) {
-    // Order penting: longest match first
     const regex = /\|\:|\:\||\|\||\||\{.*?\}|\([a-z]\)|\[.*?\]|----/gi;
     let tokens = [];
     let match;
@@ -586,10 +589,8 @@
       } else if (value === '----') {
         tokens.push({ type: 'BEAT' });
       } else if (/^\([a-z]\)$/i.test(value)) {
-        // Section marker — FLOW
         tokens.push({ type: 'SECTION', value });
       } else if (/^\{.*\}$/.test(value)) {
-        // Flow: {1va}, {2va}, {.}
         let inner = value.slice(1, -1);
         if (inner === '.') {
           tokens.push({ type: 'FLOW_STOP' });
@@ -599,7 +600,6 @@
           tokens.push({ type: 'FLOW', value: inner });
         }
       } else if (/^\[.*\]$/.test(value)) {
-        // Chord — STAY INSIDE BAR
         let inner = value.slice(1, -1);
         tokens.push({ type: 'CHORD', value: inner });
       }
@@ -609,7 +609,7 @@
   }
 
   // ============================================
-  // RENDER — FLOW + STAY INSIDE BAR
+  // RENDER — FLOW DI ATAS, STAY DI BAWAH
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -620,97 +620,97 @@
 
     let tokens = tokenize(content);
 
-    let top = '';
-    let bottom = '';
+    let flowLine = '';
+    let stayLine = '';
 
-    let currentFlow = null;      // "1", "2", "1,2", dll
+    let currentFlow = null;
     let justStarted = false;
 
     for (let t of tokens) {
-      // === FLOW: START ===
+      // === FLOW START ===
       if (t.type === 'FLOW_START') {
         currentFlow = t.value;
         justStarted = true;
         continue;
       }
 
-      // === FLOW: STOP ===
+      // === FLOW STOP ===
       if (t.type === 'FLOW_STOP') {
         currentFlow = null;
         continue;
       }
 
-      // === SECTION MARKER — FLOW ===
+      // === SECTION — FLOW ===
       if (t.type === 'SECTION') {
         let text = t.value;
-        top += text;
-        bottom += ' '.repeat(text.length);
+        flowLine += text;
+        stayLine += ' '.repeat(text.length);
         continue;
       }
 
       // === BARLINE ===
       if (t.type === 'BAR') {
-        top += ' ';
-        bottom += '|';
+        flowLine += ' ';
+        stayLine += '|';
         continue;
       }
 
       // === REPEAT START ===
       if (t.type === 'REPEAT_START') {
-        top += '  ';
-        bottom += '|:';
+        flowLine += '  ';
+        stayLine += '|:';
         continue;
       }
 
       // === REPEAT END ===
       if (t.type === 'REPEAT_END') {
-        top += '  ';
-        bottom += ':|';
+        flowLine += '  ';
+        stayLine += ':|';
         continue;
       }
 
       // === DOUBLE BAR ===
       if (t.type === 'DOUBLE_BAR') {
-        top += '  ';
-        bottom += '||';
+        flowLine += '  ';
+        stayLine += '||';
         continue;
       }
 
-      // === CHORD — STAY INSIDE BAR ===
+      // === CHORD ===
       if (t.type === 'CHORD') {
         let text = t.value;
-        bottom += text;
+        stayLine += text;
 
         if (currentFlow) {
           if (justStarted) {
-            top += currentFlow;
+            flowLine += currentFlow;
             if (text.length > 1) {
-              top += '.'.repeat(text.length - 1);
+              flowLine += '.'.repeat(text.length - 1);
             }
             justStarted = false;
           } else {
-            top += '.'.repeat(text.length);
+            flowLine += '.'.repeat(text.length);
           }
         } else {
-          top += ' '.repeat(text.length);
+          flowLine += ' '.repeat(text.length);
         }
         continue;
       }
 
-      // === BEAT — STAY INSIDE BAR ===
+      // === BEAT ===
       if (t.type === 'BEAT') {
-        bottom += '-';
+        stayLine += '-';
         if (currentFlow) {
-          top += '.';
+          flowLine += '.';
         } else {
-          top += ' ';
+          flowLine += ' ';
         }
         continue;
       }
     }
 
-    // Color bottom line
-    let bottomHTML = bottom
+    // Color stay line
+    let stayHTML = stayLine
       .replace(/\|/g, '<span class="barline">|</span>')
       .replace(/\|:/g, '<span class="repeat">|:</span>')
       .replace(/:\|/g, '<span class="repeat">:|</span>')
@@ -719,9 +719,15 @@
       .replace(/([A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>')
       .replace(/-/g, '<span class="beat">-</span>');
 
+    // Flow line color
+    let flowHTML = flowLine
+      .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
+      .replace(/(\d+va)/g, '<span class="flow">$1</span>')
+      .replace(/\./g, '<span class="flow">.</span>');
+
     let html = `
-      <div class="line-top">${top}</div>
-      <div class="line-bottom">${bottomHTML}</div>
+      <div class="line-flow">${flowHTML}</div>
+      <div class="line-stay">${stayHTML}</div>
     `;
 
     outputEl.innerHTML = html;
