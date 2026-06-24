@@ -42,35 +42,70 @@
       flex-shrink: 0;
     }
 
+    /* ============================================
+       OUTPUT - FLEX WRAP
+       ============================================ */
     #output {
       flex: 1;
       overflow-y: auto;
       min-height: 0;
       background: #1b1b1b;
-      padding: 15px 20px;
+      padding: 15px 10px;
       border-radius: 10px;
-      font-family: 'Courier New', monospace;
-      font-size: 15px;
-      line-height: 1.8;
       border: 1px solid #2a2a2a;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 8px 20px;
+    }
+
+    #output .bar {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 80px;
+      flex-shrink: 0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      padding: 4px 8px;
+      border-left: 1px solid #2a2a4e;
+      border-right: 1px solid #2a2a4e;
+    }
+
+    #output .bar .line1 {
+      color: #ff922b;
+      font-size: 0.85em;
+      min-height: 1.6em;
+    }
+
+    #output .bar .line2 {
+      color: #ffcc00;
+      font-size: 0.95em;
+      min-height: 1.6em;
+    }
+
+    #output .bar .line2 .section {
+      color: #51cf66;
+    }
+
+    #output .bar .line3 {
+      color: #4fc3f7;
+      font-size: 0.95em;
+      min-height: 1.6em;
+    }
+
+    #output .bar .line3 .beat {
+      color: #ff6b6b;
+    }
+
+    #output .bar .line3 .repeat {
+      color: #cc88ff;
     }
 
     .output.scrolling {
       border-color: #4fc3f7;
     }
-
-    /* ============================================
-       WARNINGS
-       ============================================ */
-    .chord { color: #ffcc00; }
-    .barline { color: #4fc3f7; }
-    .beat { color: #ff6b6b; }
-    .section { color: #51cf66; }
-    .repeat { color: #cc88ff; }
-    .ending { color: #ff922b; }
 
     /* ============================================
        HEADER
@@ -315,13 +350,18 @@
         min-width: 38px;
         font-size: 1rem;
       }
+      #output .bar {
+        min-width: 60px;
+        padding: 2px 4px;
+        font-size: 12px;
+      }
     }
 
     @media (max-width: 400px) {
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output { font-size: 12px; padding: 10px; }
+      #output .bar { font-size: 10px; min-width: 50px; padding: 2px 3px; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -330,8 +370,8 @@
     }
 
     @media (min-width: 769px) {
-      .app { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output { font-size: 15px; min-height: 300px; }
+      .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+      #output .bar { font-size: 15px; min-width: 100px; padding: 6px 12px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -408,7 +448,7 @@
   // ============================================
   let sheets = [];
   let currentSheetId = null;
-  let fontSize = 15;
+  let fontSize = 14;
   let scrollInterval = null;
   let isScrolling = false;
   let scrollSpeed = 0.4;
@@ -547,21 +587,16 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — 3 BARIS
+  // RENDER LEADSHEET — FLEX WRAP
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
-    if (!content) { outputEl.textContent = 'No content'; return; }
+    if (!content) { outputEl.innerHTML = 'No content'; return; }
 
     // Split by | to get bars
     let bars = content.split('|').filter(b => b.trim() !== '');
 
-    let line1 = ''; // Ending line
-    let line2 = ''; // Section + Chords
-    let line3 = ''; // Bar lines + Beats
-
-    let hasEnding = false;
-    let endingText = '';
+    let outputHTML = '';
 
     for (let bar of bars) {
       let barContent = bar;
@@ -571,7 +606,7 @@
       let sectionMatch = bar.match(/\(([a-d])\)/);
       if (sectionMatch) {
         section = '(' + sectionMatch[1] + ')';
-        barContent = bar.replace(/\([a-d]\)/, '');
+        barContent = barContent.replace(/\([a-d]\)/, '');
       }
 
       // Check for ending markers
@@ -580,8 +615,6 @@
       if (endingMatch) {
         ending = endingMatch[0];
         barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
-        hasEnding = true;
-        endingText = ending.replace(/\[|\]/g, '') + '─────────────────';
       }
 
       // Remove [.] marker
@@ -595,69 +628,50 @@
       let beatCount = (barContent.match(/\/\/\/\//g) || []).length;
       if (beatCount === 0) beatCount = 4;
 
-      // Build line 2: section + chords
+      // Build line1: ending
+      let line1 = '';
+      if (ending) {
+        line1 = ending.replace(/\[|\]/g, '') + '────────────';
+      }
+
+      // Build line2: section + chords
+      let line2 = '';
       if (section) {
-        line2 += section + '  ';
+        line2 += '<span class="section">' + section + '</span> ';
       }
       for (let chord of chordNames) {
         let displayChord = chord.replace(/#/g, '♯').replace(/b/g, '♭').replace(/m7b5/g, 'ø').replace(/dim/g, '°');
-        let spacing = Math.max(4, displayChord.length + 2);
-        line2 += displayChord + ' '.repeat(spacing - displayChord.length);
+        line2 += displayChord + ' ';
       }
 
-      // Build line 3: bar lines + beats
-      if (section) {
-        line3 += '||  ';
+      // Build line3: bar lines + beats
+      let line3 = '';
+      // Check for repeat signs
+      if (barContent.includes(':')) {
+        line3 += '<span class="repeat">|:</span> ';
+      } else {
+        line3 += '| ';
       }
-      // Add bar line and beats
-      line3 += '|  ';
       for (let i = 0; i < beatCount; i++) {
-        line3 += '/  ';
+        line3 += '<span class="beat">/</span> ';
+      }
+      if (barContent.includes(':')) {
+        line3 += ' <span class="repeat">:|</span>';
+      } else {
+        line3 += ' |';
       }
 
-      // Add space between bars
-      line2 += ' | ';
-      line3 += '| ';
+      // Build bar HTML
+      outputHTML += `
+        <div class="bar">
+          <div class="line1">${line1}</div>
+          <div class="line2">${line2}</div>
+          <div class="line3">${line3}</div>
+        </div>
+      `;
     }
 
-    // Build final output with 3 lines
-    let finalOutput = '';
-
-    // Line 1: Ending
-    if (hasEnding) {
-      finalOutput += endingText + '\n';
-    }
-
-    // Line 2: Section + Chords
-    finalOutput += line2.trim() + '\n';
-
-    // Line 3: Bar lines + Beats
-    finalOutput += line3.trim();
-
-    // Apply colors
-    let rendered = finalOutput;
-
-    // Chords
-    rendered = rendered.replace(/(♯|♭|ø|°|[A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>');
-
-    // Bar lines
-    rendered = rendered.replace(/\|/g, '<span class="barline">|</span>');
-
-    // Beats
-    rendered = rendered.replace(/\//g, '<span class="beat">/</span>');
-
-    // Section markers: (a), (b), etc.
-    rendered = rendered.replace(/\(([a-d])\)/g, '<span class="section">($1)</span>');
-
-    // Repeat signs
-    rendered = rendered.replace(/\|:/g, '<span class="repeat">|:</span>');
-    rendered = rendered.replace(/:\|/g, '<span class="repeat">:|</span>');
-
-    // Ending lines
-    rendered = rendered.replace(/(1va|2va|1,2va|1,2,3va|1,2,3,4va)(─+)/g, '<span class="ending">$1$2</span>');
-
-    // Replace newlines with <br>
-    outputEl.innerHTML = rendered.replace(/\n/g, '<br>');
+    outputEl.innerHTML = outputHTML;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
@@ -671,7 +685,9 @@
   }
 
   function applyFontSize(size) {
-    outputEl.style.fontSize = size + 'px';
+    document.querySelectorAll('#output .bar').forEach(el => {
+      el.style.fontSize = size + 'px';
+    });
   }
 
   // ============================================
