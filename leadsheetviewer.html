@@ -43,7 +43,7 @@
     }
 
     /* ============================================
-       OUTPUT - 2 BARIS
+       OUTPUT - FLEX WRAP, SETIAP BAR SATU UNIT
        ============================================ */
     #output {
       flex: 1;
@@ -55,59 +55,63 @@
       border: 1px solid #2a2a2a;
       font-family: 'Courier New', monospace;
       font-size: 16px;
-      line-height: 2.0;
+      line-height: 1.8;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 4px 8px;
+    }
+
+    /* Setiap bar = satu unit menegak */
+    #output .bar-unit {
       display: flex;
       flex-direction: column;
-      gap: 2px 0;
-    }
-
-    #output .line-ending {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px 8px;
-      color: #ff922b;
-      font-size: 0.95em;
-      min-height: 1.8em;
-      padding: 2px 0;
-      border-bottom: 1px solid #2a2a4e;
-      margin-bottom: 2px;
-    }
-
-    #output .line-ending .ending-space {
-      display: inline-block;
-      min-width: 20px;
-    }
-
-    #output .line-bars {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 2px 4px;
-      min-height: 1.8em;
-      padding: 2px 0;
-    }
-
-    #output .bar-unit {
-      display: inline-flex;
-      flex-wrap: wrap;
-      align-items: center;
-      white-space: nowrap;
+      align-items: flex-start;
       background: transparent;
-      padding: 2px 0;
+      padding: 2px 4px;
+      border-left: 1px solid #2a2a4e;
+      border-right: 1px solid #2a2a4e;
+      min-width: 60px;
+      flex-shrink: 0;
+    }
+
+    #output .bar-unit .line-ending {
+      color: #ff922b;
+      font-size: 0.85em;
+      min-height: 1.4em;
+      white-space: nowrap;
+    }
+
+    #output .bar-unit .line-bars {
+      color: #4fc3f7;
+      font-size: 0.95em;
+      min-height: 1.4em;
+      white-space: nowrap;
+    }
+
+    #output .bar-unit .line-bars .chord {
+      color: #ffcc00;
+    }
+
+    #output .bar-unit .line-bars .beat {
+      color: #ff6b6b;
+    }
+
+    #output .bar-unit .line-bars .section {
+      color: #51cf66;
+    }
+
+    #output .bar-unit .line-bars .repeat {
+      color: #cc88ff;
+    }
+
+    #output .bar-unit .line-bars .barline {
+      color: #4fc3f7;
     }
 
     .output.scrolling {
       border-color: #4fc3f7;
     }
-
-    /* Warna Elemen */
-    .barline { color: #4fc3f7; }
-    .section { color: #51cf66; }
-    .chord { color: #ffcc00; }
-    .beat { color: #ff6b6b; }
-    .repeat { color: #cc88ff; }
-    .ending { color: #ff922b; }
 
     /* ============================================
        HEADER
@@ -320,7 +324,8 @@
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
-      #output { font-size: 14px; padding: 10px; }
+      #output { font-size: 14px; padding: 10px; gap: 2px 4px; }
+      #output .bar-unit { min-width: 40px; padding: 2px 3px; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -359,7 +364,8 @@
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output { font-size: 12px; padding: 8px; }
+      #output { font-size: 12px; padding: 8px; gap: 2px 3px; }
+      #output .bar-unit { min-width: 30px; padding: 1px 2px; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -369,7 +375,8 @@
 
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output { font-size: 16px; padding: 15px 20px; }
+      #output { font-size: 16px; padding: 15px 20px; gap: 4px 10px; }
+      #output .bar-unit { min-width: 80px; padding: 4px 8px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -585,69 +592,57 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — FIX PARSING
+  // RENDER LEADSHEET — SETIAP BAR SATU UNIT
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
     if (!content) { outputEl.innerHTML = 'No content'; return; }
 
-    // Split by | to get bars
     let bars = content.split('|').filter(b => b.trim() !== '');
 
-    let endingRow = [];
-    let barsRow = [];
+    let html = '';
     let currentEnding = null;
+    let isEndingActive = false;
 
     for (let bar of bars) {
       let barContent = bar;
 
-      // DETECT [1va], [2va], [3va], [4va]
+      // DETECT [1va], [2va]
       let match = barContent.match(/\[(\d)va\]/);
       if (match) {
         currentEnding = match[1] + 'va';
+        isEndingActive = true;
         barContent = barContent.replace(/\[\dva\]/g, '');
       }
 
-      // DETECT [.] — end the ending
+      // DETECT [.]
       let hasEnd = barContent.includes('[.]');
       if (hasEnd) {
         barContent = barContent.replace(/\[\.\]/g, '');
-        // If ending started and ends in same bar, don't extend
         let hasStart = /\[(\d)va\]/.test(bar);
         if (hasStart) {
-          // Same bar: show ending label but don't extend
-          // We'll handle this in render
-        }
-        // If ending was active, mark it as ended
-        if (currentEnding && !hasStart) {
-          // Ending continues to this bar then ends
-        }
-        // If ending started and ends in same bar, don't extend
-        if (hasStart) {
+          // Same bar: show ending label only
           currentEnding = null;
+          isEndingActive = false;
+        } else if (isEndingActive) {
+          // End the ending after this bar
+          currentEnding = null;
+          isEndingActive = false;
         }
       }
 
-      // Check for [.] and [1va] in same bar
-      let hasStartInBar = /\[(\d)va\]/.test(bar);
-      let hasEndInBar = /\[\.\]/.test(bar);
-      if (hasStartInBar && hasEndInBar) {
-        // Same bar: don't extend
-        let endingLabel = bar.match(/\[(\d)va\]/);
-        if (endingLabel) {
-          endingRow.push(endingLabel[1] + 'va');
-        }
-        currentEnding = null;
-      } else if (hasEndInBar && currentEnding) {
-        // End the ending after this bar
-        endingRow.push(currentEnding);
+      // BUILD LINE 1: ENDING
+      let lineEnding = '';
+      if (currentEnding && isEndingActive) {
+        lineEnding = currentEnding + '......';
+      } else if (currentEnding && !isEndingActive) {
+        lineEnding = currentEnding + '......';
         currentEnding = null;
       } else {
-        // Normal: push current ending or empty
-        endingRow.push(currentEnding || '');
+        lineEnding = '';
       }
 
-      // PROCESS CHORD DISPLAY
+      // BUILD LINE 2: CHORDS + BEATS
       let processedBar = barContent
         .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
         .replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>')
@@ -656,26 +651,14 @@
         .replace(/:\|/g, '<span class="repeat">:|</span>')
         .replace(/\|/g, '<span class="barline">|</span>');
 
-      barsRow.push(processedBar);
+      // BUILD BAR UNIT
+      html += `
+        <div class="bar-unit">
+          <div class="line-ending">${lineEnding}</div>
+          <div class="line-bars">${processedBar}</div>
+        </div>
+      `;
     }
-
-    // RENDER BARIS ATAS (ENDING)
-    let lineEnding = '';
-    for (let e of endingRow) {
-      if (e) {
-        lineEnding += `<span class="ending">${e}......</span> `;
-      } else {
-        lineEnding += '<span class="ending-space"></span> ';
-      }
-    }
-
-    // RENDER BARIS BAWAH
-    let lineBars = barsRow.join(' ');
-
-    // Build final output
-    let html = '';
-    html += `<div class="line-ending">${lineEnding}</div>`;
-    html += `<div class="line-bars">${lineBars}</div>`;
 
     outputEl.innerHTML = html;
     outputEl.scrollTop = 0;
