@@ -52,14 +52,14 @@
       border: 1px solid #2a2a2a;
       font-family: 'Courier New', monospace;
       font-size: 16px;
-      line-height: 1.8;
+      line-height: 1.6;
       white-space: pre-wrap;
     }
 
     #output .line-top {
       color: #ff922b;
-      font-size: 0.9em;
-      min-height: 1.4em;
+      font-size: 0.85em;
+      min-height: 1.2em;
       padding: 2px 0;
       font-family: 'Courier New', monospace;
       white-space: pre-wrap;
@@ -69,7 +69,7 @@
     #output .line-bottom {
       color: #ffffff;
       font-size: 1em;
-      min-height: 1.4em;
+      min-height: 1.2em;
       padding: 2px 0;
       font-family: 'Courier New', monospace;
       white-space: pre-wrap;
@@ -586,7 +586,6 @@
         tokens.push({ type: 'SECTION', value });
       } else if (/^\[.*\]$/.test(value)) {
         let inner = value.slice(1, -1);
-        // Support: 1va, 2va, 1,2va, 2,3,4va
         if (/^[\d,]+va$/i.test(inner)) {
           tokens.push({ type: 'OCTAVE', value: inner.replace(/va/i, '') });
         } else if (inner === '.') {
@@ -601,7 +600,7 @@
   }
 
   // ============================================
-  // RENDER — STATE + INLINE
+  // RENDER — STATE + INLINE (FIXED)
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -615,7 +614,7 @@
     let top = '';
     let bottom = '';
 
-    let currentEnding = null;
+    let currentEnding = null;   // "1", "2", "1,2", dll
     let justStarted = false;
 
     for (let t of tokens) {
@@ -675,7 +674,12 @@
 
         if (currentEnding) {
           if (justStarted) {
-            top += currentEnding + '.'.repeat(text.length - 1);
+            // Write the ending label first, then dots
+            top += currentEnding;
+            // Add dots for the rest of the chord length
+            if (text.length > 1) {
+              top += '.'.repeat(text.length - 1);
+            }
             justStarted = false;
           } else {
             top += '.'.repeat(text.length);
