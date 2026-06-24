@@ -42,6 +42,9 @@
       flex-shrink: 0;
     }
 
+    /* ============================================
+       OUTPUT - 2 BARIS
+       ============================================ */
     #output {
       flex: 1;
       overflow-y: auto;
@@ -52,31 +55,34 @@
       border: 1px solid #2a2a2a;
       font-family: 'Courier New', monospace;
       font-size: 16px;
-      line-height: 2.2;
+      line-height: 2.0;
       display: flex;
       flex-direction: column;
-      align-content: flex-start;
       gap: 2px 0;
     }
 
-    /* Baris 1: Ending */
-    #output .ending-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px 20px;
-      color: #ff922b;
-      font-size: 0.95em;
-      padding: 2px 0;
-      border-bottom: 1px solid #2a2a4e;
-      margin-bottom: 4px;
-    }
-
-    /* Baris 2: Chords + Beats */
-    #output .bars-line {
+    /* Baris 1: Ending (1va, 2va) */
+    #output .line-ending {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 2px 4px;
+      color: #ff922b;
+      font-size: 0.95em;
+      min-height: 1.8em;
+      padding: 2px 0;
+      border-bottom: 1px solid #2a2a4e;
+      margin-bottom: 2px;
+    }
+
+    /* Baris 2: Chords + Beats */
+    #output .line-bars {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 4px;
+      min-height: 1.8em;
+      padding: 2px 0;
     }
 
     #output .bar-unit {
@@ -312,7 +318,6 @@
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
       #output { font-size: 14px; padding: 10px; }
-      #output .ending-line { font-size: 0.9em; gap: 2px 10px; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -352,7 +357,6 @@
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
       #output { font-size: 12px; padding: 8px; }
-      #output .ending-line { font-size: 0.85em; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -578,51 +582,86 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — 1VA DI ATAS
+  // RENDER LEADSHEET — 2 BARIS
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
     if (!content) { outputEl.innerHTML = 'No content'; return; }
 
-    let rendered = content;
+    // Split by | to get bars
+    let bars = content.split('|').filter(b => b.trim() !== '');
 
-    // 1. Extract endings first
-    let endings = [];
-    let endingMatch = rendered.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g);
-    if (endingMatch) {
-      endings = endingMatch.map(e => e.replace(/\[|\]/g, '') + '.............');
+    let lineEnding = '';   // Line 1: 1va/2va
+    let lineBars = '';     // Line 2: Chords + Beats
+
+    let activeEnding = '';
+    let endingLength = 0;
+
+    for (let bar of bars) {
+      let barContent = bar;
+
+      // Check for ending markers
+      let endingMatch = barContent.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/);
+      if (endingMatch) {
+        let ending = endingMatch[0].replace(/\[|\]/g, '');
+        activeEnding = ending + '.............';
+        endingLength = activeEnding.length;
+        barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
+      }
+
+      // Check for [.] — end the ending
+      if (barContent.includes('[.]')) {
+        // Add the ending with remaining dots
+        if (activeEnding) {
+          // Add the ending label with dots
+          lineEnding += activeEnding + ' ';
+          activeEnding = '';
+          endingLength = 0;
+        }
+        barContent = barContent.replace(/\[\.\]/g, '');
+      }
+
+      // If active ending is running, add dots
+      if (activeEnding) {
+        // Add the ending label once, then dots for subsequent bars
+        if (!lineEnding.includes(activeEnding)) {
+          lineEnding += activeEnding + ' ';
+        } else {
+          // Add dots to continue the line
+          lineEnding += '............. ';
+        }
+      } else {
+        // If no active ending, add empty space to align
+        lineEnding += '             '; // 13 spaces to match ............. length
+      }
+
+      // Build line 2: bar content with colors
+      let processedBar = barContent;
+
+      // Section marker: (a), (b) → <span class="section">(a)</span>
+      processedBar = processedBar.replace(/\(([a-d])\)/g, '<span class="section">($1)</span>');
+
+      // Chord brackets: [C] → <span class="chord">C</span>
+      processedBar = processedBar.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
+
+      // Beat: ---- → <span class="beat">----</span>
+      processedBar = processedBar.replace(/----/g, '<span class="beat">----</span>');
+
+      // Repeat signs
+      processedBar = processedBar.replace(/\|:/g, '<span class="repeat">|:</span>');
+      processedBar = processedBar.replace(/:\|/g, '<span class="repeat">:|</span>');
+
+      // Barline: | → <span class="barline">|</span>
+      processedBar = processedBar.replace(/\|/g, '<span class="barline">|</span>');
+
+      // Add bar with a space separator
+      lineBars += processedBar + ' ';
     }
 
-    // 2. Remove endings and [.] from content
-    rendered = rendered.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
-    rendered = rendered.replace(/\[\.\]/g, '');
-
-    // 3. Chord brackets: [C] → <span class="chord">C</span>
-    rendered = rendered.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
-
-    // 4. Section marker: (a), (b) → <span class="section">(a)</span>
-    rendered = rendered.replace(/\(([a-d])\)/g, '<span class="section">($1)</span>');
-
-    // 5. Beat: ---- → <span class="beat">----</span>
-    rendered = rendered.replace(/----/g, '<span class="beat">----</span>');
-
-    // 6. Repeat signs
-    rendered = rendered.replace(/\|:/g, '<span class="repeat">|:</span>');
-    rendered = rendered.replace(/:\|/g, '<span class="repeat">:|</span>');
-
-    // 7. Barline: | → <span class="barline">|</span>
-    rendered = rendered.replace(/\|/g, '<span class="barline">|</span>');
-
-    // Build final HTML — 2 baris: endings di atas, bars di bawah
+    // Build final output
     let html = '';
-
-    // Baris 1: Endings (jika ada)
-    if (endings.length > 0) {
-      html += `<div class="ending-line">${endings.join(' ')}</div>`;
-    }
-
-    // Baris 2: Bars
-    html += `<div class="bars-line">${rendered}</div>`;
+    html += `<div class="line-ending">${lineEnding}</div>`;
+    html += `<div class="line-bars">${lineBars}</div>`;
 
     outputEl.innerHTML = html;
     outputEl.scrollTop = 0;
