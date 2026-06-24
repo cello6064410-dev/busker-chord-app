@@ -17,9 +17,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
-    /* ============================================
-       LEADSHEET KHAS CSS — BRACKET THERAPUNG
-       ============================================ */
     html, body {
       margin: 0;
       padding: 0;
@@ -78,7 +75,7 @@
       position: relative;
       padding: 8px 6px;
       border-right: 1px solid #2a2a4e;
-      min-height: 60px;
+      min-height: 50px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -89,33 +86,25 @@
     }
 
     /* ============================================
-       CHORD WRAPPER
+       CHORD + BEAT DALAM SATU BARIS
        ============================================ */
-    .chord-wrapper {
-      height: 24px;
+    .bar-content {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       gap: 2px;
       flex-wrap: wrap;
+      font-size: 0.95em;
     }
 
     .chord {
       color: #ffcc00;
       font-weight: bold;
-      font-size: 0.95em;
     }
 
-    /* ============================================
-       BEAT
-       ============================================ */
     .beat {
       color: #ff6b6b;
-      font-size: 0.9em;
     }
 
-    /* ============================================
-       BARLINE
-       ============================================ */
     .barline {
       color: #4fc3f7;
     }
@@ -151,7 +140,6 @@
       overflow: visible;
     }
 
-    /* Right hook for the last bar */
     .volta::after {
       content: '';
       position: absolute;
@@ -159,33 +147,6 @@
       top: 0;
       height: 8px;
       border-right: 2px solid #ff922b;
-    }
-
-    /* Continuous volta — no left border */
-    .volta.continue {
-      border-left: none;
-      padding-left: 0;
-    }
-
-    .volta.continue::after {
-      right: 0;
-      border-right: 2px solid #ff922b;
-    }
-
-    /* No right hook for middle bars */
-    .volta.middle {
-      border-left: none;
-      padding-left: 0;
-    }
-
-    .volta.middle::after {
-      display: none;
-    }
-
-    /* No left hook for continue bars */
-    .volta.no-left {
-      border-left: none;
-      padding-left: 0;
     }
 
     /* ============================================
@@ -408,9 +369,8 @@
       .song-list { max-height: 120px; }
       #output { font-size: 14px; padding: 10px; }
       .system { padding-top: 24px; gap: 0; }
-      .measure { padding: 4px 4px; min-height: 50px; }
-      .chord-wrapper { height: 20px; }
-      .chord { font-size: 0.85em; }
+      .measure { padding: 4px 4px; min-height: 40px; }
+      .bar-content { font-size: 0.85em; gap: 1px; }
       .volta { font-size: 9px; top: -18px; height: 12px; }
       .floating-bar {
         bottom: 0;
@@ -452,9 +412,8 @@
       #sheetTitle { font-size: 0.85rem; }
       #output { font-size: 12px; padding: 8px; }
       .system { padding-top: 20px; }
-      .measure { padding: 2px 2px; min-height: 40px; }
-      .chord-wrapper { height: 16px; }
-      .chord { font-size: 0.75em; }
+      .measure { padding: 2px 2px; min-height: 30px; }
+      .bar-content { font-size: 0.75em; gap: 0px; }
       .volta { font-size: 8px; top: -15px; height: 10px; }
       .floating-bar button {
         font-size: 0.9rem;
@@ -467,8 +426,8 @@
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
       #output { font-size: 16px; padding: 15px 20px; }
       .system { padding-top: 32px; }
-      .measure { padding: 10px 8px; min-height: 70px; }
-      .chord-wrapper { height: 28px; }
+      .measure { padding: 10px 8px; min-height: 60px; }
+      .bar-content { font-size: 1em; gap: 3px; }
       .volta { font-size: 12px; top: -26px; height: 16px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
@@ -685,7 +644,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — BRACKET THERAPUNG
+  // RENDER LEADSHEET — CHORD + BEAT SATU BARIS
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -698,8 +657,8 @@
     let bars = content.split('|').filter(b => b.trim() !== '');
 
     let html = '';
-    let voltaState = null;      // "1", "2", "1,2", dll
-    let voltaStartIndex = -1;   // Bar index where volta started
+    let voltaState = null;
+    let voltaStartIndex = -1;
     let currentSystem = [];
     let systemIndex = 0;
     const BARS_PER_SYSTEM = 4;
@@ -724,10 +683,9 @@
         barContent = barContent.replace(/\{[\d,]+va\}/, '');
       }
 
-      // Check for {.} — FIXED
+      // Check for {.}
       if (barContent.indexOf('{.}') !== -1) {
         barContent = barContent.replace(/\{\.\}/, '');
-        // End volta
         voltaState = null;
       }
 
@@ -740,31 +698,45 @@
       let beatCount = (beatContent.match(/----/g) || []).length;
       if (beatCount === 0) beatCount = 4;
 
-      // Build measure HTML
-      let chordHTML = chordNames.map(ch => `<span class="chord">${ch}</span>`).join(' ');
-      let beatHTML = '';
-      for (let b = 0; b < beatCount; b++) {
-        beatHTML += '<span class="beat">-</span>';
+      // ============================================
+      // BUILD BAR CONTENT — SATU BARIS
+      // ============================================
+      let barHTML = '';
+
+      // Chords
+      for (let ch of chordNames) {
+        barHTML += `<span class="chord">${ch}</span>`;
       }
 
-      // Check for repeats
+      // Add a space between chords and beats
+      if (chordNames.length > 0 && beatCount > 0) {
+        barHTML += ' ';
+      }
+
+      // Beats
+      for (let b = 0; b < beatCount; b++) {
+        barHTML += `<span class="beat">-</span>`;
+      }
+
+      // Barline / Repeat
       let hasRepeatStart = barContent.indexOf('|:') !== -1;
       let hasRepeatEnd = barContent.indexOf(':|') !== -1;
       let hasDoubleBar = barContent.indexOf('||') !== -1;
 
-      let barlineHTML = '';
-      if (hasRepeatStart) barlineHTML += '<span class="repeat">|:</span>';
-      if (hasRepeatEnd) barlineHTML += '<span class="repeat">:|</span>';
-      if (hasDoubleBar) barlineHTML += '<span class="barline">||</span>';
+      if (hasRepeatStart) barHTML += '<span class="repeat">|:</span>';
+      if (hasRepeatEnd) barHTML += '<span class="repeat">:|</span>';
+      if (hasDoubleBar) barHTML += '<span class="barline">||</span>';
       if (!hasRepeatStart && !hasRepeatEnd && !hasDoubleBar) {
-        barlineHTML = '<span class="barline">|</span>';
+        barHTML += '<span class="barline">|</span>';
       }
+
+      // Section marker
+      let sectionHTML = section ? `<div class="section" style="position:absolute;top:-18px;left:2px;font-size:0.8em;color:#51cf66;">${section}</div>` : '';
 
       let measureHTML = `
         <div class="measure" data-bar-index="${i}">
-          ${section ? `<div class="section" style="position:absolute;top:-18px;left:2px;font-size:0.8em;color:#51cf66;">${section}</div>` : ''}
-          <div class="chord-wrapper">${chordHTML}</div>
-          <div>${beatHTML} ${barlineHTML}</div>
+          ${sectionHTML}
+          <div class="bar-content">${barHTML}</div>
         </div>
       `;
 
@@ -772,35 +744,26 @@
 
       // If system is full or last bar
       if (currentSystem.length === BARS_PER_SYSTEM || i === bars.length - 1) {
-        // Check if there's an active volta spanning this system
         let voltaHTML = '';
         if (voltaState && voltaStartIndex !== -1) {
           let startInSystem = voltaStartIndex - (systemIndex * BARS_PER_SYSTEM);
           let endInSystem = currentSystem.length - 1;
           let span = endInSystem - startInSystem + 1;
 
-          // Only show volta if it starts in this system
           if (startInSystem >= 0 && startInSystem < currentSystem.length) {
             let leftHook = startInSystem === 0 ? 'border-left:2px solid #ff922b;' : '';
             let rightHook = endInSystem === currentSystem.length - 1 ? 'border-right:2px solid #ff922b;' : '';
-
-            // Calculate position and width
             let gridColumnStart = startInSystem + 1;
             let gridColumnEnd = startInSystem + span + 1;
 
             voltaHTML = `
-              <div class="volta" style="
-                grid-column: ${gridColumnStart} / ${gridColumnEnd};
-                ${leftHook}
-                ${rightHook}
-              ">
+              <div class="volta" style="grid-column: ${gridColumnStart} / ${gridColumnEnd}; ${leftHook} ${rightHook}">
                 ${startInSystem === 0 ? voltaState + '.' : ''}
               </div>
             `;
           }
         }
 
-        // Build system
         let systemHTML = `
           <div class="system" style="position:relative;">
             ${voltaHTML}
@@ -818,6 +781,7 @@
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
+
   // ============================================
   // FONT SIZE
   // ============================================
