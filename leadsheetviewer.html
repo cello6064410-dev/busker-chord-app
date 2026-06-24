@@ -42,9 +42,6 @@
       flex-shrink: 0;
     }
 
-    /* ============================================
-       OUTPUT - FLEX WRAP AUTO TURUN KE BAWAH
-       ============================================ */
     #output {
       flex: 1;
       overflow-y: auto;
@@ -57,9 +54,29 @@
       font-size: 16px;
       line-height: 2.2;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       align-content: flex-start;
-      gap: 4px 6px;
+      gap: 2px 0;
+    }
+
+    /* Baris 1: Ending */
+    #output .ending-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 20px;
+      color: #ff922b;
+      font-size: 0.95em;
+      padding: 2px 0;
+      border-bottom: 1px solid #2a2a4e;
+      margin-bottom: 4px;
+    }
+
+    /* Baris 2: Chords + Beats */
+    #output .bars-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 4px;
     }
 
     #output .bar-unit {
@@ -294,7 +311,8 @@
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
-      #output { font-size: 14px; padding: 10px; gap: 2px 4px; }
+      #output { font-size: 14px; padding: 10px; }
+      #output .ending-line { font-size: 0.9em; gap: 2px 10px; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -333,7 +351,8 @@
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output { font-size: 12px; padding: 8px; gap: 2px 3px; }
+      #output { font-size: 12px; padding: 8px; }
+      #output .ending-line { font-size: 0.85em; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -343,7 +362,7 @@
 
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output { font-size: 16px; padding: 15px 20px; gap: 4px 8px; }
+      #output { font-size: 16px; padding: 15px 20px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -559,7 +578,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — FLEX WRAP
+  // RENDER LEADSHEET — 1VA DI ATAS
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -567,16 +586,15 @@
 
     let rendered = content;
 
-    // 1. Process endings: [1va] → 1va............ (titik)
-    rendered = rendered.replace(/\[1,2,3,4va\]/g, '1,2,3,4va............');
-    rendered = rendered.replace(/\[1,2,3va\]/g, '1,2,3va............');
-    rendered = rendered.replace(/\[1,2va\]/g, '1,2va............');
-    rendered = rendered.replace(/\[1va\]/g, '1va............');
-    rendered = rendered.replace(/\[2va\]/g, '2va............');
-    rendered = rendered.replace(/\[3va\]/g, '3va............');
-    rendered = rendered.replace(/\[4va\]/g, '4va............');
+    // 1. Extract endings first
+    let endings = [];
+    let endingMatch = rendered.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g);
+    if (endingMatch) {
+      endings = endingMatch.map(e => e.replace(/\[|\]/g, '') + '.............');
+    }
 
-    // 2. Remove [.] markers
+    // 2. Remove endings and [.] from content
+    rendered = rendered.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
     rendered = rendered.replace(/\[\.\]/g, '');
 
     // 3. Chord brackets: [C] → <span class="chord">C</span>
@@ -592,20 +610,19 @@
     rendered = rendered.replace(/\|:/g, '<span class="repeat">|:</span>');
     rendered = rendered.replace(/:\|/g, '<span class="repeat">:|</span>');
 
-    // 7. Barline: | → </span><span class="bar-unit">|</span>
-    // Split by | to create bar units
-    let bars = rendered.split('|');
+    // 7. Barline: | → <span class="barline">|</span>
+    rendered = rendered.replace(/\|/g, '<span class="barline">|</span>');
+
+    // Build final HTML — 2 baris: endings di atas, bars di bawah
     let html = '';
-    for (let i = 0; i < bars.length; i++) {
-      let bar = bars[i];
-      if (bar.trim() !== '' || i === 0) {
-        if (i > 0) {
-          html += `<span class="bar-unit"><span class="barline">|</span>${bar}</span>`;
-        } else {
-          html += `<span class="bar-unit">${bar}</span>`;
-        }
-      }
+
+    // Baris 1: Endings (jika ada)
+    if (endings.length > 0) {
+      html += `<div class="ending-line">${endings.join(' ')}</div>`;
     }
+
+    // Baris 2: Bars
+    html += `<div class="bars-line">${rendered}</div>`;
 
     outputEl.innerHTML = html;
     outputEl.scrollTop = 0;
