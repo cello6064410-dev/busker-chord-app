@@ -61,12 +61,11 @@
       gap: 2px 0;
     }
 
-    /* Baris 1: Ending (1va, 2va) */
     #output .line-ending {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 2px 4px;
+      gap: 4px 8px;
       color: #ff922b;
       font-size: 0.95em;
       min-height: 1.8em;
@@ -75,7 +74,11 @@
       margin-bottom: 2px;
     }
 
-    /* Baris 2: Chords + Beats */
+    #output .line-ending .ending-space {
+      display: inline-block;
+      min-width: 20px;
+    }
+
     #output .line-bars {
       display: flex;
       flex-wrap: wrap;
@@ -582,7 +585,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — 2 BARIS
+  // RENDER LEADSHEET — FIX PARSING
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -591,72 +594,83 @@
     // Split by | to get bars
     let bars = content.split('|').filter(b => b.trim() !== '');
 
-    let lineEnding = '';   // Line 1: 1va/2va
-    let lineBars = '';     // Line 2: Chords + Beats
-
-    let activeEnding = '';
-    let endingLength = 0;
+    let endingRow = [];
+    let barsRow = [];
+    let currentEnding = null;
 
     for (let bar of bars) {
       let barContent = bar;
 
-      // Check for ending markers
-      let endingMatch = barContent.match(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/);
-      if (endingMatch) {
-        let ending = endingMatch[0].replace(/\[|\]/g, '');
-        activeEnding = ending + '.............';
-        endingLength = activeEnding.length;
-        barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
+      // DETECT [1va], [2va], [3va], [4va]
+      let match = barContent.match(/\[(\d)va\]/);
+      if (match) {
+        currentEnding = match[1] + 'va';
+        barContent = barContent.replace(/\[\dva\]/g, '');
       }
 
-      // Check for [.] — end the ending
-      if (barContent.includes('[.]')) {
-        // Add the ending with remaining dots
-        if (activeEnding) {
-          // Add the ending label with dots
-          lineEnding += activeEnding + ' ';
-          activeEnding = '';
-          endingLength = 0;
-        }
+      // DETECT [.] — end the ending
+      let hasEnd = barContent.includes('[.]');
+      if (hasEnd) {
         barContent = barContent.replace(/\[\.\]/g, '');
-      }
-
-      // If active ending is running, add dots
-      if (activeEnding) {
-        // Add the ending label once, then dots for subsequent bars
-        if (!lineEnding.includes(activeEnding)) {
-          lineEnding += activeEnding + ' ';
-        } else {
-          // Add dots to continue the line
-          lineEnding += '............. ';
+        // If ending started and ends in same bar, don't extend
+        let hasStart = /\[(\d)va\]/.test(bar);
+        if (hasStart) {
+          // Same bar: show ending label but don't extend
+          // We'll handle this in render
         }
-      } else {
-        // If no active ending, add empty space to align
-        lineEnding += '             '; // 13 spaces to match ............. length
+        // If ending was active, mark it as ended
+        if (currentEnding && !hasStart) {
+          // Ending continues to this bar then ends
+        }
+        // If ending started and ends in same bar, don't extend
+        if (hasStart) {
+          currentEnding = null;
+        }
       }
 
-      // Build line 2: bar content with colors
-      let processedBar = barContent;
+      // Check for [.] and [1va] in same bar
+      let hasStartInBar = /\[(\d)va\]/.test(bar);
+      let hasEndInBar = /\[\.\]/.test(bar);
+      if (hasStartInBar && hasEndInBar) {
+        // Same bar: don't extend
+        let endingLabel = bar.match(/\[(\d)va\]/);
+        if (endingLabel) {
+          endingRow.push(endingLabel[1] + 'va');
+        }
+        currentEnding = null;
+      } else if (hasEndInBar && currentEnding) {
+        // End the ending after this bar
+        endingRow.push(currentEnding);
+        currentEnding = null;
+      } else {
+        // Normal: push current ending or empty
+        endingRow.push(currentEnding || '');
+      }
 
-      // Section marker: (a), (b) → <span class="section">(a)</span>
-      processedBar = processedBar.replace(/\(([a-d])\)/g, '<span class="section">($1)</span>');
+      // PROCESS CHORD DISPLAY
+      let processedBar = barContent
+        .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
+        .replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>')
+        .replace(/----/g, '<span class="beat">----</span>')
+        .replace(/\|:/g, '<span class="repeat">|:</span>')
+        .replace(/:\|/g, '<span class="repeat">:|</span>')
+        .replace(/\|/g, '<span class="barline">|</span>');
 
-      // Chord brackets: [C] → <span class="chord">C</span>
-      processedBar = processedBar.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
-
-      // Beat: ---- → <span class="beat">----</span>
-      processedBar = processedBar.replace(/----/g, '<span class="beat">----</span>');
-
-      // Repeat signs
-      processedBar = processedBar.replace(/\|:/g, '<span class="repeat">|:</span>');
-      processedBar = processedBar.replace(/:\|/g, '<span class="repeat">:|</span>');
-
-      // Barline: | → <span class="barline">|</span>
-      processedBar = processedBar.replace(/\|/g, '<span class="barline">|</span>');
-
-      // Add bar with a space separator
-      lineBars += processedBar + ' ';
+      barsRow.push(processedBar);
     }
+
+    // RENDER BARIS ATAS (ENDING)
+    let lineEnding = '';
+    for (let e of endingRow) {
+      if (e) {
+        lineEnding += `<span class="ending">${e}......</span> `;
+      } else {
+        lineEnding += '<span class="ending-space"></span> ';
+      }
+    }
+
+    // RENDER BARIS BAWAH
+    let lineBars = barsRow.join(' ');
 
     // Build final output
     let html = '';
