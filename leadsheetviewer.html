@@ -724,8 +724,8 @@
         barContent = barContent.replace(/\{[\d,]+va\}/, '');
       }
 
-      // Check for {.}
-      if (barContent.includes('{.'}')) {
+      // Check for {.} — FIXED
+      if (barContent.indexOf('{.}') !== -1) {
         barContent = barContent.replace(/\{\.\}/, '');
         // End volta
         voltaState = null;
@@ -748,9 +748,9 @@
       }
 
       // Check for repeats
-      let hasRepeatStart = barContent.includes('|:');
-      let hasRepeatEnd = barContent.includes(':|');
-      let hasDoubleBar = barContent.includes('||');
+      let hasRepeatStart = barContent.indexOf('|:') !== -1;
+      let hasRepeatEnd = barContent.indexOf(':|') !== -1;
+      let hasDoubleBar = barContent.indexOf('||') !== -1;
 
       let barlineHTML = '';
       if (hasRepeatStart) barlineHTML += '<span class="repeat">|:</span>';
@@ -818,7 +818,6 @@
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
-
   // ============================================
   // FONT SIZE
   // ============================================
