@@ -82,7 +82,6 @@
       flex-shrink: 0;
     }
 
-    /* Bar bawah (chord + beat) */
     .bar-layer {
       display: flex;
       align-items: center;
@@ -93,7 +92,6 @@
       background: transparent;
     }
 
-    /* Ending atas */
     .ending-layer {
       min-height: 24px;
       font-size: 0.75em;
@@ -641,11 +639,12 @@
 
   // ============================================
   // ════════════════════════════════════════════
-  // TOKENIZER — LEXER
+  // TOKENIZER — LEXER (FIXED)
   // ════════════════════════════════════════════
   // ============================================
   function tokenize(input) {
-    const regex = /\|\:|\:\||\|\||\|\[(.*?)\]|----|\([a-z]\)/gi;
+    // CRITICAL FIX: | dan [C] sebagai token berasingan
+    const regex = /\|\:|\:\||\|\||\||\[.*?\]|----|\([a-z]\)/gi;
 
     let tokens = [];
     let match;
