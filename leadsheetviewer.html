@@ -17,9 +17,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
-    /* ============================================
-       FIX SCROLL
-       ============================================ */
     html, body {
       margin: 0;
       padding: 0;
@@ -50,7 +47,7 @@
       overflow-y: auto;
       min-height: 0;
       background: #1b1b1b;
-      padding: 15px;
+      padding: 15px 20px;
       border-radius: 10px;
       font-family: 'Courier New', monospace;
       font-size: 15px;
@@ -68,24 +65,12 @@
     /* ============================================
        WARNINGS
        ============================================ */
-    .chord {
-      color: #ffcc00;
-    }
-    .barline {
-      color: #4fc3f7;
-    }
-    .beat {
-      color: #ff6b6b;
-    }
-    .section {
-      color: #51cf66;
-    }
-    .repeat {
-      color: #cc88ff;
-    }
-    .ending {
-      color: #ff922b;
-    }
+    .chord { color: #ffcc00; }
+    .barline { color: #4fc3f7; }
+    .beat { color: #ff6b6b; }
+    .section { color: #51cf66; }
+    .repeat { color: #cc88ff; }
+    .ending { color: #ff922b; }
 
     /* ============================================
        HEADER
@@ -152,9 +137,6 @@
       min-width: 40px;
     }
 
-    /* ============================================
-       SEARCH BAR
-       ============================================ */
     .search-container {
       display: flex;
       align-items: center;
@@ -198,9 +180,6 @@
       display: none;
     }
 
-    /* ============================================
-       SONG LIST
-       ============================================ */
     .song-list {
       max-height: 160px;
       overflow-y: auto;
@@ -208,6 +187,7 @@
       border-radius: 10px;
       padding: 5px;
       margin-bottom: 8px;
+      display: none;
     }
 
     .song-list button {
@@ -236,37 +216,8 @@
       font-family: Arial, sans-serif;
     }
 
-    .error-text {
-      color: #ff4444;
-    }
+    .error-text { color: #ff4444; }
 
-    .result-count {
-      color: #888;
-      font-size: 0.8rem;
-      padding: 8px 10px 4px 10px;
-      font-family: Arial, sans-serif;
-      border-bottom: 1px solid #2a2a2a;
-      margin-bottom: 4px;
-    }
-
-    .scroll-hint {
-      color: #666;
-      font-size: 0.8rem;
-      text-align: center;
-      padding: 6px;
-      font-family: Arial, sans-serif;
-      border-top: 1px solid #2a2a2a;
-      margin-top: 4px;
-      animation: pulse 2s infinite;
-    }
-
-    .hidden-result {
-      display: block;
-    }
-
-    /* ============================================
-       FLOATING BAR
-       ============================================ */
     .floating-bar {
       position: fixed;
       bottom: 12px;
@@ -329,9 +280,6 @@
       50% { opacity: 1; }
     }
 
-    /* ============================================
-       RESPONSIVE
-       ============================================ */
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
@@ -459,7 +407,6 @@
   // GLOBAL VARIABLES
   // ============================================
   let sheets = [];
-  let filteredSheets = [];
   let currentSheetId = null;
   let fontSize = 15;
   let scrollInterval = null;
@@ -487,15 +434,10 @@
   // ============================================
   auth.onAuthStateChanged(function(user) {
     if (!user) { window.location.href = "login.html"; return; }
-    console.log('✅ Logged in as:', user.displayName || user.email);
     if (user.displayName) {
       userNameEl.textContent = '👤 ' + user.displayName;
       userNameEl.style.display = 'inline';
     }
-    db.collection('users').doc(user.uid).set({
-      lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-      loginCount: firebase.firestore.FieldValue.increment(1)
-    }, { merge: true }).catch(err => console.error('Error updating login:', err));
     loadSheets();
   });
 
@@ -504,10 +446,7 @@
   // ============================================
   function resetLogoutTimer() {
     if (logoutTimer) clearTimeout(logoutTimer);
-    logoutTimer = setTimeout(function() {
-      console.log('⏰ Auto-logout: Idle for 30 minutes');
-      logoutUser();
-    }, IDLE_TIMEOUT);
+    logoutTimer = setTimeout(function() { logoutUser(); }, IDLE_TIMEOUT);
   }
 
   function setupIdleTimer() {
@@ -527,30 +466,16 @@
   // LOAD LEADSHEETS
   // ============================================
   function loadSheets() {
-    outputEl.textContent = '⏳ Loading leadsheets...';
-    sheetListEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
-
     db.collection('leadsheets').orderBy('title').get()
       .then((snapshot) => {
         sheets = [];
-        sheetListEl.innerHTML = '';
-        if (snapshot.empty) {
-          outputEl.textContent = '📭 No leadsheets found. Go to Admin to create one.';
-          sheetListEl.innerHTML = '<div class="empty-text">📭 No leadsheets found<br><small>Go to Admin to create your first leadsheet!</small></div>';
-          return;
+        if (!snapshot.empty) {
+          snapshot.forEach((doc) => {
+            sheets.push({ id: doc.id, ...doc.data() });
+          });
         }
-        snapshot.forEach((doc) => {
-          sheets.push({ id: doc.id, ...doc.data() });
-        });
-        outputEl.textContent = 'Select a leadsheet to view';
-        sheetListEl.innerHTML = '<div class="empty-text">🔍 Type a leadsheet title to search</div>';
-        console.log(`✅ ${sheets.length} leadsheets loaded`);
       })
-      .catch((error) => {
-        console.error('Error loading leadsheets:', error);
-        outputEl.textContent = '❌ Error loading leadsheets. Please refresh.';
-        sheetListEl.innerHTML = '<div class="error-text">❌ Error loading leadsheets<br><small>' + error.message + '</small></div>';
-      });
+      .catch(err => console.error('Error loading leadsheets:', err));
   }
 
   // ============================================
@@ -559,57 +484,53 @@
   function filterSheets() {
     const query = searchInput.value.toLowerCase().trim();
     clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
-    if (query === '') {
-      sheetListEl.innerHTML = '<div class="empty-text">🔍 Type a leadsheet title to search</div>';
-      return;
-    }
-    const results = sheets.filter(s => s.title && s.title.toLowerCase().includes(query));
-    const limitedResults = results.slice(0, MAX_SEARCH_RESULTS);
-    renderSheetList(limitedResults, results.length);
-  }
 
-  function renderSheetList(results, totalFound) {
-    sheetListEl.innerHTML = '';
-    if (results.length === 0) {
-      sheetListEl.innerHTML = '<div class="empty-text">🔍 No leadsheets found matching "<span id="searchTerm">' + searchInput.value + '</span>"</div>';
+    if (query === '') {
+      sheetListEl.style.display = 'none';
+      sheetListEl.innerHTML = '';
       return;
     }
-    const count = document.createElement('div');
-    count.className = 'result-count';
-    count.textContent = 'Showing ' + results.length + ' of ' + totalFound + ' results';
-    sheetListEl.appendChild(count);
-    const displayResults = results.slice(0, DISPLAY_RESULTS);
-    const hiddenResults = results.slice(DISPLAY_RESULTS);
+
+    const results = sheets.filter(s => s.title && s.title.toLowerCase().includes(query));
+    sheetListEl.style.display = 'block';
+
+    if (results.length === 0) {
+      sheetListEl.innerHTML = '<div class="empty-text">🔍 No leadsheets found</div>';
+      return;
+    }
+
+    sheetListEl.innerHTML = '';
+    const displayResults = results.slice(0, MAX_SEARCH_RESULTS);
+    const hiddenResults = results.slice(MAX_SEARCH_RESULTS);
+
     displayResults.forEach((sheet) => {
-      const btn = createSheetButton(sheet);
+      const btn = document.createElement('button');
+      btn.textContent = sheet.title || 'Untitled';
+      btn.className = 'song-item';
+      btn.onclick = () => selectSheet(sheet.id);
       sheetListEl.appendChild(btn);
     });
+
     if (hiddenResults.length > 0) {
       const hint = document.createElement('div');
       hint.className = 'scroll-hint';
       hint.textContent = '⬇️ ' + hiddenResults.length + ' more results (scroll down)';
       sheetListEl.appendChild(hint);
       hiddenResults.forEach((sheet) => {
-        const btn = createSheetButton(sheet);
-        btn.className += ' hidden-result';
+        const btn = document.createElement('button');
+        btn.textContent = sheet.title || 'Untitled';
+        btn.className = 'song-item hidden-result';
+        btn.onclick = () => selectSheet(sheet.id);
         sheetListEl.appendChild(btn);
       });
     }
   }
 
-  function createSheetButton(sheet) {
-    const btn = document.createElement('button');
-    btn.textContent = sheet.title || 'Untitled';
-    btn.className = 'song-item';
-    btn.setAttribute('data-id', sheet.id);
-    btn.onclick = () => selectSheet(sheet.id);
-    return btn;
-  }
-
   function clearSearch() {
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';
-    sheetListEl.innerHTML = '<div class="empty-text">🔍 Type a leadsheet title to search</div>';
+    sheetListEl.style.display = 'none';
+    sheetListEl.innerHTML = '';
     searchInput.focus();
   }
 
@@ -626,35 +547,117 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET - DENGAN WARNA
+  // RENDER LEADSHEET — 3 BARIS
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
     if (!content) { outputEl.textContent = 'No content'; return; }
 
-    // Escape HTML
-    let rendered = content;
+    // Split by | to get bars
+    let bars = content.split('|').filter(b => b.trim() !== '');
 
-    // Replace chords: [C] → <span class="chord">C</span>
-    rendered = rendered.replace(/\[([^\]]+)\]/g, '<span class="chord">$1</span>');
+    let line1 = ''; // Ending line
+    let line2 = ''; // Section + Chords
+    let line3 = ''; // Bar lines + Beats
 
-    // Replace bar lines: | → <span class="barline">|</span>
+    let hasEnding = false;
+    let endingText = '';
+
+    for (let bar of bars) {
+      let barContent = bar;
+
+      // Check for section marker: (a), (b), etc.
+      let section = '';
+      let sectionMatch = bar.match(/\(([a-d])\)/);
+      if (sectionMatch) {
+        section = '(' + sectionMatch[1] + ')';
+        barContent = bar.replace(/\([a-d]\)/, '');
+      }
+
+      // Check for ending markers
+      let ending = '';
+      let endingMatch = barContent.match(/\[1va\]|\[2va\]|\[1,2va\]|\[1,2,3va\]|\[1,2,3,4va\]/);
+      if (endingMatch) {
+        ending = endingMatch[0];
+        barContent = barContent.replace(/\[1,2,3,4va\]|\[1,2,3va\]|\[1,2va\]|\[1va\]|\[2va\]|\[3va\]|\[4va\]/g, '');
+        hasEnding = true;
+        endingText = ending.replace(/\[|\]/g, '') + '─────────────────';
+      }
+
+      // Remove [.] marker
+      barContent = barContent.replace(/\[\.\]/g, '');
+
+      // Extract chords
+      let chordMatches = barContent.match(/\[([^\]]+)\]/g) || [];
+      let chordNames = chordMatches.map(c => c.replace(/[\[\]]/g, ''));
+
+      // Count beats (////)
+      let beatCount = (barContent.match(/\/\/\/\//g) || []).length;
+      if (beatCount === 0) beatCount = 4;
+
+      // Build line 2: section + chords
+      if (section) {
+        line2 += section + '  ';
+      }
+      for (let chord of chordNames) {
+        let displayChord = chord.replace(/#/g, '♯').replace(/b/g, '♭').replace(/m7b5/g, 'ø').replace(/dim/g, '°');
+        let spacing = Math.max(4, displayChord.length + 2);
+        line2 += displayChord + ' '.repeat(spacing - displayChord.length);
+      }
+
+      // Build line 3: bar lines + beats
+      if (section) {
+        line3 += '||  ';
+      }
+      // Add bar line and beats
+      line3 += '|  ';
+      for (let i = 0; i < beatCount; i++) {
+        line3 += '/  ';
+      }
+
+      // Add space between bars
+      line2 += ' | ';
+      line3 += '| ';
+    }
+
+    // Build final output with 3 lines
+    let finalOutput = '';
+
+    // Line 1: Ending
+    if (hasEnding) {
+      finalOutput += endingText + '\n';
+    }
+
+    // Line 2: Section + Chords
+    finalOutput += line2.trim() + '\n';
+
+    // Line 3: Bar lines + Beats
+    finalOutput += line3.trim();
+
+    // Apply colors
+    let rendered = finalOutput;
+
+    // Chords
+    rendered = rendered.replace(/(♯|♭|ø|°|[A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>');
+
+    // Bar lines
     rendered = rendered.replace(/\|/g, '<span class="barline">|</span>');
 
-    // Replace beats: \ → <span class="beat">\</span>
-    rendered = rendered.replace(/\\/g, '<span class="beat">\\</span>');
+    // Beats
+    rendered = rendered.replace(/\//g, '<span class="beat">/</span>');
 
-    // Replace section markers: a., b., etc. → <span class="section">a.</span>
-    rendered = rendered.replace(/([a-d])\./g, '<span class="section">$1.</span>');
+    // Section markers: (a), (b), etc.
+    rendered = rendered.replace(/\(([a-d])\)/g, '<span class="section">($1)</span>');
 
-    // Replace repeat signs
+    // Repeat signs
     rendered = rendered.replace(/\|:/g, '<span class="repeat">|:</span>');
     rendered = rendered.replace(/:\|/g, '<span class="repeat">:|</span>');
 
-    // Replace ending lines: 1va─── etc. → <span class="ending">$&</span>
+    // Ending lines
     rendered = rendered.replace(/(1va|2va|1,2va|1,2,3va|1,2,3,4va)(─+)/g, '<span class="ending">$1$2</span>');
 
-    outputEl.innerHTML = rendered;
+    // Replace newlines with <br>
+    outputEl.innerHTML = rendered.replace(/\n/g, '<br>');
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
@@ -676,7 +679,7 @@
   // ============================================
   function startScroll() {
     if (isScrolling) return;
-    if (!outputEl.innerHTML || outputEl.innerHTML === 'Loading...' || outputEl.innerHTML === 'Select a leadsheet to view' || outputEl.innerHTML === 'No content') return;
+    if (!outputEl.innerHTML || outputEl.innerHTML === 'Loading...' || outputEl.innerHTML === 'No content') return;
     if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) return;
     isScrolling = true;
     playBtn.textContent = '▶️';
