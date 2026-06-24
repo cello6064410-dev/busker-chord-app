@@ -53,98 +53,34 @@
       font-family: 'Courier New', monospace;
       font-size: 16px;
       line-height: 1.8;
+      white-space: pre-wrap;
     }
 
-    /* ============================================
-       SHEET LAYOUT
-       ============================================ */
-    .sheet {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      gap: 2px 4px;
-      padding: 4px 0;
-      border-bottom: 1px solid #1a1a2e;
-    }
-
-    .bar-block {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2px 4px;
-      min-width: 40px;
-      flex-shrink: 0;
-    }
-
-    .bar-layer {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      white-space: nowrap;
-      font-size: 0.95em;
+    #output .line-top {
+      color: #ff922b;
+      font-size: 0.9em;
       min-height: 1.6em;
-      background: transparent;
+      padding: 2px 0;
+      border-bottom: 1px solid #2a2a4e;
+      margin-bottom: 2px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
     }
 
-    .ending-layer {
-      min-height: 24px;
-      font-size: 0.75em;
-      color: #ff922b;
-      position: relative;
-      width: 100%;
-      display: flex;
-      justify-content: center;
+    #output .line-bottom {
+      color: #ffffff;
+      font-size: 1em;
+      min-height: 1.6em;
+      padding: 2px 0;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
     }
 
-    .ending-bracket {
-      border-top: 2px solid #ff922b;
-      padding-top: 2px;
-      position: relative;
-      display: inline-block;
-      width: 100%;
-      text-align: center;
-    }
-
-    .ending-bracket::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: -2px;
-      height: 8px;
-      border-left: 2px solid #ff922b;
-    }
-
-    .ending-bracket::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: -2px;
-      height: 8px;
-      border-right: 2px solid #ff922b;
-    }
-
-    .ending-label {
-      position: absolute;
-      top: -14px;
-      left: 2px;
-      font-size: 0.7em;
-      color: #ff922b;
-      font-weight: bold;
-    }
-
-    /* Warna Elemen */
-    .chord { color: #ffcc00; }
-    .beat { color: #ff6b6b; }
-    .section { color: #51cf66; }
-    .repeat { color: #cc88ff; }
-    .barline { color: #4fc3f7; }
-    .nav { color: #ff922b; font-weight: bold; }
+    #output .line-bottom .chord { color: #ffcc00; }
+    #output .line-bottom .beat { color: #ff6b6b; }
+    #output .line-bottom .section { color: #51cf66; }
+    #output .line-bottom .repeat { color: #cc88ff; }
+    #output .line-bottom .barline { color: #4fc3f7; }
 
     .output.scrolling {
       border-color: #4fc3f7;
@@ -358,15 +294,10 @@
       50% { opacity: 1; }
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
       #output { font-size: 14px; padding: 10px; }
-      .bar-block { min-width: 30px; padding: 2px 3px; }
-      .ending-label { font-size: 0.6em; top: -12px; }
-      .ending-layer { min-height: 20px; font-size: 0.7em; }
-      .bar-layer { gap: 1px; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -399,7 +330,6 @@
         min-width: 38px;
         font-size: 1rem;
       }
-      .row { gap: 2px 3px; }
     }
 
     @media (max-width: 400px) {
@@ -407,10 +337,6 @@
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
       #output { font-size: 12px; padding: 8px; }
-      .bar-block { min-width: 20px; padding: 1px 2px; }
-      .ending-label { font-size: 0.5em; top: -10px; }
-      .ending-layer { min-height: 16px; font-size: 0.6em; }
-      .bar-layer { gap: 1px; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -421,12 +347,10 @@
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
       #output { font-size: 16px; padding: 15px 20px; }
-      .bar-block { min-width: 60px; padding: 4px 8px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
       .floating-bar button:hover { background: #2a2a4e; }
-      .row { gap: 4px 8px; }
     }
   </style>
 </head>
@@ -638,14 +562,10 @@
   }
 
   // ============================================
-  // ════════════════════════════════════════════
-  // TOKENIZER — LEXER (FIXED)
-  // ════════════════════════════════════════════
+  // TOKENIZER
   // ============================================
   function tokenize(input) {
-    // CRITICAL FIX: | dan [C] sebagai token berasingan
     const regex = /\|\:|\:\||\|\||\||\[.*?\]|----|\([a-z]\)/gi;
-
     let tokens = [];
     let match;
 
@@ -654,39 +574,24 @@
 
       if (value === '|:') {
         tokens.push({ type: 'REPEAT_START' });
-
       } else if (value === ':|') {
         tokens.push({ type: 'REPEAT_END' });
-
       } else if (value === '||') {
         tokens.push({ type: 'DOUBLE_BAR' });
-
       } else if (value === '|') {
         tokens.push({ type: 'BAR' });
-
       } else if (value === '----') {
         tokens.push({ type: 'BEAT' });
-
       } else if (/^\([a-z]\)$/i.test(value)) {
         tokens.push({ type: 'SECTION', value });
-
       } else if (/^\[.*\]$/.test(value)) {
         let inner = value.slice(1, -1);
-
         if (/^[\d,]+va$/i.test(inner)) {
-          tokens.push({
-            type: 'ENDING_START',
-            value: inner.replace(/va/i, '')
-          });
-
+          tokens.push({ type: 'OCTAVE', value: inner.replace(/va/i, '') });
         } else if (inner === '.') {
-          tokens.push({ type: 'ENDING_STOP' });
-
+          tokens.push({ type: 'HOLD' });
         } else {
-          tokens.push({
-            type: 'CHORD',
-            value: inner
-          });
+          tokens.push({ type: 'CHORD', value: inner });
         }
       }
     }
@@ -695,127 +600,104 @@
   }
 
   // ============================================
-  // PARSER — STATE MACHINE
-  // ============================================
-  function parse(tokens) {
-    let bars = [];
-    let currentBar = [];
-    let endingState = null;
-
-    for (let token of tokens) {
-      switch (token.type) {
-
-        case 'ENDING_START':
-          endingState = token.value;
-          break;
-
-        case 'ENDING_STOP':
-          endingState = null;
-          break;
-
-        case 'BAR':
-        case 'DOUBLE_BAR':
-        case 'REPEAT_START':
-        case 'REPEAT_END':
-          bars.push({
-            content: currentBar,
-            ending: endingState,
-            barline: token.type
-          });
-          currentBar = [];
-          break;
-
-        default:
-          currentBar.push(token);
-      }
-    }
-
-    // Last bar
-    if (currentBar.length > 0) {
-      bars.push({
-        content: currentBar,
-        ending: endingState,
-        barline: null
-      });
-    }
-
-    return bars;
-  }
-
-  // ============================================
-  // RENDER ENGINE
-  // ============================================
-  function renderBars(bars) {
-    let html = '<div class="sheet">';
-    let barsPerRow = 4;
-
-    for (let i = 0; i < bars.length; i++) {
-      let bar = bars[i];
-
-      if (i % barsPerRow === 0) {
-        html += `<div class="row">`;
-      }
-
-      // Build chord line
-      let chordHTML = '';
-      let endingHTML = '';
-
-      for (let t of bar.content) {
-        if (t.type === 'CHORD') {
-          chordHTML += `<span class="chord">${t.value}</span>`;
-        }
-        if (t.type === 'BEAT') {
-          chordHTML += `<span class="beat">----</span>`;
-        }
-        if (t.type === 'SECTION') {
-          chordHTML += `<span class="section">${t.value}</span>`;
-        }
-        if (t.type === 'REPEAT_START' || t.type === 'REPEAT_END' || t.type === 'DOUBLE_BAR') {
-          chordHTML += `<span class="repeat">${t.type === 'REPEAT_START' ? '|:' : t.type === 'REPEAT_END' ? ':|' : '||'}</span>`;
-        }
-      }
-
-      // Barline
-      if (bar.barline === 'BAR') chordHTML += `<span class="barline">|</span>`;
-      if (bar.barline === 'DOUBLE_BAR') chordHTML += `<span class="barline">||</span>`;
-      if (bar.barline === 'REPEAT_START') chordHTML += `<span class="repeat">|:</span>`;
-      if (bar.barline === 'REPEAT_END') chordHTML += `<span class="repeat">:|</span>`;
-
-      // Ending
-      if (bar.ending) {
-        endingHTML = `
-          <div class="ending-bracket">
-            <span class="ending-label">${bar.ending}</span>
-          </div>
-        `;
-      }
-
-      html += `
-        <div class="bar-block">
-          <div class="ending-layer">${endingHTML}</div>
-          <div class="bar-layer">${chordHTML}</div>
-        </div>
-      `;
-
-      if (i % barsPerRow === barsPerRow - 1 || i === bars.length - 1) {
-        html += `</div>`;
-      }
-    }
-
-    html += '</div>';
-    return html;
-  }
-
-  // ============================================
-  // RENDER LEADSHEET
+  // RENDER — DUA LAYER SERENTAK
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
-    if (!content) { outputEl.innerHTML = 'No content'; return; }
+    if (!content) {
+      outputEl.innerHTML = 'No content';
+      return;
+    }
 
     let tokens = tokenize(content);
-    let bars = parse(tokens);
-    let html = renderBars(bars);
+
+    let topLine = '';
+    let bottomLine = '';
+
+    let currentOctave = null;
+    let isDrawing = false;
+
+    for (let t of tokens) {
+      if (t.type === 'OCTAVE') {
+        currentOctave = t.value;
+        isDrawing = true;
+        // Write octave label once
+        topLine += currentOctave + ' ';
+        continue;
+      }
+
+      if (t.type === 'HOLD') {
+        isDrawing = false;
+        // Add a space to mark the end
+        topLine += ' ';
+        continue;
+      }
+
+      if (t.type === 'BAR') {
+        bottomLine += '|';
+        topLine += ' ';
+        continue;
+      }
+
+      if (t.type === 'REPEAT_START') {
+        bottomLine += '|:';
+        topLine += '  ';
+        continue;
+      }
+
+      if (t.type === 'REPEAT_END') {
+        bottomLine += ':|';
+        topLine += '  ';
+        continue;
+      }
+
+      if (t.type === 'DOUBLE_BAR') {
+        bottomLine += '||';
+        topLine += '  ';
+        continue;
+      }
+
+      if (t.type === 'SECTION') {
+        bottomLine += t.value;
+        topLine += ' '.repeat(t.value.length);
+        continue;
+      }
+
+      if (t.type === 'CHORD') {
+        bottomLine += t.value;
+        if (isDrawing) {
+          topLine += '.'.repeat(t.value.length);
+        } else {
+          topLine += ' '.repeat(t.value.length);
+        }
+        continue;
+      }
+
+      if (t.type === 'BEAT') {
+        bottomLine += '-';
+        if (isDrawing) {
+          topLine += '.';
+        } else {
+          topLine += ' ';
+        }
+        continue;
+      }
+    }
+
+    // Wrap with color
+    let bottomHTML = bottomLine
+      .replace(/\|/g, '<span class="barline">|</span>')
+      .replace(/\|:/g, '<span class="repeat">|:</span>')
+      .replace(/:\|/g, '<span class="repeat">:|</span>')
+      .replace(/\|\|/g, '<span class="barline">||</span>')
+      .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
+      .replace(/([A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>')
+      .replace(/-/g, '<span class="beat">-</span>');
+
+    let html = `
+      <div class="line-top">${topLine}</div>
+      <div class="line-bottom">${bottomHTML}</div>
+    `;
 
     outputEl.innerHTML = html;
     outputEl.scrollTop = 0;
