@@ -56,33 +56,44 @@
       display: flex;
       flex-wrap: wrap;
       align-content: flex-start;
-      gap: 8px 20px;
+      gap: 4px 0;
     }
 
     #output .bar {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      min-width: 80px;
+      min-width: 60px;
       flex-shrink: 0;
       font-family: 'Courier New', monospace;
       font-size: 14px;
-      line-height: 1.8;
-      padding: 4px 8px;
-      border-left: 1px solid #2a2a4e;
-      border-right: 1px solid #2a2a4e;
+      line-height: 1.6;
+      padding: 2px 0;
+      background: transparent;
+    }
+
+    /* Barline NIPIS — guna teks, bukan border */
+    #output .bar .line3 .barline {
+      color: #4fc3f7;
+    }
+
+    #output .bar .line3 .barline-double {
+      color: #4fc3f7;
+      font-weight: bold;
     }
 
     #output .bar .line1 {
       color: #ff922b;
       font-size: 0.85em;
-      min-height: 1.6em;
+      min-height: 1.4em;
+      white-space: nowrap;
     }
 
     #output .bar .line2 {
       color: #ffcc00;
       font-size: 0.95em;
-      min-height: 1.6em;
+      min-height: 1.4em;
+      white-space: nowrap;
     }
 
     #output .bar .line2 .section {
@@ -92,7 +103,8 @@
     #output .bar .line3 {
       color: #4fc3f7;
       font-size: 0.95em;
-      min-height: 1.6em;
+      min-height: 1.4em;
+      white-space: nowrap;
     }
 
     #output .bar .line3 .beat {
@@ -351,9 +363,9 @@
         font-size: 1rem;
       }
       #output .bar {
-        min-width: 60px;
-        padding: 2px 4px;
+        min-width: 50px;
         font-size: 12px;
+        padding: 2px 0;
       }
     }
 
@@ -361,7 +373,7 @@
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output .bar { font-size: 10px; min-width: 50px; padding: 2px 3px; }
+      #output .bar { font-size: 10px; min-width: 40px; padding: 1px 0; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -371,7 +383,7 @@
 
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output .bar { font-size: 15px; min-width: 100px; padding: 6px 12px; }
+      #output .bar { font-size: 15px; min-width: 80px; padding: 4px 0; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -587,7 +599,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — FLEX WRAP
+  // RENDER LEADSHEET — FLEX WRAP + BARRINE NIPIS
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -644,21 +656,35 @@
         line2 += displayChord + ' ';
       }
 
-      // Build line3: bar lines + beats
+      // Build line3: barline (nipis) + beats
       let line3 = '';
-      // Check for repeat signs
-      if (barContent.includes(':')) {
-        line3 += '<span class="repeat">|:</span> ';
+
+      // Check if this bar has a section marker → double bar
+      let isDoubleBar = section ? true : false;
+
+      // Left barline
+      if (isDoubleBar) {
+        line3 += '<span class="barline-double">||</span> ';
       } else {
-        line3 += '| ';
+        line3 += '<span class="barline">|</span> ';
       }
+
+      // Beats
       for (let i = 0; i < beatCount; i++) {
         line3 += '<span class="beat">/</span> ';
       }
-      if (barContent.includes(':')) {
-        line3 += ' <span class="repeat">:|</span>';
+
+      // Right barline
+      if (isDoubleBar) {
+        line3 += ' <span class="barline-double">||</span>';
       } else {
-        line3 += ' |';
+        line3 += ' <span class="barline">|</span>';
+      }
+
+      // Check for repeat signs
+      if (barContent.includes(':')) {
+        line3 = line3.replace(/\|/g, '<span class="repeat">|</span>');
+        line3 = line3.replace(/:/g, '<span class="repeat">:</span>');
       }
 
       // Build bar HTML
