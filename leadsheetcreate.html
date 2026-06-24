@@ -34,8 +34,8 @@
     <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
   </div>
 
-  <!-- LEADSHEET LIST -->
-  <div id="leadsheetList" class="song-list"></div>
+  <!-- LEADSHEET LIST (hanya muncul bila search) -->
+  <div id="leadsheetList" class="song-list" style="display:none;"></div>
 
   <hr style="border-color: #2a2a4e; margin: 15px 0;">
 
@@ -96,7 +96,6 @@
   // GLOBAL VARIABLES
   // ============================================
   let allLeadsheets = [];
-  let filteredLeadsheets = [];
   let currentEditId = null;
   let currentTime = '4/4';
   const MAX_SEARCH_RESULTS = 10;
@@ -133,27 +132,22 @@
   }
 
   // ============================================
-  // LOAD LEADSHEETS
+  // LOAD LEADSHEETS (simpan dalam memory)
   // ============================================
   function loadLeadsheets() {
-    listEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
-
     db.collection('leadsheets')
       .orderBy('title')
       .get()
       .then((snapshot) => {
         allLeadsheets = [];
-        listEl.innerHTML = '';
         if (snapshot.empty) {
-          listEl.innerHTML = '<div class="empty-text">📭 No leadsheets found. Create one below.</div>';
+          listEl.innerHTML = '<div class="empty-text">📭 No leadsheets found</div>';
           return;
         }
         snapshot.forEach((doc) => {
           const data = doc.data();
           allLeadsheets.push({ id: doc.id, ...data });
         });
-        filteredLeadsheets = [...allLeadsheets];
-        renderList(filteredLeadsheets, filteredLeadsheets.length);
       })
       .catch((err) => {
         console.error('Error loading leadsheets:', err);
@@ -162,35 +156,35 @@
   }
 
   // ============================================
-  // SEARCH / FILTER
+  // SEARCH / FILTER (hanya bila taip)
   // ============================================
   function filterLeadsheets() {
     const query = searchInput.value.toLowerCase().trim();
     clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
-    if (query === '') {
-      filteredLeadsheets = [...allLeadsheets];
-    } else {
-      filteredLeadsheets = allLeadsheets.filter(s => s.title && s.title.toLowerCase().includes(query));
-    }
-    renderList(filteredLeadsheets, filteredLeadsheets.length);
-  }
 
-  function renderList(results, totalFound) {
-    listEl.innerHTML = '';
+    if (query === '') {
+      listEl.style.display = 'none';
+      listEl.innerHTML = '';
+      return;
+    }
+
+    const results = allLeadsheets.filter(s => s.title && s.title.toLowerCase().includes(query));
+    listEl.style.display = 'block';
+
     if (results.length === 0) {
       listEl.innerHTML = '<div class="empty-text">🔍 No leadsheets found</div>';
       return;
     }
-    const count = document.createElement('div');
-    count.className = 'result-count';
-    count.textContent = 'Showing ' + results.length + ' of ' + totalFound + ' results';
-    listEl.appendChild(count);
-    const displayResults = results.slice(0, DISPLAY_RESULTS);
-    const hiddenResults = results.slice(DISPLAY_RESULTS);
+
+    listEl.innerHTML = '';
+    const displayResults = results.slice(0, MAX_SEARCH_RESULTS);
+    const hiddenResults = results.slice(MAX_SEARCH_RESULTS);
+
     displayResults.forEach((sheet) => {
       const item = createListItem(sheet);
       listEl.appendChild(item);
     });
+
     if (hiddenResults.length > 0) {
       const hint = document.createElement('div');
       hint.className = 'scroll-hint';
@@ -207,26 +201,25 @@
   function createListItem(sheet) {
     const div = document.createElement('div');
     div.className = 'admin-song-item';
+    div.style.cursor = 'pointer';
     div.innerHTML = `
       <span class="song-title">${sheet.title || 'Untitled'}</span>
-      <div class="admin-btn-group">
-        <button class="edit-btn" onclick="loadForEdit('${sheet.id}')">✏️ Edit</button>
-        <button class="delete-btn" onclick="confirmDelete('${sheet.id}')">🗑️ Delete</button>
-      </div>
+      <span style="color: #666; font-size: 0.7rem; font-family: Arial, sans-serif;">${sheet.timeSignature || '4/4'}</span>
     `;
+    div.onclick = () => loadForEdit(sheet.id);
     return div;
   }
 
   function clearSearch() {
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';
-    filteredLeadsheets = [...allLeadsheets];
-    renderList(filteredLeadsheets, filteredLeadsheets.length);
+    listEl.style.display = 'none';
+    listEl.innerHTML = '';
     searchInput.focus();
   }
 
   // ============================================
-  // LOAD FOR EDIT
+  // LOAD FOR EDIT (klik nama lagu)
   // ============================================
   function loadForEdit(id) {
     const sheet = allLeadsheets.find(s => s.id === id);
@@ -298,35 +291,28 @@
   }
 
   // ============================================
-  // CONFIRM DELETE
+  // DELETE
   // ============================================
-  function confirmDelete(id) {
+  function deleteLeadsheet() {
+    if (!currentEditId) {
+      statusMsg.textContent = '⚠️ No leadsheet selected';
+      statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
+      return;
+    }
     if (!confirm('Delete this leadsheet permanently?')) return;
     statusMsg.textContent = '⏳ Deleting...';
     statusMsg.style.cssText = 'background:rgba(79,195,247,0.2); color:#4fc3f7; border:1px solid #4fc3f7; padding:12px; border-radius:10px;';
-    db.collection('leadsheets').doc(id).delete()
+    db.collection('leadsheets').doc(currentEditId).delete()
       .then(() => {
         statusMsg.textContent = '✅ Leadsheet deleted!';
         statusMsg.style.cssText = 'background:rgba(0,200,83,0.2); color:#00e676; border:1px solid #00c853; padding:12px; border-radius:10px;';
-        if (currentEditId === id) clearForm();
+        clearForm();
         loadLeadsheets();
       })
       .catch(err => {
         statusMsg.textContent = '❌ Delete failed: ' + err.message;
         statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
       });
-  }
-
-  // ============================================
-  // DELETE BUTTON (from form)
-  // ============================================
-  function deleteLeadsheet() {
-    if (!currentEditId) {
-      statusMsg.textContent = '⚠️ No leadsheet selected to delete';
-      statusMsg.style.cssText = 'background:rgba(255,68,68,0.2); color:#ff4444; border:1px solid #ff4444; padding:12px; border-radius:10px;';
-      return;
-    }
-    confirmDelete(currentEditId);
   }
 
   // ============================================
