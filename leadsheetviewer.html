@@ -86,31 +86,37 @@
     }
 
     /* ============================================
-       CHORD + BEAT DALAM SATU BARIS
+       CHORD + BEAT DALAM SATU BARIS — FIX
        ============================================ */
     .bar-content {
       display: flex;
       align-items: center;
       gap: 2px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap !important;  /* ✅ Paksa satu baris */
+      white-space: nowrap !important; /* ✅ Paksa teks tidak turun */
       font-size: 0.95em;
+      overflow: visible;
     }
 
     .chord {
       color: #ffcc00;
       font-weight: bold;
+      display: inline-block;
     }
 
     .beat {
       color: #ff6b6b;
+      display: inline-block;
     }
 
     .barline {
       color: #4fc3f7;
+      display: inline-block;
     }
 
     .repeat {
       color: #cc88ff;
+      display: inline-block;
     }
 
     .section {
@@ -644,7 +650,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — CHORD + BEAT SATU BARIS
+  // RENDER LEADSHEET — CHORD + BEAT SATU BARIS (FIXED)
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
