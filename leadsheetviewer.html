@@ -52,7 +52,7 @@
       border: 1px solid #2a2a2a;
       font-family: 'Courier New', monospace;
       font-size: 16px;
-      line-height: 1.6;
+      line-height: 1.8;
       white-space: pre-wrap;
     }
 
@@ -76,11 +76,13 @@
       letter-spacing: 0;
     }
 
-    #output .line-bottom .chord { color: #ffcc00; }
-    #output .line-bottom .beat { color: #ff6b6b; }
-    #output .line-bottom .section { color: #51cf66; }
-    #output .line-bottom .repeat { color: #cc88ff; }
-    #output .line-bottom .barline { color: #4fc3f7; }
+    /* Warna */
+    .chord { color: #ffcc00; }        /* Emas */
+    .beat { color: #ff6b6b; }          /* Merah */
+    .barline { color: #4fc3f7; }       /* Biru */
+    .repeat { color: #cc88ff; }        /* Ungu */
+    .section { color: #51cf66; }       /* Hijau */
+    .flow { color: #ff922b; }          /* Oren */
 
     .output.scrolling {
       border-color: #4fc3f7;
@@ -562,10 +564,11 @@
   }
 
   // ============================================
-  // TOKENIZER
+  // TOKENIZER — NEW SYSTEM
   // ============================================
   function tokenize(input) {
-    const regex = /\|\:|\:\||\|\||\||\[.*?\]|----|\([a-z]\)/gi;
+    // Order penting: longest match first
+    const regex = /\|\:|\:\||\|\||\||\{.*?\}|\([a-z]\)|\[.*?\]|----/gi;
     let tokens = [];
     let match;
 
@@ -583,16 +586,22 @@
       } else if (value === '----') {
         tokens.push({ type: 'BEAT' });
       } else if (/^\([a-z]\)$/i.test(value)) {
+        // Section marker — FLOW
         tokens.push({ type: 'SECTION', value });
-      } else if (/^\[.*\]$/.test(value)) {
+      } else if (/^\{.*\}$/.test(value)) {
+        // Flow: {1va}, {2va}, {.}
         let inner = value.slice(1, -1);
-        if (/^[\d,]+va$/i.test(inner)) {
-          tokens.push({ type: 'OCTAVE', value: inner.replace(/va/i, '') });
-        } else if (inner === '.') {
-          tokens.push({ type: 'HOLD' });
+        if (inner === '.') {
+          tokens.push({ type: 'FLOW_STOP' });
+        } else if (/^[\d,]+va$/i.test(inner)) {
+          tokens.push({ type: 'FLOW_START', value: inner.replace(/va/i, '') });
         } else {
-          tokens.push({ type: 'CHORD', value: inner });
+          tokens.push({ type: 'FLOW', value: inner });
         }
+      } else if (/^\[.*\]$/.test(value)) {
+        // Chord — STAY INSIDE BAR
+        let inner = value.slice(1, -1);
+        tokens.push({ type: 'CHORD', value: inner });
       }
     }
 
@@ -600,7 +609,7 @@
   }
 
   // ============================================
-  // RENDER — STATE + INLINE (FIXED)
+  // RENDER — FLOW + STAY INSIDE BAR
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -614,69 +623,67 @@
     let top = '';
     let bottom = '';
 
-    let currentEnding = null;   // "1", "2", "1,2", dll
+    let currentFlow = null;      // "1", "2", "1,2", dll
     let justStarted = false;
 
     for (let t of tokens) {
-      // START OCTAVE
-      if (t.type === 'OCTAVE') {
-        currentEnding = t.value;
+      // === FLOW: START ===
+      if (t.type === 'FLOW_START') {
+        currentFlow = t.value;
         justStarted = true;
         continue;
       }
 
-      // STOP OCTAVE
-      if (t.type === 'HOLD') {
-        currentEnding = null;
+      // === FLOW: STOP ===
+      if (t.type === 'FLOW_STOP') {
+        currentFlow = null;
         continue;
       }
 
-      // BAR
+      // === SECTION MARKER — FLOW ===
+      if (t.type === 'SECTION') {
+        let text = t.value;
+        top += text;
+        bottom += ' '.repeat(text.length);
+        continue;
+      }
+
+      // === BARLINE ===
       if (t.type === 'BAR') {
         top += ' ';
         bottom += '|';
         continue;
       }
 
-      // REPEAT START
+      // === REPEAT START ===
       if (t.type === 'REPEAT_START') {
         top += '  ';
         bottom += '|:';
         continue;
       }
 
-      // REPEAT END
+      // === REPEAT END ===
       if (t.type === 'REPEAT_END') {
         top += '  ';
         bottom += ':|';
         continue;
       }
 
-      // DOUBLE BAR
+      // === DOUBLE BAR ===
       if (t.type === 'DOUBLE_BAR') {
         top += '  ';
         bottom += '||';
         continue;
       }
 
-      // SECTION
-      if (t.type === 'SECTION') {
-        let text = t.value;
-        bottom += text;
-        top += ' '.repeat(text.length);
-        continue;
-      }
-
-      // CHORD
+      // === CHORD — STAY INSIDE BAR ===
       if (t.type === 'CHORD') {
         let text = t.value;
         bottom += text;
 
-        if (currentEnding) {
+        if (currentFlow) {
           if (justStarted) {
-            // Write the ending label first, then dots
-            top += currentEnding;
-            // Add dots for the rest of the chord length
+            top += currentFlow;
             if (text.length > 1) {
               top += '.'.repeat(text.length - 1);
             }
@@ -690,10 +697,10 @@
         continue;
       }
 
-      // BEAT
+      // === BEAT — STAY INSIDE BAR ===
       if (t.type === 'BEAT') {
         bottom += '-';
-        if (currentEnding) {
+        if (currentFlow) {
           top += '.';
         } else {
           top += ' ';
