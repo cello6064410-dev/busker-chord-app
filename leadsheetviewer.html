@@ -45,51 +45,68 @@
       flex-shrink: 0;
     }
 
+    /* ============================================
+       OUTPUT — FLEX WRAP, SETIAP BAR SATU UNIT
+       ============================================ */
     #output {
       flex: 1;
       overflow-y: auto;
       min-height: 0;
       background: #1b1b1b;
-      padding: 15px 15px;
+      padding: 15px 10px;
       border-radius: 10px;
       border: 1px solid #2a2a2a;
       font-family: 'Courier New', monospace;
       font-size: 16px;
       line-height: 1.6;
-      white-space: pre-wrap;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 4px 6px;
     }
 
-    /* === FLOW LINE — ATAS (section, 1va) === */
+    /* Setiap bar = satu unit */
+    .bar-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      background: transparent;
+      padding: 2px 4px;
+      border-left: 1px solid #2a2a4e;
+      border-right: 1px solid #2a2a4e;
+      min-width: 40px;
+      flex-shrink: 0;
+    }
+
+    /* Flow line — atas (section, 1va) */
     .flow-line {
       color: #ff922b;
-      font-size: 0.85em;
-      min-height: 1.4em;
-      padding: 2px 0;
+      font-size: 0.8em;
+      min-height: 1.2em;
+      padding: 0;
       font-family: 'Courier New', monospace;
-      white-space: pre-wrap;
+      white-space: nowrap;
       letter-spacing: 0;
-      border-bottom: 1px solid #2a2a4e;
-      margin-bottom: 2px;
     }
 
-    /* === STAY LINE — BAWAH (chords, beats, barline) === */
+    /* Stay line — bawah (chords, beats, barline) */
     .stay-line {
       color: #ffffff;
-      font-size: 1em;
-      min-height: 1.4em;
-      padding: 2px 0;
+      font-size: 0.95em;
+      min-height: 1.2em;
+      padding: 0;
       font-family: 'Courier New', monospace;
-      white-space: pre-wrap;
+      white-space: nowrap;
       letter-spacing: 0;
     }
 
     /* === WARNA ELEMEN === */
-    .chord { color: #ffcc00; }      /* Emas */
-    .beat { color: #ff6b6b; }        /* Merah */
-    .barline { color: #4fc3f7; }     /* Biru */
-    .repeat { color: #cc88ff; }      /* Ungu */
-    .section { color: #51cf66; }     /* Hijau */
-    .flow { color: #ff922b; }        /* Oren */
+    .chord { color: #ffcc00; }
+    .beat { color: #ff6b6b; }
+    .barline { color: #4fc3f7; }
+    .repeat { color: #cc88ff; }
+    .section { color: #51cf66; }
+    .flow { color: #ff922b; }
 
     .output.scrolling {
       border-color: #4fc3f7;
@@ -306,7 +323,10 @@
     @media (max-width: 768px) {
       .app { padding: 8px; padding-bottom: 80px; }
       .song-list { max-height: 120px; }
-      #output { font-size: 14px; padding: 10px; }
+      #output { font-size: 14px; padding: 10px; gap: 2px 4px; }
+      .bar-unit { min-width: 30px; padding: 2px 3px; }
+      .flow-line { font-size: 0.75em; }
+      .stay-line { font-size: 0.9em; }
       .floating-bar {
         bottom: 0;
         left: 0;
@@ -345,7 +365,10 @@
       .app { padding: 5px; padding-bottom: 75px; }
       .header h2 { font-size: 0.9rem; }
       #sheetTitle { font-size: 0.85rem; }
-      #output { font-size: 12px; padding: 8px; }
+      #output { font-size: 12px; padding: 8px; gap: 2px 3px; }
+      .bar-unit { min-width: 20px; padding: 1px 2px; }
+      .flow-line { font-size: 0.7em; }
+      .stay-line { font-size: 0.85em; }
       .floating-bar button {
         font-size: 0.9rem;
         padding: 10px 0;
@@ -355,7 +378,8 @@
 
     @media (min-width: 769px) {
       .app { max-width: 100%; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-      #output { font-size: 16px; padding: 15px 20px; }
+      #output { font-size: 16px; padding: 15px 20px; gap: 4px 8px; }
+      .bar-unit { min-width: 60px; padding: 4px 8px; }
       .song-list { max-height: 200px; }
       .floating-bar { gap: 10px; padding: 10px 20px; }
       .floating-bar button { padding: 10px 18px; min-width: 50px; }
@@ -571,7 +595,7 @@
   }
 
   // ============================================
-  // RENDER LEADSHEET — FLOW + STAY SELARI
+  // RENDER LEADSHEET — SETIAP BAR SATU UNIT
   // ============================================
   function renderLeadsheet(sheet) {
     let content = sheet.content || '';
@@ -580,133 +604,141 @@
       return;
     }
 
-    let flowLine = '';
-    let stayLine = '';
+    // Split by | to get bars
+    let bars = content.split('|').filter(b => b.trim() !== '');
 
-    let currentFlow = null;      // "1", "2", "1,2", dll
+    let html = '';
+    let currentFlow = null;
     let justStarted = false;
 
-    let i = 0;
-    while (i < content.length) {
+    for (let bar of bars) {
+      let flowLine = '';
+      let stayLine = '';
+      let barContent = bar;
 
-      // === 1. SECTION MARKER (a) — FLOW ===
-      if (content[i] === '(' && i + 2 < content.length && content[i + 2] === ')') {
-        let section = content.substring(i, i + 3);
-        flowLine += section;
-        stayLine += '   ';  // 3 spaces
-        i += 3;
-        continue;
+      // Check for section marker (a) at start
+      let sectionMatch = barContent.match(/^\(([a-d])\)/);
+      if (sectionMatch) {
+        flowLine += '(' + sectionMatch[1] + ')';
+        stayLine += '   ';
+        barContent = barContent.replace(/^\([a-d]\)/, '');
       }
 
-      // === 2. FLOW START {1va} ===
-      if (content[i] === '{') {
-        let j = content.indexOf('}', i);
-        if (j !== -1) {
-          let inner = content.substring(i + 1, j);
-          if (inner !== '.') {
-            currentFlow = inner.replace(/va/i, '');
-            justStarted = true;
-          } else {
-            // {.} — flow stop
-            currentFlow = null;
-          }
-          i = j + 1;
-          continue;
-        }
-      }
-
-      // === 3. CHORD [C] — STAY ===
-      if (content[i] === '[') {
-        let j = content.indexOf(']', i);
-        if (j !== -1) {
-          let chord = content.substring(i + 1, j);
-          stayLine += chord;
-          if (currentFlow) {
-            if (justStarted) {
-              flowLine += currentFlow;
-              if (chord.length > 1) {
-                flowLine += '.'.repeat(chord.length - 1);
-              }
-              justStarted = false;
+      // Process the bar content for chords, beats, flow
+      let i = 0;
+      while (i < barContent.length) {
+        // Check for {1va} — flow start
+        if (barContent[i] === '{') {
+          let j = barContent.indexOf('}', i);
+          if (j !== -1) {
+            let inner = barContent.substring(i + 1, j);
+            if (inner !== '.') {
+              currentFlow = inner.replace(/va/i, '');
+              justStarted = true;
             } else {
-              flowLine += '.'.repeat(chord.length);
+              // {.} — flow stop
+              currentFlow = null;
             }
-          } else {
-            flowLine += ' '.repeat(chord.length);
+            i = j + 1;
+            continue;
           }
-          i = j + 1;
+        }
+
+        // Check for [chord]
+        if (barContent[i] === '[') {
+          let j = barContent.indexOf(']', i);
+          if (j !== -1) {
+            let chord = barContent.substring(i + 1, j);
+            stayLine += chord;
+            if (currentFlow) {
+              if (justStarted) {
+                flowLine += currentFlow;
+                if (chord.length > 1) {
+                  flowLine += '.'.repeat(chord.length - 1);
+                }
+                justStarted = false;
+              } else {
+                flowLine += '.'.repeat(chord.length);
+              }
+            } else {
+              flowLine += ' '.repeat(chord.length);
+            }
+            i = j + 1;
+            continue;
+          }
+        }
+
+        // Check for ----
+        if (barContent[i] === '-' && i + 3 < barContent.length &&
+            barContent[i+1] === '-' && barContent[i+2] === '-' && barContent[i+3] === '-') {
+          stayLine += '----';
+          if (currentFlow) {
+            flowLine += '....';
+          } else {
+            flowLine += '    ';
+          }
+          i += 4;
           continue;
         }
-      }
 
-      // === 4. BEAT ---- ===
-      if (content[i] === '-' && i + 3 < content.length &&
-          content[i+1] === '-' && content[i+2] === '-' && content[i+3] === '-') {
-        stayLine += '----';
-        if (currentFlow) {
-          flowLine += '....';
-        } else {
-          flowLine += '    ';
+        // Check for |:
+        if (barContent[i] === '|' && i + 1 < barContent.length && barContent[i+1] === ':') {
+          stayLine += '|:';
+          flowLine += '  ';
+          i += 2;
+          continue;
         }
-        i += 4;
-        continue;
-      }
 
-      // === 5. REPEAT START |: ===
-      if (content[i] === '|' && i + 1 < content.length && content[i+1] === ':') {
-        stayLine += '|:';
-        flowLine += '  ';
-        i += 2;
-        continue;
-      }
+        // Check for :|
+        if (barContent[i] === ':' && i + 1 < barContent.length && barContent[i+1] === '|') {
+          stayLine += ':|';
+          flowLine += '  ';
+          i += 2;
+          continue;
+        }
 
-      // === 6. REPEAT END :| ===
-      if (content[i] === ':' && i + 1 < content.length && content[i+1] === '|') {
-        stayLine += ':|';
-        flowLine += '  ';
-        i += 2;
-        continue;
-      }
+        // Check for ||
+        if (barContent[i] === '|' && i + 1 < barContent.length && barContent[i+1] === '|') {
+          stayLine += '||';
+          flowLine += '  ';
+          i += 2;
+          continue;
+        }
 
-      // === 7. DOUBLE BAR || ===
-      if (content[i] === '|' && i + 1 < content.length && content[i+1] === '|') {
-        stayLine += '||';
-        flowLine += '  ';
-        i += 2;
-        continue;
-      }
+        // Regular | barline
+        if (barContent[i] === '|') {
+          stayLine += '|';
+          flowLine += ' ';
+          i++;
+          continue;
+        }
 
-      // === 8. BARLINE | ===
-      if (content[i] === '|') {
-        stayLine += '|';
-        flowLine += ' ';
+        // Other characters (spaces, etc.)
         i++;
-        continue;
       }
 
-      // === 9. OTHER CHARACTERS ===
-      i++;
+      // Color the lines
+      let stayHTML = stayLine
+        .replace(/\|/g, '<span class="barline">|</span>')
+        .replace(/\|:/g, '<span class="repeat">|:</span>')
+        .replace(/:\|/g, '<span class="repeat">:|</span>')
+        .replace(/\|\|/g, '<span class="barline">||</span>')
+        .replace(/([A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>')
+        .replace(/-/g, '<span class="beat">-</span>');
+
+      let flowHTML = flowLine
+        .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
+        .replace(/(\d+va)/g, '<span class="flow">$1</span>')
+        .replace(/\./g, '<span class="flow">.</span>');
+
+      // Build bar unit
+      html += `
+        <div class="bar-unit">
+          <div class="flow-line">${flowHTML}</div>
+          <div class="stay-line">${stayHTML}</div>
+        </div>
+      `;
     }
-
-    // === COLOR STAY LINE ===
-    let stayHTML = stayLine
-      .replace(/\|/g, '<span class="barline">|</span>')
-      .replace(/\|:/g, '<span class="repeat">|:</span>')
-      .replace(/:\|/g, '<span class="repeat">:|</span>')
-      .replace(/\|\|/g, '<span class="barline">||</span>')
-      .replace(/([A-G])(m|maj|min|dim|aug|sus|add|\d|♯|♭|ø|°)*/g, '<span class="chord">$&</span>')
-      .replace(/-/g, '<span class="beat">-</span>');
-
-    // === COLOR FLOW LINE ===
-    let flowHTML = flowLine
-      .replace(/\(([a-d])\)/g, '<span class="section">($1)</span>')
-      .replace(/(\d+va)/g, '<span class="flow">$1</span>')
-      .replace(/\./g, '<span class="flow">.</span>');
-
-    let html = `
-      <div class="flow-line">${flowHTML}</div>
-      <div class="stay-line">${stayHTML}</div>
-    `;
 
     outputEl.innerHTML = html;
     outputEl.scrollTop = 0;
