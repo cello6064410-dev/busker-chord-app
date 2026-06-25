@@ -38,11 +38,6 @@
     <!-- Status Message -->
     <div id="loginStatus" class="login-status"></div>
 
-    <!-- Back Link -->
-    <div class="login-footer">
-      <a href="index.html">⬅ Back to Home</a>
-    </div>
-
   </div>
 </div>
 
@@ -84,12 +79,12 @@
     db.collection('users').doc(user.uid).set(userData, { merge: true })
       .then(() => {
         console.log('✅ User data saved');
-        window.location.href = "viewermenu.html";
+        window.location.href = "index.html";
       })
       .catch((error) => {
         console.error('Error saving user:', error);
         // Still redirect even if save fails
-        window.location.href = "viewermenu.html";
+        window.location.href = "index.html";
       });
   }
 
@@ -98,8 +93,8 @@
   // ============================================
   auth.onAuthStateChanged(function(user) {
     if (user) {
-      // Already logged in — redirect to menu
-      window.location.href = "viewermenu.html";
+      // Already logged in — redirect to index
+      window.location.href = "index.html";
     }
   });
 
@@ -109,13 +104,11 @@
   auth.getRedirectResult()
     .then((result) => {
       if (result.user) {
-        // Successfully logged in
         saveUserAndRedirect(result.user);
       }
     })
     .catch((error) => {
       console.error('Redirect login error:', error);
-      // Only show error if it's not a "no result" error
       if (error.code !== 'auth.no-such-provider') {
         loginStatus.textContent = '❌ Login failed: ' + error.message;
         loginStatus.className = 'login-status error';
@@ -293,22 +286,6 @@
     background: rgba(0, 200, 83, 0.15);
     color: #00e676;
     border: 1px solid rgba(0, 200, 83, 0.3);
-  }
-
-  .login-footer {
-    margin-top: 25px;
-  }
-
-  .login-footer a {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 0.9rem;
-    font-family: Arial, sans-serif;
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-
-  .login-footer a:hover {
-    color: rgba(255, 255, 255, 0.7);
   }
 
   /* Responsive */

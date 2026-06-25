@@ -11,6 +11,11 @@
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
 
@@ -33,15 +38,7 @@
     <!-- Buttons -->
     <div class="index-buttons">
       
-      <button onclick="admin()" class="index-btn admin-btn">
-        <div class="index-btn-icon">🎼</div>
-        <div class="index-btn-content">
-          <span class="index-btn-label">Tukang Tulis</span>
-          <span class="index-btn-desc">Tulis Lirik &amp; Kords Lagu</span>
-        </div>
-        <div class="index-btn-arrow">→</div>
-      </button>
-      
+      <!-- Viewer Button - FREE (sudah login) -->
       <button onclick="viewer()" class="index-btn viewer-btn">
         <div class="index-btn-icon">🎵</div>
         <div class="index-btn-content">
@@ -50,7 +47,18 @@
         </div>
         <div class="index-btn-arrow">→</div>
       </button>
+      
+      <!-- Admin Button - PERLU PASSWORD -->
+      <button onclick="admin()" class="index-btn admin-btn">
+        <div class="index-btn-icon">🎼</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Tukang Tulis</span>
+          <span class="index-btn-desc">Tulis Lirik &amp; Kords Lagu</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
+      </button>
 
+      <!-- Dashboard Button - PERLU PASSWORD -->
       <button onclick="dashboard()" class="index-btn dashboard-btn">
         <div class="index-btn-icon">📊</div>
         <div class="index-btn-content">
@@ -70,27 +78,61 @@
 </div>
 
 <script>
-function admin() {
-  let pass = prompt("Enter admin password:");
-  if (pass === "admin123") {
-    window.location.href = "adminmenu.html";
-  } else if (pass !== null) {
-    alert("Wrong password");
-  }
-}
+  // ============================================
+  // FIREBASE CONFIG
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
 
-function viewer() {
-  window.location.href = "login.html";
-}
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
 
-function dashboard() {
-  let pass = prompt("Enter admin password:");
-  if (pass === "admin123") {
-    window.location.href = "dashboard.html";
-  } else if (pass !== null) {
-    alert("Wrong password");
+<script>
+  // ============================================
+  // CHECK LOGIN STATUS
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      // Not logged in - redirect to login
+      window.location.href = "login.html";
+    }
+  });
+
+  // ============================================
+  // VIEWER - FREE ACCESS
+  // ============================================
+  function viewer() {
+    window.location.href = "viewer.html";
   }
-}
+
+  // ============================================
+  // ADMIN - NEED PASSWORD
+  // ============================================
+  function admin() {
+    let pass = prompt("Enter admin password:");
+    if (pass === "admin123") {
+      window.location.href = "create.html";
+    } else if (pass !== null) {
+      alert("Wrong password");
+    }
+  }
+
+  // ============================================
+  // DASHBOARD - NEED PASSWORD
+  // ============================================
+  function dashboard() {
+    let pass = prompt("Enter admin password:");
+    if (pass === "admin123") {
+      window.location.href = "dashboard.html";
+    } else if (pass !== null) {
+      alert("Wrong password");
+    }
+  }
 </script>
 
 </body>
