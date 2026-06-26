@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Song Viewer Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h2>🎵 Song Viewer</h2>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
+        <button onclick="logoutUser()" class="logout-btn" title="Logout" style="background: #4a2a2a; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; min-width: 40px;">🚪</button>
+        <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px;">
+      <h3 id="songTitle" style="margin:0;">No Song Selected</h3>
+      <span id="keyDisplay" style="color: #00ffcc; font-size: 0.9rem; font-family: Arial, sans-serif; background: #1a1a2e; padding: 2px 12px; border-radius: 12px; border: 1px solid #2a2a4e;">Key: 0</span>
+      <button onclick="openTransposePopup()" id="transposeBtn" title="Transpose" style="background: #2a2a4e; border: none; color: white; padding: 4px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 32px;">🎵 Transpose</button>
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
+    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
+  </div>
+
+  <!-- SONG LIST -->
+  <div id="songList" class="song-list"></div>
+
+  <!-- LYRICS OUTPUT -->
+  <div id="output" class="output">Loading songs...</div>
+
+  <!-- LINK TO ALL SONGS LIST -->
+  <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
+    <a href="list.html" style="color: #4fc3f7; font-family: Arial, sans-serif; font-size: 0.9rem; text-decoration: none; padding: 8px 16px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4e; display: inline-block;">
+      📋 All Songs
+    </a>
+  </div>
+
+  <!-- FLOATING CONTROL BAR -->
+  <div class="floating-bar">
+    <button onclick="transposeUp()" title="Transpose Up (+7 semitone)">⬆</button>
+    <button onclick="transposeDown()" title="Transpose Down (-5 semitone)">⬇</button>
+    <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
+    <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
+    <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
+    <button onclick="stopScroll()" title="Stop Auto-Scroll" id="stopBtn">⏹</button>
+    <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+  </div>
+</div>
+
+<!-- TRANSPOSE POPUP MODAL -->
+<div id="transposeModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🎵 Transpose</h2>
+      <button onclick="closeTransposePopup()" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-current-key">
+        <span>Current Key: </span>
+        <span id="modalCurrentKey" style="color: #ffcc00; font-weight: bold;">C / Am</span>
+      </div>
+      <div class="modal-enharmonic">
+        <label class="toggle-switch">
+          <input type="checkbox" id="enharmonicToggle" onchange="toggleEnharmonic()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span id="enharmonicLabel" style="color: #888; font-size: 0.9rem;">Enharmonic: OFF</span>
+        <span style="color: #666; font-size: 0.8rem; margin-left: 8px;">(6♯/7♯/6♭/7♭ only)</span>
+      </div>
+      <div id="keyListContainer" class="key-list-container">
+        <!-- Key list will be rendered here -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeTransposePopup()" class="modal-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ============================================
+  // GLOBAL VARIABLES
+  // ============================================
+  let songs = [];
+  let filteredSongs = [];
+  let currentSongId = null;
+  let currentKeyIndex = 7; // Default C = index 7
+  let currentKeyMajor = 'C';
+  let currentKeyMinor = 'Am';
+  let currentKeySignature = '0';
+  let fontSize = 16;
+  let isEnharmonicMode = false;
+
+  // Auto-scroll variables
+  let scrollInterval = null;
+  let isScrolling = false;
+  let scrollSpeed = 0.4;
+
+  // Auto-logout timer
+  let logoutTimer = null;
+  const IDLE_TIMEOUT = 30 * 60 * 1000;
+
+  // Search results limit
+  const MAX_SEARCH_RESULTS = 10;
+  const DISPLAY_RESULTS = 5;
+
+  // ============================================
+  // CIRCLE OF FIFTHS - KEY SIGNATURE DATA
+  // ============================================
+  const circleOfFifths = [
+    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0, keySig: '♭' },
+    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1, keySig: '♭' },
+    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2, keySig: '♭' },
+    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3, keySig: '♭' },
+    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4, keySig: '♭' },
+    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5, keySig: '♭' },
+    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6, keySig: '♭' },
+    { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7, keySig: '' },
+    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8, keySig: '♯' },
+    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9, keySig: '♯' },
+    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10, keySig: '♯' },
+    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11, keySig: '♯' },
+    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12, keySig: '♯' },
+    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13, keySig: '♯' },
+    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14, keySig: '♯' }
+  ];
+
+  const enharmonicMap = {
+    '6♯': { targetId: '6♭', label: 'F♯ / G♭' },
+    '7♯': { targetId: '5♭', label: 'C♯ / D♭' },
+    '6♭': { targetId: '6♯', label: 'G♭ / F♯' },
+    '7♭': { targetId: '5♯', label: 'C♭ / B' }
+  };
+
+  // ============================================
+  // SCALES FOR TRANSPOSE - WITH SYMBOLS ♭ ♯
+  // ============================================
+  const sharpScale = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+  const flatScale = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+
+  // ============================================
+  // DOM REFERENCES
+  // ============================================
+  const songListEl = document.getElementById('songList');
+  const outputEl = document.getElementById('output');
+  const songTitleEl = document.getElementById('songTitle');
+  const keyDisplayEl = document.getElementById('keyDisplay');
+  const playBtn = document.getElementById('playBtn');
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  const userNameEl = document.getElementById('userName');
+
+  const modal = document.getElementById('transposeModal');
+  const modalCurrentKey = document.getElementById('modalCurrentKey');
+  const keyListContainer = document.getElementById('keyListContainer');
+  const enharmonicToggle = document.getElementById('enharmonicToggle');
+  const enharmonicLabel = document.getElementById('enharmonicLabel');
+
+  // ============================================
+  // AUTH - CHECK LOGIN STATUS
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    console.log('✅ Logged in as:', user.displayName || user.email);
+    if (user.displayName) {
+      userNameEl.textContent = '👤 ' + user.displayName;
+      userNameEl.style.display = 'inline';
+    }
+    db.collection('users').doc(user.uid).set({
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+      loginCount: firebase.firestore.FieldValue.increment(1)
+    }, { merge: true }).catch(err => console.error('Error updating login:', err));
+    loadSongs();
+  });
+
+  // ============================================
+  // AUTO-LOGOUT
+  // ============================================
+  function resetLogoutTimer() {
+    if (logoutTimer) clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(function() {
+      console.log('⏰ Auto-logout: Idle for 30 minutes');
+      logoutUser();
+    }, IDLE_TIMEOUT);
+  }
+
+  function setupIdleTimer() {
+    const events = ['mousemove', 'mousedown', 'click', 'scroll', 'touchstart', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, resetLogoutTimer);
+    });
+    resetLogoutTimer();
+  }
+
+  function logoutUser() {
+    if (logoutTimer) clearTimeout(logoutTimer);
+    stopScroll();
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch(() => {
+      window.location.href = "login.html";
+    });
+  }
+
+  // ============================================
+  // LOAD SONGS
+  // ============================================
+  function loadSongs() {
+    outputEl.textContent = '⏳ Loading songs...';
+    songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
+
+    db.collection('songs')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        songs = [];
+        songListEl.innerHTML = '';
+        if (snapshot.empty) {
+          outputEl.textContent = '📭 No songs found. Go to Admin to create one.';
+          songListEl.innerHTML = `
+            <div class="empty-text">
+              📭 No songs found<br>
+              <small>Go to Admin to create your first song!</small>
+            </div>
+          `;
+          return;
+        }
+        snapshot.forEach((doc) => {
+          const song = { id: doc.id, ...doc.data() };
+          songs.push(song);
+        });
+        outputEl.textContent = 'Select a song to begin';
+        songListEl.innerHTML = `
+          <div class="empty-text">
+            🔍 Type a song title to search
+          </div>
+        `;
+        console.log(`✅ ${songs.length} songs loaded`);
+      })
+      .catch((error) => {
+        console.error('Error loading songs:', error);
+        outputEl.textContent = '❌ Error loading songs. Please refresh.';
+        songListEl.innerHTML = `
+          <div class="error-text">
+            ❌ Error loading songs<br>
+            <small>${error.message}</small>
+          </div>
+        `;
+      });
+  }
+
+  // ============================================
+  // SEARCH / FILTER
+  // ============================================
+  function filterSongs() {
+    const query = searchInput.value.toLowerCase().trim();
+    if (query.length > 0) {
+      clearSearchBtn.style.display = 'block';
+    } else {
+      clearSearchBtn.style.display = 'none';
+    }
+    if (query === '') {
+      songListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 Type a song title to search
+        </div>
+      `;
+      return;
+    }
+    const results = songs.filter(song =>
+      song.title && song.title.toLowerCase().includes(query)
+    );
+    const limitedResults = results.slice(0, MAX_SEARCH_RESULTS);
+    renderSongList(limitedResults, results.length);
+  }
+
+  function renderSongList(results, totalFound) {
+    songListEl.innerHTML = '';
+    if (results.length === 0) {
+      songListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 No songs found matching "<span id="searchTerm">${searchInput.value}</span>"
+        </div>
+      `;
+      return;
+    }
+    const resultCount = document.createElement('div');
+    resultCount.className = 'result-count';
+    resultCount.textContent = `Showing ${results.length} of ${totalFound} results`;
+    songListEl.appendChild(resultCount);
+    const displayResults = results.slice(0, DISPLAY_RESULTS);
+    const hiddenResults = results.slice(DISPLAY_RESULTS);
+    displayResults.forEach((song) => {
+      const btn = createSongButton(song);
+      songListEl.appendChild(btn);
+    });
+    if (hiddenResults.length > 0) {
+      const hint = document.createElement('div');
+      hint.className = 'scroll-hint';
+      hint.textContent = `⬇️ ${hiddenResults.length} more results (scroll down)`;
+      songListEl.appendChild(hint);
+      hiddenResults.forEach((song) => {
+        const btn = createSongButton(song);
+        btn.className += ' hidden-result';
+        songListEl.appendChild(btn);
+      });
+    }
+  }
+
+  function createSongButton(song) {
+    const btn = document.createElement('button');
+    btn.textContent = song.title || 'Untitled';
+    btn.className = 'song-item';
+    btn.setAttribute('data-id', song.id);
+    btn.onclick = () => selectSong(song.id);
+    return btn;
+  }
+
+  function clearSearch() {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    songListEl.innerHTML = `
+      <div class="empty-text">
+        🔍 Type a song title to search
+      </div>
+    `;
+    searchInput.focus();
+  }
+
+  // ============================================
+  // GET KEY DATA BY SIGNATURE
+  // ============================================
+  function getKeyDataBySig(sig) {
+    return circleOfFifths.find(k => k.sig === sig) || circleOfFifths[7];
+  }
+
+  // ============================================
+  // SELECT SONG
+  // ============================================
+  function selectSong(songId) {
+    stopScroll();
+    currentSongId = songId;
+    const song = songs.find(s => s.id === songId);
+    if (!song) {
+      outputEl.textContent = 'Song not found';
+      return;
+    }
+    songTitleEl.textContent = song.title || 'Untitled';
+
+    const sig = song.keySignature || '0';
+    const keyData = getKeyDataBySig(sig);
+    
+    currentKeyMajor = keyData.major;
+    currentKeyMinor = keyData.minor;
+    currentKeySignature = sig;
+    currentKeyIndex = keyData.index;
+
+    updateKeyDisplay();
+    displaySong(song);
+  }
+
+  // ============================================
+  // CONVERT CHORD SYMBOLS (kecuali <br>)
+  // ============================================
+  function convertChordSymbols(text) {
+    // Jangan convert <br>
+    text = text.replace(/<br>/g, '<<BR>>');
+    
+    // m7b5 → ø (half-diminished)
+    text = text.replace(/m7b5/g, 'ø');
+    // dim → ° (fully diminished)
+    text = text.replace(/dim/g, '°');
+    // # → ♯ (sharp)
+    text = text.replace(/#/g, '♯');
+    // b → ♭ (flat) — tapi jangan convert dalam <br>
+    text = text.replace(/b/g, '♭');
+    
+    // Restore <br>
+    text = text.replace(/<<BR>>/g, '<br>');
+    
+    return text;
+  }
+  // ============================================
+  // DISPLAY SONG
+  // ============================================
+  function displaySong(song) {
+    let lyrics = song.lyrics || song.content || '';
+    if (!lyrics) {
+      outputEl.innerHTML = '<div class="no-lyrics">No lyrics available</div>';
+      return;
+    }
+    
+    // Calculate transpose steps based on key index difference
+    const originalSig = song.keySignature || '0';
+    const originalKeyData = getKeyDataBySig(originalSig);
+    const steps = currentKeyIndex - originalKeyData.index;
+    
+    // Convert steps to semitone offset
+    let semitoneOffset = 0;
+    if (steps > 0) {
+      semitoneOffset = steps * 7; // Up
+    } else if (steps < 0) {
+      semitoneOffset = steps * 5; // Down
+    }
+    
+    if (semitoneOffset !== 0) {
+      lyrics = transposeLyricsBySemitone(lyrics, semitoneOffset);
+    }
+    
+    lyrics = formatChordsAboveLyrics(lyrics);
+    
+    // Convert symbols after transpose
+    lyrics = convertChordSymbols(lyrics);
+    
+    outputEl.innerHTML = lyrics;
+    outputEl.scrollTop = 0;
+    applyFontSize(fontSize);
+  }
+
+  // ============================================
+  // UPDATE KEY DISPLAY
+  // ============================================
+  function updateKeyDisplay() {
+    const keyData = circleOfFifths[currentKeyIndex];
+    const sigDisplay = keyData.sig.replace('#', '♯').replace('b', '♭');
+    keyDisplayEl.textContent = `Key: ${keyData.major} / ${keyData.minor} (${sigDisplay})`;
+    modalCurrentKey.textContent = `${keyData.major} / ${keyData.minor}`;
+  }
+
+  // ============================================
+  // TRANSPOSE FUNCTIONS
+  // ============================================
+  function transposeUp() {
+    let newIndex = currentKeyIndex + 1;
+    if (newIndex >= circleOfFifths.length) newIndex = circleOfFifths.length - 1;
+    applyTranspose(newIndex);
+  }
+
+  function transposeDown() {
+    let newIndex = currentKeyIndex - 1;
+    if (newIndex < 0) newIndex = 0;
+    applyTranspose(newIndex);
+  }
+
+  function applyTranspose(newIndex) {
+    currentKeyIndex = newIndex;
+    const keyData = circleOfFifths[currentKeyIndex];
+    currentKeyMajor = keyData.major;
+    currentKeyMinor = keyData.minor;
+    currentKeySignature = keyData.sig;
+    
+    updateKeyDisplay();
+    if (currentSongId) {
+      const song = songs.find(s => s.id === currentSongId);
+      if (song) displaySong(song);
+    }
+  }
+
+  function transposeLyricsBySemitone(lyrics, semitoneOffset) {
+    const targetKeyData = circleOfFifths[currentKeyIndex];
+    const useSharp = targetKeyData.keySig === '♯';
+    const scale = useSharp ? sharpScale : flatScale;
+    const steps = Math.abs(semitoneOffset) % 12;
+    
+    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
+      let transposed = chord;
+      for (let i = 0; i < scale.length; i++) {
+        const root = scale[i];
+        if (chord.startsWith(root)) {
+          const newIndex = (i + steps + 12) % 12;
+          const newRoot = scale[newIndex];
+          const quality = chord.substring(root.length);
+          transposed = newRoot + quality;
+          break;
+        }
+      }
+      return `[${transposed}]`;
+    });
+  }
+
+  // ============================================
+  // TRANSPOSE POPUP
+  // ============================================
+  function openTransposePopup() {
+    modal.style.display = 'flex';
+    renderKeyList();
+    updateModalEnharmonicState();
+  }
+
+  function closeTransposePopup() {
+    modal.style.display = 'none';
+  }
+
+  function renderKeyList() {
+    keyListContainer.innerHTML = '';
+    let keysToRender = circleOfFifths;
+
+    if (isEnharmonicMode) {
+      keysToRender = circleOfFifths.map(k => {
+        if (enharmonicMap[k.id]) {
+          const target = enharmonicMap[k.id];
+          const targetData = circleOfFifths.find(k2 => k2.id === target.targetId);
+          if (targetData) {
+            return { ...k, major: targetData.major, minor: targetData.minor, id: k.id + '_enh' };
+          }
+        }
+        return k;
+      });
+    }
+
+    keysToRender.forEach((key) => {
+      const div = document.createElement('div');
+      div.className = 'key-item';
+      const isCurrent = key.id === circleOfFifths[currentKeyIndex].id ||
+                        (enharmonicMap[key.id] && isEnharmonicMode);
+      if (isCurrent) {
+        div.classList.add('highlight-key');
+      }
+      const sigDisplay = key.sig.replace('#', '♯').replace('b', '♭');
+      let label = `${sigDisplay}  ${key.major} / ${key.minor}`;
+      if (enharmonicMap[key.id] && isEnharmonicMode) {
+        const target = enharmonicMap[key.id];
+        const targetData = circleOfFifths.find(k => k.id === target.targetId);
+        if (targetData) {
+          label += ` (${targetData.major} / ${targetData.minor})`;
+        }
+      }
+      div.textContent = label;
+      div.dataset.keyId = key.id;
+      div.onclick = () => selectKey(key.id);
+      keyListContainer.appendChild(div);
+    });
+  }
+
+  function selectKey(keyId) {
+    let keyData = circleOfFifths.find(k => k.id === keyId);
+    if (!keyData) return;
+
+    let selectedMajor = keyData.major;
+    let selectedMinor = keyData.minor;
+    let selectedSig = keyData.sig;
+    let selectedIndex = keyData.index;
+
+    if (isEnharmonicMode && enharmonicMap[keyId]) {
+      const target = enharmonicMap[keyId];
+      const targetData = circleOfFifths.find(k => k.id === target.targetId);
+      if (targetData) {
+        selectedMajor = targetData.major;
+        selectedMinor = targetData.minor;
+        selectedSig = targetData.sig;
+        selectedIndex = targetData.index;
+      }
+    }
+
+    currentKeyMajor = selectedMajor;
+    currentKeyMinor = selectedMinor;
+    currentKeySignature = selectedSig;
+    currentKeyIndex = selectedIndex;
+    updateKeyDisplay();
+
+    if (currentSongId) {
+      const song = songs.find(s => s.id === currentSongId);
+      if (song) displaySong(song);
+    }
+
+    closeTransposePopup();
+  }
+
+  function toggleEnharmonic() {
+    isEnharmonicMode = enharmonicToggle.checked;
+    enharmonicLabel.textContent = `Enharmonic: ${isEnharmonicMode ? 'ON' : 'OFF'}`;
+    renderKeyList();
+    updateKeyDisplay();
+    if (currentSongId) {
+      const song = songs.find(s => s.id === currentSongId);
+      if (song) displaySong(song);
+    }
+  }
+
+  function updateModalEnharmonicState() {
+    const sig = currentKeySignature;
+    const isActive = ['6♯', '7♯', '6♭', '7♭'].includes(sig);
+    enharmonicToggle.disabled = !isActive;
+    if (!isActive) {
+      enharmonicToggle.checked = false;
+      isEnharmonicMode = false;
+      enharmonicLabel.textContent = 'Enharmonic: OFF (not available)';
+    } else {
+      enharmonicLabel.textContent = `Enharmonic: ${isEnharmonicMode ? 'ON' : 'OFF'}`;
+    }
+  }
+
+  // ============================================
+  // FORMAT CHORDS ABOVE LYRICS
+  // ============================================
+  function formatChordsAboveLyrics(text) {
+    const lines = text.split('\n');
+    const result = [];
+    for (let line of lines) {
+      if (!line.trim()) {
+        result.push('<br>');
+        continue;
+      }
+      const parts = [];
+      let current = '';
+      let i = 0;
+      while (i < line.length) {
+        if (line[i] === '[') {
+          const j = line.indexOf(']', i);
+          if (j !== -1) {
+            if (current) {
+              parts.push({ type: 'text', content: current });
+              current = '';
+            }
+            parts.push({ type: 'chord', content: line.substring(i + 1, j) });
+            i = j + 1;
+          } else {
+            current += line[i];
+            i++;
+          }
+        } else {
+          current += line[i];
+          i++;
+        }
+      }
+      if (current) {
+        parts.push({ type: 'text', content: current });
+      }
+      let lyricLine = '';
+      const chordMap = [];
+      for (let part of parts) {
+        if (part.type === 'text') {
+          const startPos = lyricLine.length;
+          lyricLine += part.content;
+          if (chordMap.length > 0 && chordMap[chordMap.length - 1].position === undefined) {
+            chordMap[chordMap.length - 1].position = startPos;
+          }
+        } else if (part.type === 'chord') {
+          chordMap.push({
+            chord: part.content,
+            position: lyricLine.length
+          });
+        }
+      }
+      let chordLine = '';
+      for (let item of chordMap) {
+        const spaces = item.position - chordLine.length;
+        if (spaces > 0) {
+          chordLine += ' '.repeat(spaces);
+        }
+        chordLine += item.chord;
+      }
+      chordLine = chordLine.trimEnd();
+      if (chordMap.length > 0) {
+        result.push(`<div class="chord-row">${chordLine}</div>`);
+      }
+      result.push(`<div class="lyric-row">${lyricLine}</div>`);
+    }
+    return result.join('\n');
+  }
+
+  // ============================================
+  // FONT SIZE
+  // ============================================
+  function changeFontSize(delta) {
+    fontSize = Math.min(32, Math.max(10, fontSize + delta));
+    applyFontSize(fontSize);
+  }
+
+  function applyFontSize(size) {
+    outputEl.style.fontSize = size + 'px';
+    document.querySelectorAll('.chord-row, .lyric-row').forEach(el => {
+      el.style.fontSize = size + 'px';
+    });
+  }
+
+  // ============================================
+  // AUTO-SCROLL
+  // ============================================
+  function startScroll() {
+    const output = document.getElementById('output');
+    if (isScrolling) return;
+    if (!output.innerHTML || output.innerHTML === 'Select a song to begin' || output.innerHTML === 'Loading songs...') return;
+    if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) return;
+    isScrolling = true;
+    const playBtn = document.getElementById('playBtn');
+    if (playBtn) {
+      playBtn.textContent = '▶️';
+      playBtn.style.background = '#2a5a2e';
+    }
+    output.classList.add('scrolling');
+    scrollInterval = setInterval(() => {
+      const output = document.getElementById('output');
+      if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
+        stopScroll();
+        return;
+      }
+      output.scrollTop += scrollSpeed;
+    }, 50);
+  }
+
+  function stopScroll() {
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+    isScrolling = false;
+    const playBtn = document.getElementById('playBtn');
+    if (playBtn) {
+      playBtn.textContent = '▶';
+      playBtn.style.background = '#1a1a2e';
+    }
+    const output = document.getElementById('output');
+    if (output) {
+      output.classList.remove('scrolling');
+    }
+  }
+
+  function toggleScroll() {
+    if (isScrolling) {
+      stopScroll();
+    } else {
+      startScroll();
+    }
+  }
+
+  // ============================================
+  // TAP TO STOP
+  // ============================================
+  function setupTapToStop() {
+    const output = document.getElementById('output');
+    if (!output) return;
+    let touchStartY = 0;
+    let isSwiping = false;
+    output.addEventListener('touchstart', function(e) {
+      touchStartY = e.touches[0].clientY;
+      isSwiping = false;
+    }, { passive: true });
+    output.addEventListener('touchmove', function(e) {
+      const touchEndY = e.touches[0].clientY;
+      const diff = touchStartY - touchEndY;
+      if (Math.abs(diff) > 10) {
+        isSwiping = true;
+      }
+    }, { passive: true });
+    output.addEventListener('touchend', function(e) {
+      if (!isSwiping && isScrolling) {
+        stopScroll();
+        e.preventDefault();
+      }
+    }, { passive: true });
+    output.addEventListener('click', function() {
+      if (isScrolling) {
+        stopScroll();
+      }
+    });
+  }
+
+  // ============================================
+  // FULLSCREEN
+  // ============================================
+  function toggleFullscreen() {
+    const app = document.querySelector('.app');
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      app.classList.add('fullscreen-mode');
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      app.classList.remove('fullscreen-mode');
+    }
+  }
+
+  document.addEventListener('fullscreenchange', function() {
+    const app = document.querySelector('.app');
+    if (!document.fullscreenElement) {
+      app.classList.remove('fullscreen-mode');
+    }
+  });
+
+  // ============================================
+  // KEYBOARD SHORTCUTS
+  // ============================================
+  document.addEventListener('keydown', function(e) {
+    if (e.key === ' ' || e.key === 'Space') {
+      e.preventDefault();
+      toggleScroll();
+    }
+    if (e.key === 'ArrowUp' && isScrolling) {
+      e.preventDefault();
+      scrollSpeed = Math.min(scrollSpeed + 0.3, 3);
+    }
+    if (e.key === 'ArrowDown' && isScrolling) {
+      e.preventDefault();
+      scrollSpeed = Math.max(scrollSpeed - 0.3, 0.3);
+    }
+    if (e.key === 'Escape') {
+      if (modal.style.display === 'flex') {
+        closeTransposePopup();
+      }
+    }
+  });
+
+  // ============================================
+  // GO HOME
+  // ============================================
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    setupTapToStop();
+    outputEl.style.fontSize = fontSize + 'px';
+    setupIdleTimer();
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closeTransposePopup();
+      }
+    });
+  });
+
+  // ============================================
+  // CLEANUP
+  // ============================================
+  window.addEventListener('beforeunload', function() {
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+      logoutTimer = null;
+    }
+  });
+
+  console.log('🎵 Song Viewer Pro loaded!');
+  console.log('Controls:');
+  console.log('  ⬆  - Transpose Up (+7 semitone)');
+  console.log('  ⬇  - Transpose Down (-5 semitone)');
+  console.log('  🎵 Transpose - Open key selector');
+  console.log('  ▶  - Start auto-scroll');
+  console.log('  ⏹  - Stop auto-scroll');
+  console.log('  Tap (not swipe) on lyrics - Stop scrolling');
+  console.log('  Space bar - Toggle scroll');
+  console.log('  ↑/↓ arrows - Adjust scroll speed');
+  console.log('  🔍 Search - Type to filter songs');
+  console.log('  ⛶ Fullscreen - Only lyrics & chords');
+</script>
+<script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('✅ Service Worker registered'))
+    .catch(err => console.error('❌ SW registration failed:', err));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1024">
+  <title>Create Song - Desktop Only</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <style>
+    /* FORCE DESKTOP VIEW WITH SCROLLBARS */
+    html {
+      overflow: scroll !important;
+      min-width: 1024px !important;
+    }
+    body {
+      background: #0f0f0f;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-width: 1024px !important;
+      overflow: auto !important;
+    }
+    .create-container {
+      display: block !important;
+      min-width: 900px !important;
+      max-width: none !important;
+      padding: 40px !important;
+      background: #1a1a2e;
+      min-height: 100vh;
+      overflow: visible !important;
+    }
+    .app-card {
+      max-width: 900px !important;
+      margin: 0 auto !important;
+      padding: 40px !important;
+      background: #1a1a2e;
+      border: 2px solid #2a2a4e;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      overflow: visible !important;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .header-top h2 {
+      font-size: 32px !important;
+      color: #ffcc00 !important;
+      margin: 0;
+    }
+    .home-btn {
+      background: #2a2a4e;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      min-height: 48px;
+      min-width: 48px;
+      transition: background 0.2s;
+    }
+    .home-btn:hover {
+      background: #3a3a6e;
+    }
+    .top-links {
+      display: flex;
+      justify-content: flex-end;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .top-links a {
+      color: #4fc3f7;
+      text-decoration: none;
+      font-size: 18px;
+      font-family: Arial, sans-serif;
+      padding: 8px 16px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      border: 1px solid #2a2a4e;
+      transition: background 0.2s;
+    }
+    .top-links a:hover {
+      background: #2a2a4e;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .form-group label {
+      font-size: 18px !important;
+      color: #aaa !important;
+      display: block !important;
+      margin-bottom: 8px !important;
+      font-family: Arial, sans-serif;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100% !important;
+      font-size: 18px !important;
+      padding: 15px !important;
+      background: #0f0f0f;
+      border: 2px solid #2a2a4e;
+      border-radius: 10px;
+      color: white;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    .form-select {
+      appearance: none;
+      cursor: pointer;
+    }
+    .form-select option {
+      background: #1a1a2e;
+      color: white;
+    }
+    .form-textarea {
+      min-height: 300px !important;
+      font-size: 18px !important;
+      font-family: 'Courier New', monospace !important;
+      resize: vertical !important;
+    }
+    .hint {
+      font-size: 14px !important;
+      color: #666 !important;
+      display: block !important;
+      margin-top: 8px !important;
+      font-family: Arial, sans-serif;
+    }
+    .button-group {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: wrap !important;
+      gap: 20px !important;
+      justify-content: center !important;
+      margin: 30px 0 !important;
+      padding: 25px !important;
+      background: #2a2a4e !important;
+      border: 3px solid #ffcc00 !important;
+      border-radius: 12px !important;
+      min-height: 80px !important;
+      overflow: visible !important;
+    }
+    .button-group button {
+      flex: 0 1 auto !important;
+      min-width: 160px !important;
+      padding: 16px 30px !important;
+      font-size: 18px !important;
+      font-weight: bold !important;
+      border: none !important;
+      border-radius: 10px !important;
+      cursor: pointer !important;
+      transition: transform 0.2s !important;
+      font-family: Arial, sans-serif;
+    }
+    .button-group button:hover {
+      transform: scale(1.05) !important;
+    }
+    .save-btn, #saveBtn {
+      background: #00c853 !important;
+      color: #fff !important;
+      border: 2px solid #fff !important;
+    }
+    .clear-btn {
+      background: #4a4a4a !important;
+      color: #fff !important;
+      border: 2px solid #888 !important;
+    }
+    .back-btn {
+      background: #2a4a6e !important;
+      color: #fff !important;
+      border: 2px solid #6a9abe !important;
+    }
+    .delete-btn {
+      background: #6e2a2a !important;
+      color: #fff !important;
+      border: 2px solid #ff4444 !important;
+      display: none !important;
+    }
+    .delete-btn.active {
+      display: inline-block !important;
+    }
+    .status-message {
+      padding: 15px !important;
+      border-radius: 10px !important;
+      font-size: 18px !important;
+      text-align: center !important;
+      margin: 20px 0 !important;
+      font-family: Arial, sans-serif;
+    }
+    .status-message.success {
+      background: rgba(0, 200, 83, 0.2) !important;
+      color: #00e676 !important;
+      border: 2px solid #00c853 !important;
+    }
+    .status-message.error {
+      background: rgba(255, 68, 68, 0.2) !important;
+      color: #ff4444 !important;
+      border: 2px solid #ff4444 !important;
+    }
+    .status-message.info {
+      background: rgba(79, 195, 247, 0.2) !important;
+      color: #4fc3f7 !important;
+      border: 2px solid #4fc3f7 !important;
+    }
+    .subtitle {
+      font-size: 18px !important;
+      color: #aaa !important;
+      margin-bottom: 30px !important;
+      font-family: Arial, sans-serif;
+    }
+    hr {
+      border-color: #2a2a4e !important;
+      margin: 30px 0 !important;
+    }
+    .key-group {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .key-group .form-group {
+      flex: 1;
+      min-width: 200px;
+      margin-bottom: 0;
+    }
+    .key-group label {
+      font-size: 16px !important;
+    }
+    @media (max-width: 768px) {
+      .key-group {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .key-group .form-group {
+        width: 100%;
+        min-width: unset;
+      }
+    }
+    ::-webkit-scrollbar {
+      width: 12px !important;
+      height: 12px !important;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f0f0f !important;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a4e !important;
+      border-radius: 6px !important;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4a4a6e !important;
+    }
+    * {
+      scrollbar-width: auto !important;
+      scrollbar-color: #2a2a4e #0f0f0f !important;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container create-container">
+  <div class="app-card">
+
+    <!-- TOP LINKS -->
+    <div class="top-links">
+      <a href="songslist.html">📋 All Songs</a>
+      <a href="dashboard.html">📊 Dashboard</a>
+    </div>
+
+    <!-- HEADER -->
+    <div class="header-top">
+      <h2>🎼 Manage Songs</h2>
+      <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+    </div>
+
+    <p class="subtitle" id="modeLabel">Create a new song</p>
+
+    <!-- SONG ID (hidden) -->
+    <input id="songId" type="hidden">
+
+    <!-- TITLE -->
+    <div class="form-group">
+      <label for="title">Song Title</label>
+      <input id="title" placeholder="Enter song title..." class="form-input">
+    </div>
+
+    <!-- KEY SIGNATURE -->
+    <div class="form-group">
+      <label>Key Signature</label>
+      <div class="key-group">
+        <div class="form-group">
+          <label for="keyMajor">Major Key</label>
+          <select id="keyMajor" class="form-select">
+            <option value="C">C</option>
+            <option value="G">G</option>
+            <option value="D">D</option>
+            <option value="A">A</option>
+            <option value="E">E</option>
+            <option value="B">B</option>
+            <option value="F♯">F♯</option>
+            <option value="C♯">C♯</option>
+            <option value="F">F</option>
+            <option value="B♭">B♭</option>
+            <option value="E♭">E♭</option>
+            <option value="A♭">A♭</option>
+            <option value="D♭">D♭</option>
+            <option value="G♭">G♭</option>
+            <option value="C♭">C♭</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="keyMinor">Relative Minor</label>
+          <input id="keyMinor" class="form-input" readonly style="background:#0a0a1a; cursor:not-allowed;">
+        </div>
+      </div>
+      <small class="hint">Relative minor akan diisi automatik berdasarkan major key yang dipilih.</small>
+    </div>
+
+    <!-- LYRICS -->
+    <div class="form-group">
+      <label for="input">Lyrics with Chords</label>
+      <textarea id="input" placeholder="Example: [C]Hello [G]world" class="form-textarea"></textarea>
+      <small class="hint">Use [Chord] format. Example: [C]Hello [G]world</small>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="button-group">
+      <button onclick="saveSong()" id="saveBtn">💾 Save Song</button>
+      <button onclick="deleteSong()" id="deleteBtn" class="delete-btn">🗑️ Delete</button>
+      <button onclick="clearForm()" class="clear-btn">🔄 Clear</button>
+      <button onclick="goBack()" class="back-btn">⬅ Back</button>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+
+<script>
+  // ============================================
+  // DOM REFERENCES
+  // ============================================
+  const titleInput = document.getElementById('title');
+  const lyricsInput = document.getElementById('input');
+  const statusMsg = document.getElementById('statusMessage');
+  const songIdInput = document.getElementById('songId');
+  const saveBtn = document.getElementById('saveBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+  const modeLabel = document.getElementById('modeLabel');
+  const keyMajorSelect = document.getElementById('keyMajor');
+  const keyMinorInput = document.getElementById('keyMinor');
+
+  let currentSongId = null;
+
+  // ============================================
+  // KEY SIGNATURE DATA (dengan simbol flat ♭)
+  // ============================================
+  const keyMap = {
+    'C':  { sig: '0',  minor: 'Am' },
+    'G':  { sig: '1♯', minor: 'Em' },
+    'D':  { sig: '2♯', minor: 'Bm' },
+    'A':  { sig: '3♯', minor: 'F♯m' },
+    'E':  { sig: '4♯', minor: 'C♯m' },
+    'B':  { sig: '5♯', minor: 'G♯m' },
+    'F♯': { sig: '6♯', minor: 'D♯m' },
+    'C♯': { sig: '7♯', minor: 'A♯m' },
+    'F':  { sig: '1♭', minor: 'Dm' },
+    'B♭': { sig: '2♭', minor: 'Gm' },
+    'E♭': { sig: '3♭', minor: 'Cm' },
+    'A♭': { sig: '4♭', minor: 'Fm' },
+    'D♭': { sig: '5♭', minor: 'B♭m' },
+    'G♭': { sig: '6♭', minor: 'E♭m' },
+    'C♭': { sig: '7♭', minor: 'A♭m' }
+  };
+
+  // ============================================
+  // AUTO-FILL RELATIVE MINOR
+  // ============================================
+  function updateRelativeMinor() {
+    const major = keyMajorSelect.value;
+    const data = keyMap[major];
+    if (data) {
+      keyMinorInput.value = data.minor;
+    } else {
+      keyMinorInput.value = '';
+    }
+  }
+
+  keyMajorSelect.addEventListener('change', updateRelativeMinor);
+  updateRelativeMinor(); // initial
+
+  // ============================================
+  // CHECK URL PARAMETER FOR EDIT MODE
+  // ============================================
+  function checkForEditMode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const songId = urlParams.get('edit');
+    if (songId) {
+      loadSongForEdit(songId);
+    }
+  }
+
+  // ============================================
+  // LOAD SONG FOR EDIT
+  // ============================================
+  function loadSongForEdit(songId) {
+    currentSongId = songId;
+    songIdInput.value = songId;
+
+    statusMsg.textContent = '⏳ Loading song...';
+    statusMsg.className = 'status-message info';
+
+    db.collection('songs').doc(songId).get()
+      .then((doc) => {
+        if (doc.exists) {
+          const song = doc.data();
+          titleInput.value = song.title || '';
+          lyricsInput.value = song.lyrics || song.content || '';
+          if (song.keyMajor) {
+            keyMajorSelect.value = song.keyMajor;
+            updateRelativeMinor();
+          }
+          if (song.keyMinor) {
+            keyMinorInput.value = song.keyMinor;
+          }
+          saveBtn.textContent = '✏️ Update Song';
+          modeLabel.textContent = 'Editing: ' + (song.title || 'Untitled');
+          deleteBtn.classList.add('active');
+          statusMsg.textContent = '✅ Song loaded for editing';
+          statusMsg.className = 'status-message success';
+        } else {
+          statusMsg.textContent = '❌ Song not found';
+          statusMsg.className = 'status-message error';
+          clearForm();
+        }
+      })
+      .catch(err => {
+        statusMsg.textContent = '❌ Error: ' + err.message;
+        statusMsg.className = 'status-message error';
+      });
+  }
+
+  // ============================================
+  // SAVE SONG
+  // ============================================
+  function saveSong() {
+    const title = titleInput.value.trim();
+    const lyrics = lyricsInput.value.trim();
+    const songId = songIdInput.value;
+    const keyMajor = keyMajorSelect.value;
+    const keyMinor = keyMinorInput.value.trim();
+
+    if (!title || !lyrics) {
+      statusMsg.textContent = '⚠️ Please enter both title and lyrics';
+      statusMsg.className = 'status-message error';
+      return;
+    }
+
+    const data = {
+      title,
+      lyrics,
+      keyMajor,
+      keyMinor,
+      keySignature: keyMap[keyMajor]?.sig || '0',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    let promise;
+    let action;
+
+    if (songId) {
+      promise = db.collection('songs').doc(songId).update(data);
+      action = 'updated';
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      promise = db.collection('songs').add(data);
+      action = 'saved';
+    }
+
+    statusMsg.textContent = '⏳ Saving...';
+    statusMsg.className = 'status-message info';
+
+    promise
+      .then(() => {
+        statusMsg.textContent = `✅ Song ${action} successfully!`;
+        statusMsg.className = 'status-message success';
+        if (!songId) {
+          clearForm();
+        } else {
+          saveBtn.textContent = '✏️ Update Song';
+        }
+      })
+      .catch(err => {
+        statusMsg.textContent = '❌ Error: ' + err.message;
+        statusMsg.className = 'status-message error';
+      });
+  }
+
+  // ============================================
+  // DELETE SONG
+  // ============================================
+  function deleteSong() {
+    const songId = songIdInput.value;
+    if (!songId) {
+      statusMsg.textContent = '⚠️ No song to delete';
+      statusMsg.className = 'status-message error';
+      return;
+    }
+    if (!confirm('Delete this song permanently?')) {
+      return;
+    }
+    statusMsg.textContent = '⏳ Deleting...';
+    statusMsg.className = 'status-message info';
+    db.collection('songs').doc(songId).delete()
+      .then(() => {
+        statusMsg.textContent = '✅ Song deleted successfully!';
+        statusMsg.className = 'status-message success';
+        clearForm();
+      })
+      .catch(err => {
+        statusMsg.textContent = '❌ Delete failed: ' + err.message;
+        statusMsg.className = 'status-message error';
+      });
+  }
+
+  // ============================================
+  // CLEAR FORM
+  // ============================================
+  function clearForm() {
+    songIdInput.value = '';
+    currentSongId = null;
+    titleInput.value = '';
+    lyricsInput.value = '';
+    keyMajorSelect.value = 'C';
+    updateRelativeMinor();
+    saveBtn.textContent = '💾 Save Song';
+    modeLabel.textContent = 'Create a new song';
+    deleteBtn.classList.remove('active');
+    statusMsg.textContent = '';
+    statusMsg.className = 'status-message';
+    titleInput.focus();
+    if (window.history && window.history.replaceState) {
+      const url = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, url);
+    }
+  }
+
+  // ============================================
+  // GO BACK / HOME
+  // ============================================
+  function goBack() {
+    window.location.href = "index.html";
+  }
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    checkForEditMode();
+  });
+</script>
+<script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('✅ Service Worker registered'))
+    .catch(err => console.error('❌ SW registration failed:', err));
+}
+</script>
+</body>
+</html>
