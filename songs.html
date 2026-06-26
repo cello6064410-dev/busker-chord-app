@@ -27,8 +27,8 @@
   <div class="header">
     <div class="header-top">
       <h2 style="font-size: 1.3rem;">🎵 SONGS LIST</h2>
-      <button onclick="goBack()" class="home-btn" title="Go Back" style="background: #2a2a4e; border: none; color: white; padding: 6px 14px; border-radius: 8px; font-size: 1rem; cursor: pointer; min-height: 40px; font-family: Arial, sans-serif; display: flex; align-items: center; gap: 6px;">
-        ← Back
+      <button onclick="goHome()" class="home-btn" title="Go to Home" style="background: #2a2a4e; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; min-height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center;">
+        🏠
       </button>
     </div>
     <p style="color: #888; font-size: 0.9rem; font-family: Arial, sans-serif; margin-top: 4px;" id="songCount">Loading...</p>
@@ -254,8 +254,8 @@
   // ============================================
   // GO BACK
   // ============================================
-  function goBack() {
-    window.location.href = "viewer.html";
+  function goHome() {
+    window.location.href = "index.html";
   }
 
   // ============================================
