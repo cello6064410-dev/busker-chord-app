@@ -54,15 +54,14 @@
 
   <!-- FLOATING CONTROL BAR -->
   <div class="floating-bar">
-    <button onclick="transposeUp()" title="Transpose Up (+7 semitone)">⬆</button>
-    <button onclick="transposeDown()" title="Transpose Down (-5 semitone)">⬇</button>
+    <button onclick="transposeUp()" title="Transpose Up (Sharp)" style="color: #ffcc00; font-weight: bold; font-size: 1.1rem;">♯+</button>
+    <button onclick="transposeDown()" title="Transpose Down (Flat)" style="color: #4fc3f7; font-weight: bold; font-size: 1.1rem;">♭−</button>
     <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
     <button onclick="changeFontSize(-2)" title="Decrease Font">A-</button>
     <button onclick="toggleScroll()" title="Start/Stop Auto-Scroll" id="playBtn">▶</button>
     <button onclick="stopScroll()" title="Stop Auto-Scroll" id="stopBtn">⏹</button>
     <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
   </div>
-</div>
 
 <!-- TRANSPOSE POPUP MODAL -->
 <div id="transposeModal" class="modal-overlay" style="display:none;">
