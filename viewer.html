@@ -31,6 +31,10 @@
       <h2>🎵 Song Viewer</h2>
       <div style="display: flex; gap: 8px; align-items: center;">
         <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
+        <!-- BUTTON: SONGS LIST - BARU -->
+        <button onclick="openSongsList()" class="songs-list-btn" title="Songs List" style="background: #2a4a6e; border: none; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; font-family: Arial, sans-serif; display: flex; align-items: center; gap: 6px;">
+          📋 Songs List
+        </button>
         <button onclick="logoutUser()" class="logout-btn" title="Logout" style="background: #4a2a2a; border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; min-width: 40px;">🚪</button>
         <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
       </div>
@@ -42,24 +46,11 @@
     </div>
   </div>
 
-  <!-- SEARCH BAR -->
-  <div class="search-container">
-    <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()">
-    <button onclick="clearSearch()" id="clearSearchBtn" style="display:none;">✕</button>
-  </div>
-
-  <!-- SONG LIST -->
-  <div id="songList" class="song-list"></div>
+  <!-- SEARCH BAR - DI BUANG -->
+  <!-- SONG LIST - DI BUANG -->
 
   <!-- LYRICS OUTPUT -->
-  <div id="output" class="output">Loading songs...</div>
-
-  <!-- LINK TO ALL SONGS LIST -->
-  <div style="text-align: center; padding: 8px 0; flex-shrink: 0;">
-    <a href="list.html" style="color: #4fc3f7; font-family: Arial, sans-serif; font-size: 0.9rem; text-decoration: none; padding: 8px 16px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4e; display: inline-block;">
-      📋 All Songs
-    </a>
-  </div>
+  <div id="output" class="output" style="flex: 1; height: auto; min-height: 300px;">Loading songs...</div>
 
   <!-- FLOATING CONTROL BAR -->
   <div class="floating-bar">
@@ -121,7 +112,6 @@
   // GLOBAL VARIABLES
   // ============================================
   let songs = [];
-  let filteredSongs = [];
   let currentSongId = null;
   let currentKeyIndex = 7; // Default C = index 7
   let currentKeyMajor = 'C';
@@ -138,10 +128,6 @@
   // Auto-logout timer
   let logoutTimer = null;
   const IDLE_TIMEOUT = 30 * 60 * 1000;
-
-  // Search results limit
-  const MAX_SEARCH_RESULTS = 10;
-  const DISPLAY_RESULTS = 5;
 
   // ============================================
   // CIRCLE OF FIFTHS - KEY SIGNATURE DATA
@@ -180,13 +166,10 @@
   // ============================================
   // DOM REFERENCES
   // ============================================
-  const songListEl = document.getElementById('songList');
   const outputEl = document.getElementById('output');
   const songTitleEl = document.getElementById('songTitle');
   const keyDisplayEl = document.getElementById('keyDisplay');
   const playBtn = document.getElementById('playBtn');
-  const searchInput = document.getElementById('searchInput');
-  const clearSearchBtn = document.getElementById('clearSearchBtn');
   const userNameEl = document.getElementById('userName');
 
   const modal = document.getElementById('transposeModal');
@@ -212,161 +195,92 @@
       lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
       loginCount: firebase.firestore.FieldValue.increment(1)
     }, { merge: true }).catch(err => console.error('Error updating login:', err));
-    loadSongs();
+    
+    // Check if there's a song to load from localStorage (from songs.html)
+    const savedSongId = localStorage.getItem('selectedSongId');
+    if (savedSongId) {
+      // Load songs first, then select the saved song
+      loadSongsWithCallback(function() {
+        const song = songs.find(s => s.id === savedSongId);
+        if (song) {
+          selectSong(savedSongId);
+          localStorage.removeItem('selectedSongId'); // Clear after loading
+        } else {
+          // If song not found, load first song
+          loadFirstSong();
+        }
+      });
+    } else {
+      // No saved song, load songs and select first
+      loadSongs();
+    }
   });
-
-  // ============================================
-  // AUTO-LOGOUT
-  // ============================================
-  function resetLogoutTimer() {
-    if (logoutTimer) clearTimeout(logoutTimer);
-    logoutTimer = setTimeout(function() {
-      console.log('⏰ Auto-logout: Idle for 30 minutes');
-      logoutUser();
-    }, IDLE_TIMEOUT);
-  }
-
-  function setupIdleTimer() {
-    const events = ['mousemove', 'mousedown', 'click', 'scroll', 'touchstart', 'keydown'];
-    events.forEach(event => {
-      document.addEventListener(event, resetLogoutTimer);
-    });
-    resetLogoutTimer();
-  }
-
-  function logoutUser() {
-    if (logoutTimer) clearTimeout(logoutTimer);
-    stopScroll();
-    auth.signOut().then(() => {
-      window.location.href = "login.html";
-    }).catch(() => {
-      window.location.href = "login.html";
-    });
-  }
 
   // ============================================
   // LOAD SONGS
   // ============================================
   function loadSongs() {
     outputEl.textContent = '⏳ Loading songs...';
-    songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
 
     db.collection('songs')
       .orderBy('title')
       .get()
       .then((snapshot) => {
         songs = [];
-        songListEl.innerHTML = '';
         if (snapshot.empty) {
           outputEl.textContent = '📭 No songs found. Go to Admin to create one.';
-          songListEl.innerHTML = `
-            <div class="empty-text">
-              📭 No songs found<br>
-              <small>Go to Admin to create your first song!</small>
-            </div>
-          `;
           return;
         }
         snapshot.forEach((doc) => {
           const song = { id: doc.id, ...doc.data() };
           songs.push(song);
         });
-        outputEl.textContent = 'Select a song to begin';
-        songListEl.innerHTML = `
-          <div class="empty-text">
-            🔍 Type a song title to search
-          </div>
-        `;
         console.log(`✅ ${songs.length} songs loaded`);
+        // Load first song automatically
+        loadFirstSong();
       })
       .catch((error) => {
         console.error('Error loading songs:', error);
         outputEl.textContent = '❌ Error loading songs. Please refresh.';
-        songListEl.innerHTML = `
-          <div class="error-text">
-            ❌ Error loading songs<br>
-            <small>${error.message}</small>
-          </div>
-        `;
       });
   }
 
-  // ============================================
-  // SEARCH / FILTER
-  // ============================================
-  function filterSongs() {
-    const query = searchInput.value.toLowerCase().trim();
-    if (query.length > 0) {
-      clearSearchBtn.style.display = 'block';
+  function loadSongsWithCallback(callback) {
+    db.collection('songs')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        songs = [];
+        if (snapshot.empty) {
+          outputEl.textContent = '📭 No songs found. Go to Admin to create one.';
+          return;
+        }
+        snapshot.forEach((doc) => {
+          const song = { id: doc.id, ...doc.data() };
+          songs.push(song);
+        });
+        console.log(`✅ ${songs.length} songs loaded`);
+        if (callback) callback();
+      })
+      .catch((error) => {
+        console.error('Error loading songs:', error);
+        outputEl.textContent = '❌ Error loading songs. Please refresh.';
+      });
+  }
+
+  function loadFirstSong() {
+    if (songs.length > 0) {
+      selectSong(songs[0].id);
     } else {
-      clearSearchBtn.style.display = 'none';
-    }
-    if (query === '') {
-      songListEl.innerHTML = `
-        <div class="empty-text">
-          🔍 Type a song title to search
-        </div>
-      `;
-      return;
-    }
-    const results = songs.filter(song =>
-      song.title && song.title.toLowerCase().includes(query)
-    );
-    const limitedResults = results.slice(0, MAX_SEARCH_RESULTS);
-    renderSongList(limitedResults, results.length);
-  }
-
-  function renderSongList(results, totalFound) {
-    songListEl.innerHTML = '';
-    if (results.length === 0) {
-      songListEl.innerHTML = `
-        <div class="empty-text">
-          🔍 No songs found matching "<span id="searchTerm">${searchInput.value}</span>"
-        </div>
-      `;
-      return;
-    }
-    const resultCount = document.createElement('div');
-    resultCount.className = 'result-count';
-    resultCount.textContent = `Showing ${results.length} of ${totalFound} results`;
-    songListEl.appendChild(resultCount);
-    const displayResults = results.slice(0, DISPLAY_RESULTS);
-    const hiddenResults = results.slice(DISPLAY_RESULTS);
-    displayResults.forEach((song) => {
-      const btn = createSongButton(song);
-      songListEl.appendChild(btn);
-    });
-    if (hiddenResults.length > 0) {
-      const hint = document.createElement('div');
-      hint.className = 'scroll-hint';
-      hint.textContent = `⬇️ ${hiddenResults.length} more results (scroll down)`;
-      songListEl.appendChild(hint);
-      hiddenResults.forEach((song) => {
-        const btn = createSongButton(song);
-        btn.className += ' hidden-result';
-        songListEl.appendChild(btn);
-      });
+      outputEl.textContent = '📭 No songs available';
     }
   }
 
-  function createSongButton(song) {
-    const btn = document.createElement('button');
-    btn.textContent = song.title || 'Untitled';
-    btn.className = 'song-item';
-    btn.setAttribute('data-id', song.id);
-    btn.onclick = () => selectSong(song.id);
-    return btn;
-  }
-
-  function clearSearch() {
-    searchInput.value = '';
-    clearSearchBtn.style.display = 'none';
-    songListEl.innerHTML = `
-      <div class="empty-text">
-        🔍 Type a song title to search
-      </div>
-    `;
-    searchInput.focus();
+  // ============================================
+  // OPEN SONGS LIST (NEW FUNCTION)
+  // ============================================
+  function openSongsList() {
+    window.location.href = "songs.html";
   }
 
   // ============================================
@@ -402,26 +316,18 @@
   }
 
   // ============================================
-  // CONVERT CHORD SYMBOLS (kecuali <br>)
+  // CONVERT CHORD SYMBOLS
   // ============================================
   function convertChordSymbols(text) {
-    // Jangan convert <br>
     text = text.replace(/<br>/g, '<<BR>>');
-    
-    // m7b5 → ø (half-diminished)
     text = text.replace(/m7b5/g, 'ø');
-    // dim → ° (fully diminished)
     text = text.replace(/dim/g, '°');
-    // # → ♯ (sharp)
     text = text.replace(/#/g, '♯');
-    // b → ♭ (flat) — tapi jangan convert dalam <br>
     text = text.replace(/b/g, '♭');
-    
-    // Restore <br>
     text = text.replace(/<<BR>>/g, '<br>');
-    
     return text;
   }
+
   // ============================================
   // DISPLAY SONG
   // ============================================
@@ -432,17 +338,15 @@
       return;
     }
     
-    // Calculate transpose steps based on key index difference
     const originalSig = song.keySignature || '0';
     const originalKeyData = getKeyDataBySig(originalSig);
     const steps = currentKeyIndex - originalKeyData.index;
     
-    // Convert steps to semitone offset
     let semitoneOffset = 0;
     if (steps > 0) {
-      semitoneOffset = steps * 7; // Up
+      semitoneOffset = steps * 7;
     } else if (steps < 0) {
-      semitoneOffset = steps * 5; // Down
+      semitoneOffset = steps * 5;
     }
     
     if (semitoneOffset !== 0) {
@@ -450,8 +354,6 @@
     }
     
     lyrics = formatChordsAboveLyrics(lyrics);
-    
-    // Convert symbols after transpose
     lyrics = convertChordSymbols(lyrics);
     
     outputEl.innerHTML = lyrics;
@@ -720,24 +622,21 @@
   // AUTO-SCROLL
   // ============================================
   function startScroll() {
-    const output = document.getElementById('output');
     if (isScrolling) return;
-    if (!output.innerHTML || output.innerHTML === 'Select a song to begin' || output.innerHTML === 'Loading songs...') return;
-    if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) return;
+    if (!outputEl.innerHTML || outputEl.innerHTML === 'No Song Selected' || outputEl.innerHTML === 'Loading songs...') return;
+    if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) return;
     isScrolling = true;
-    const playBtn = document.getElementById('playBtn');
     if (playBtn) {
       playBtn.textContent = '▶️';
       playBtn.style.background = '#2a5a2e';
     }
-    output.classList.add('scrolling');
+    outputEl.classList.add('scrolling');
     scrollInterval = setInterval(() => {
-      const output = document.getElementById('output');
-      if (output.scrollTop + output.clientHeight >= output.scrollHeight - 5) {
+      if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
         stopScroll();
         return;
       }
-      output.scrollTop += scrollSpeed;
+      outputEl.scrollTop += scrollSpeed;
     }, 50);
   }
 
@@ -747,14 +646,12 @@
       scrollInterval = null;
     }
     isScrolling = false;
-    const playBtn = document.getElementById('playBtn');
     if (playBtn) {
       playBtn.textContent = '▶';
       playBtn.style.background = '#1a1a2e';
     }
-    const output = document.getElementById('output');
-    if (output) {
-      output.classList.remove('scrolling');
+    if (outputEl) {
+      outputEl.classList.remove('scrolling');
     }
   }
 
@@ -770,28 +667,27 @@
   // TAP TO STOP
   // ============================================
   function setupTapToStop() {
-    const output = document.getElementById('output');
-    if (!output) return;
+    if (!outputEl) return;
     let touchStartY = 0;
     let isSwiping = false;
-    output.addEventListener('touchstart', function(e) {
+    outputEl.addEventListener('touchstart', function(e) {
       touchStartY = e.touches[0].clientY;
       isSwiping = false;
     }, { passive: true });
-    output.addEventListener('touchmove', function(e) {
+    outputEl.addEventListener('touchmove', function(e) {
       const touchEndY = e.touches[0].clientY;
       const diff = touchStartY - touchEndY;
       if (Math.abs(diff) > 10) {
         isSwiping = true;
       }
     }, { passive: true });
-    output.addEventListener('touchend', function(e) {
+    outputEl.addEventListener('touchend', function(e) {
       if (!isSwiping && isScrolling) {
         stopScroll();
         e.preventDefault();
       }
     }, { passive: true });
-    output.addEventListener('click', function() {
+    outputEl.addEventListener('click', function() {
       if (isScrolling) {
         stopScroll();
       }
@@ -822,6 +718,42 @@
   });
 
   // ============================================
+  // AUTO-LOGOUT
+  // ============================================
+  function resetLogoutTimer() {
+    if (logoutTimer) clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(function() {
+      console.log('⏰ Auto-logout: Idle for 30 minutes');
+      logoutUser();
+    }, IDLE_TIMEOUT);
+  }
+
+  function setupIdleTimer() {
+    const events = ['mousemove', 'mousedown', 'click', 'scroll', 'touchstart', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, resetLogoutTimer);
+    });
+    resetLogoutTimer();
+  }
+
+  function logoutUser() {
+    if (logoutTimer) clearTimeout(logoutTimer);
+    stopScroll();
+    auth.signOut().then(() => {
+      window.location.href = "login.html";
+    }).catch(() => {
+      window.location.href = "login.html";
+    });
+  }
+
+  // ============================================
+  // GO HOME
+  // ============================================
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================
   // KEYBOARD SHORTCUTS
   // ============================================
   document.addEventListener('keydown', function(e) {
@@ -843,13 +775,6 @@
       }
     }
   });
-
-  // ============================================
-  // GO HOME
-  // ============================================
-  function goHome() {
-    window.location.href = "index.html";
-  }
 
   // ============================================
   // INITIALIZE
@@ -889,7 +814,7 @@
   console.log('  Tap (not swipe) on lyrics - Stop scrolling');
   console.log('  Space bar - Toggle scroll');
   console.log('  ↑/↓ arrows - Adjust scroll speed');
-  console.log('  🔍 Search - Type to filter songs');
+  console.log('  📋 Songs List - Open songs list');
   console.log('  ⛶ Fullscreen - Only lyrics & chords');
 </script>
 <script>

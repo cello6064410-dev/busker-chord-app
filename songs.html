@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Songs List - Busker App</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+
+<div class="app" style="padding-bottom: 80px;">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <h2 style="font-size: 1.3rem;">🎵 SONGS LIST</h2>
+      <button onclick="goBack()" class="home-btn" title="Go Back" style="background: #2a2a4e; border: none; color: white; padding: 6px 14px; border-radius: 8px; font-size: 1rem; cursor: pointer; min-height: 40px; font-family: Arial, sans-serif; display: flex; align-items: center; gap: 6px;">
+        ← Back
+      </button>
+    </div>
+    <p style="color: #888; font-size: 0.9rem; font-family: Arial, sans-serif; margin-top: 4px;" id="songCount">Loading...</p>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()" style="flex: 1; padding: 12px 16px; background: #1a1a2e; border: 1px solid #2a2a4e; border-radius: 10px; color: white; font-size: 1rem; font-family: Arial, sans-serif; outline: none; min-height: 48px;">
+    <button onclick="clearSearch()" id="clearSearchBtn" style="position: absolute; right: 12px; background: none; border: none; color: #888; font-size: 1.2rem; cursor: pointer; padding: 8px 10px; min-height: 44px; min-width: 44px; display: none;">✕</button>
+  </div>
+
+  <!-- SONG LIST - SCROLLABLE -->
+  <div id="songList" class="song-list" style="flex: 1; overflow-y: auto; max-height: none; height: auto; padding: 8px; background: #151515; border-radius: 10px; margin-top: 8px; min-height: 300px;">
+    <div class="loading-text">⏳ Loading songs...</div>
+  </div>
+
+  <!-- FLOATING BACK BUTTON -->
+  <div class="floating-bar" style="justify-content: center; position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; background: rgba(15, 15, 15, 0.92); backdrop-filter: blur(10px); padding: 10px 20px; border-radius: 14px; z-index: 9999; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); border: 1px solid #2a2a2a;">
+    <button onclick="goBack()" style="padding: 12px 30px; min-width: 120px; background: #2a2a4e; border: none; border-radius: 10px; color: white; font-size: 1rem; cursor: pointer; font-family: Arial, sans-serif; min-height: 48px;">⬅ Back to Viewer</button>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // FIREBASE CONFIGURATION
+  // ============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+    authDomain: "busker-chord-app.firebaseapp.com",
+    projectId: "busker-chord-app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ============================================
+  // GLOBAL VARIABLES
+  // ============================================
+  let allSongs = [];
+  let filteredSongs = [];
+  const songListEl = document.getElementById('songList');
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  const songCountEl = document.getElementById('songCount');
+
+  // ============================================
+  // AUTH - CHECK LOGIN
+  // ============================================
+  auth.onAuthStateChanged(function(user) {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    loadAllSongs();
+  });
+
+  // ============================================
+  // LOAD ALL SONGS
+  // ============================================
+  function loadAllSongs() {
+    songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
+
+    db.collection('songs')
+      .orderBy('title')
+      .get()
+      .then((snapshot) => {
+        allSongs = [];
+        songListEl.innerHTML = '';
+
+        if (snapshot.empty) {
+          songListEl.innerHTML = `
+            <div class="empty-text">
+              📭 No songs found<br>
+              <small>Go to Admin to create your first song!</small>
+            </div>
+          `;
+          songCountEl.textContent = '0 songs';
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          const song = { id: doc.id, ...doc.data() };
+          allSongs.push(song);
+        });
+
+        filteredSongs = [...allSongs];
+        renderSongList();
+        songCountEl.textContent = `${allSongs.length} songs`;
+      })
+      .catch((error) => {
+        console.error('Error loading songs:', error);
+        songListEl.innerHTML = `
+          <div class="error-text">
+            ❌ Error loading songs<br>
+            <small>${error.message}</small>
+          </div>
+        `;
+        songCountEl.textContent = 'Error loading';
+      });
+  }
+
+  // ============================================
+  // RENDER SONG LIST
+  // ============================================
+  function renderSongList() {
+    songListEl.innerHTML = '';
+
+    if (filteredSongs.length === 0) {
+      songListEl.innerHTML = `
+        <div class="empty-text">
+          🔍 No songs found matching "<span id="searchTerm">${searchInput.value || ''}</span>"
+        </div>
+      `;
+      return;
+    }
+
+    // Group by first letter (A-Z)
+    const grouped = {};
+    filteredSongs.forEach(song => {
+      const title = song.title || 'Untitled';
+      const firstLetter = title.charAt(0).toUpperCase();
+      if (!grouped[firstLetter]) {
+        grouped[firstLetter] = [];
+      }
+      grouped[firstLetter].push(song);
+    });
+
+    // Sort keys alphabetically
+    const sortedKeys = Object.keys(grouped).sort();
+
+    sortedKeys.forEach(letter => {
+      // Add letter header
+      const header = document.createElement('div');
+      header.style.cssText = `
+        padding: 8px 12px;
+        margin: 8px 0 4px 0;
+        color: #ffcc00;
+        font-size: 1.1rem;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
+        background: #1a1a2e;
+        border-radius: 6px;
+        border-left: 3px solid #ffcc00;
+      `;
+      header.textContent = letter;
+      songListEl.appendChild(header);
+
+      // Sort songs under this letter
+      grouped[letter].sort((a, b) => {
+        const titleA = a.title || 'Untitled';
+        const titleB = b.title || 'Untitled';
+        return titleA.localeCompare(titleB);
+      });
+
+      grouped[letter].forEach((song) => {
+        const btn = document.createElement('button');
+        btn.textContent = song.title || 'Untitled';
+        btn.style.cssText = `
+          width: 100%;
+          padding: 12px 16px;
+          margin-bottom: 4px;
+          text-align: left;
+          background: #1a1a2e;
+          border: 1px solid #2a2a4e;
+          border-radius: 8px;
+          color: white;
+          font-size: 1rem;
+          cursor: pointer;
+          font-family: Arial, sans-serif;
+          transition: background 0.2s, transform 0.1s;
+          min-height: 44px;
+        `;
+        btn.onmouseover = () => { btn.style.background = '#2a2a4e'; };
+        btn.onmouseout = () => { btn.style.background = '#1a1a2e'; };
+        btn.onclick = () => selectSong(song.id);
+        songListEl.appendChild(btn);
+      });
+    });
+  }
+
+  // ============================================
+  // SEARCH / FILTER SONGS
+  // ============================================
+  function filterSongs() {
+    const query = searchInput.value.toLowerCase().trim();
+    
+    if (query.length > 0) {
+      clearSearchBtn.style.display = 'block';
+    } else {
+      clearSearchBtn.style.display = 'none';
+    }
+
+    if (query === '') {
+      filteredSongs = [...allSongs];
+    } else {
+      filteredSongs = allSongs.filter(song => 
+        song.title && song.title.toLowerCase().includes(query)
+      );
+    }
+
+    renderSongList();
+  }
+
+  // ============================================
+  // CLEAR SEARCH
+  // ============================================
+  function clearSearch() {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    filteredSongs = [...allSongs];
+    renderSongList();
+    searchInput.focus();
+  }
+
+  // ============================================
+  // SELECT SONG - SAVE TO LOCALSTORAGE & GO BACK
+  // ============================================
+  function selectSong(songId) {
+    // Save selected song ID to localStorage
+    localStorage.setItem('selectedSongId', songId);
+    
+    // Go back to viewer.html
+    window.location.href = "viewer.html";
+  }
+
+  // ============================================
+  // GO BACK
+  // ============================================
+  function goBack() {
+    window.location.href = "viewer.html";
+  }
+
+  // ============================================
+  // INITIALIZE
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set initial state
+    songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
+  });
+
+  // ============================================
+  // KEYBOARD SHORTCUTS
+  // ============================================
+  document.addEventListener('keydown', function(e) {
+    // ESC to go back
+    if (e.key === 'Escape') {
+      goBack();
+    }
+    // Focus search with Ctrl+F or Cmd+F
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      searchInput.focus();
+    }
+  });
+
+  console.log('📋 Songs List loaded!');
+  console.log('Type in search bar to filter songs');
+  console.log('Click a song to load it in viewer');
+  console.log('Press ESC to go back');
+</script>
+<script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('✅ Service Worker registered'))
+    .catch(err => console.error('❌ SW registration failed:', err));
+}
+</script>
+</body>
+</html>
