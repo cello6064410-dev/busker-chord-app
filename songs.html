@@ -248,13 +248,9 @@
   // SELECT SONG - SAVE TO LOCALSTORAGE & GO BACK
   // ============================================
   function selectSong(songId) {
-    // Save selected song ID to localStorage
     localStorage.setItem('selectedSongId', songId);
-    
-    // Go back to viewer.html
     window.location.href = "viewer.html";
   }
-
   // ============================================
   // GO BACK
   // ============================================
