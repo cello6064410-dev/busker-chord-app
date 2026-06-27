@@ -456,6 +456,7 @@
         <!-- Buttons -->
         <div class="btn-group">
             <button onclick="saveLeadsheet()" class="btn btn-primary" id="saveBtn">💾 Save</button>
+            <button onclick="openEditList()" class="btn btn-secondary" style="background: #4a2a7e; border: 1px solid #8a4abe;">📝 Edit Leadsheet</button>
             <button onclick="deleteLeadsheet()" class="btn btn-danger" id="deleteBtn">🗑️ Delete</button>
             <button onclick="goBack()" class="btn btn-secondary">⬅ Back</button>
         </div>
@@ -681,6 +682,9 @@
 
     function goHome() {
         window.location.href = "index.html";
+    }
+    function openEditList() {
+    window.location.href = "leadsheetslistforedit.html";
     }
 
     // ============================================================

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>Edit Leadsheets</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #0f0f0f;
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding-bottom: 80px;
+    }
+
+    .header {
+        flex-shrink: 0;
+        text-align: center;
+        padding: 5px 0;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #2a2a4e;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 5px;
+    }
+
+    .header-top h2 {
+        font-size: 1.2rem;
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+        margin: 0;
+    }
+
+    .header-btn {
+        background: #2a2a4e;
+        border: none;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-height: 36px;
+        font-family: Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: background 0.2s;
+    }
+
+    .header-btn:hover {
+        background: #3a3a6e;
+    }
+
+    .search-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 0 8px 0;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    #searchInput {
+        flex: 1;
+        padding: 10px 14px;
+        background: #1a1a2e;
+        border: 1px solid #2a2a4e;
+        border-radius: 10px;
+        color: white;
+        font-size: 1rem;
+        font-family: Arial, sans-serif;
+        outline: none;
+        transition: border-color 0.3s;
+        min-height: 44px;
+    }
+
+    #searchInput:focus {
+        border-color: #ffcc00;
+    }
+
+    #searchInput::placeholder {
+        color: #666;
+    }
+
+    #clearSearchBtn {
+        position: absolute;
+        right: 10px;
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 8px 10px;
+        min-height: 44px;
+        min-width: 44px;
+        display: none;
+    }
+
+    #clearSearchBtn:hover {
+        color: #fff;
+    }
+
+    .song-list {
+        flex: 1;
+        overflow-y: auto;
+        background: #151515;
+        border-radius: 10px;
+        padding: 5px;
+        margin-bottom: 8px;
+    }
+
+    .song-list .loading-text,
+    .song-list .empty-text,
+    .song-list .error-text {
+        text-align: center;
+        padding: 40px 20px;
+        color: #888;
+        font-family: Arial, sans-serif;
+    }
+
+    .song-list .error-text {
+        color: #ff4444;
+    }
+
+    .song-item {
+        width: 100%;
+        padding: 12px 16px;
+        margin-bottom: 4px;
+        text-align: left;
+        background: #1a1a2e;
+        border: 1px solid #2a2a4e;
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        transition: background 0.2s, transform 0.1s;
+        min-height: 44px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .song-item:hover {
+        background: #2a2a4e;
+    }
+
+    .song-item:active {
+        transform: scale(0.98);
+    }
+
+    .song-item .song-title {
+        font-weight: bold;
+        color: #fff;
+    }
+
+    .song-item .song-key {
+        color: #00ffcc;
+        font-size: 0.8rem;
+        font-family: 'Courier New', monospace;
+        background: #0f0f0f;
+        padding: 2px 10px;
+        border-radius: 12px;
+        border: 1px solid #2a2a4e;
+    }
+
+    .result-count {
+        color: #888;
+        font-size: 0.8rem;
+        padding: 8px 10px 4px 10px;
+        font-family: Arial, sans-serif;
+        border-bottom: 1px solid #2a2a2a;
+        margin-bottom: 4px;
+    }
+
+    /* Floating Bar */
+    .floating-bar {
+        position: fixed;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        background: rgba(15, 15, 15, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        border-radius: 14px;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        border: 1px solid #2a2a2a;
+    }
+
+    .floating-bar button {
+        padding: 12px 30px;
+        min-width: 120px;
+        background: #2a2a4e;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        min-height: 48px;
+        transition: background 0.2s;
+    }
+
+    .floating-bar button:hover {
+        background: #3a3a6e;
+    }
+
+    .floating-bar button:active {
+        transform: scale(0.96);
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 6px;
+        }
+        .container {
+            padding-bottom: 75px;
+        }
+        .header-top h2 {
+            font-size: 1rem;
+        }
+        .header-btn {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            min-height: 32px;
+        }
+        #searchInput {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            min-height: 38px;
+        }
+        .song-item {
+            font-size: 0.9rem;
+            padding: 10px 12px;
+            min-height: 38px;
+        }
+        .song-item .song-key {
+            font-size: 0.7rem;
+            padding: 1px 8px;
+        }
+        .floating-bar {
+            gap: 6px;
+            padding: 8px 12px;
+            width: 98%;
+            justify-content: center;
+            bottom: 6px;
+        }
+        .floating-bar button {
+            padding: 10px 16px;
+            min-width: 80px;
+            font-size: 0.9rem;
+            min-height: 40px;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+        .song-list {
+            max-height: none;
+        }
+        .song-item:hover {
+            background: #2a2a4e;
+        }
+    }
+</style>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-top">
+            <h2>📝 Edit Leadsheets</h2>
+            <button onclick="goBack()" class="header-btn" title="Go Back">✕ Close</button>
+        </div>
+        <p style="color: #888; font-size: 0.9rem; font-family: Arial, sans-serif; margin-top: 4px;" id="songCount">Loading...</p>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="🔍 Search leadsheets..." oninput="filterSongs()" />
+        <button onclick="clearSearch()" id="clearSearchBtn">✕</button>
+    </div>
+
+    <!-- SONG LIST -->
+    <div id="songList" class="song-list">
+        <div class="loading-text">⏳ Loading leadsheets...</div>
+    </div>
+
+    <!-- FLOATING BACK BUTTON -->
+    <div class="floating-bar">
+        <button onclick="goBack()">✕ Close</button>
+    </div>
+
+</div>
+
+<script>
+    // ============================================================
+    // FIREBASE CONFIG
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+        authDomain: "busker-chord-app.firebaseapp.com",
+        projectId: "busker-chord-app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ============================================================
+    // GLOBALS
+    // ============================================================
+    let allSongs = [];
+    let filteredSongs = [];
+    const songListEl = document.getElementById('songList');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const songCountEl = document.getElementById('songCount');
+
+    // ============================================================
+    // AUTH CHECK
+    // ============================================================
+    auth.onAuthStateChanged(function(user) {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+        loadAllSongs();
+    });
+
+    // ============================================================
+    // LOAD ALL LEADSHEETS
+    // ============================================================
+    function loadAllSongs() {
+        songListEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
+
+        db.collection('leadsheets')
+            .orderBy('title')
+            .get()
+            .then((snapshot) => {
+                allSongs = [];
+                songListEl.innerHTML = '';
+
+                if (snapshot.empty) {
+                    songListEl.innerHTML = `
+                        <div class="empty-text">
+                            📭 No leadsheets found<br>
+                            <small>Go to Admin to create your first leadsheet!</small>
+                        </div>
+                    `;
+                    songCountEl.textContent = '0 leadsheets';
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const song = { id: doc.id, ...doc.data() };
+                    allSongs.push(song);
+                });
+
+                filteredSongs = [...allSongs];
+                renderSongList();
+                songCountEl.textContent = `${allSongs.length} leadsheets`;
+            })
+            .catch((error) => {
+                console.error('Error loading leadsheets:', error);
+                songListEl.innerHTML = `
+                    <div class="error-text">
+                        ❌ Error loading leadsheets<br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+                songCountEl.textContent = 'Error loading';
+            });
+    }
+
+    // ============================================================
+    // RENDER SONG LIST
+    // ============================================================
+    function renderSongList() {
+        songListEl.innerHTML = '';
+
+        if (filteredSongs.length === 0) {
+            songListEl.innerHTML = `
+                <div class="empty-text">
+                    🔍 No leadsheets found matching "<span id="searchTerm">${searchInput.value || ''}</span>"
+                </div>
+            `;
+            return;
+        }
+
+        // Group by first letter
+        const grouped = {};
+        filteredSongs.forEach(song => {
+            const title = song.title || 'Untitled';
+            const firstLetter = title.charAt(0).toUpperCase();
+            if (!grouped[firstLetter]) {
+                grouped[firstLetter] = [];
+            }
+            grouped[firstLetter].push(song);
+        });
+
+        const sortedKeys = Object.keys(grouped).sort();
+
+        sortedKeys.forEach(letter => {
+            const header = document.createElement('div');
+            header.style.cssText = `
+                padding: 8px 12px;
+                margin: 8px 0 4px 0;
+                color: #ffcc00;
+                font-size: 1.1rem;
+                font-weight: bold;
+                font-family: Arial, sans-serif;
+                background: #1a1a2e;
+                border-radius: 6px;
+                border-left: 3px solid #ffcc00;
+            `;
+            header.textContent = letter;
+            songListEl.appendChild(header);
+
+            grouped[letter].sort((a, b) => {
+                const titleA = a.title || 'Untitled';
+                const titleB = b.title || 'Untitled';
+                return titleA.localeCompare(titleB);
+            });
+
+            grouped[letter].forEach((song) => {
+                const btn = document.createElement('button');
+                btn.className = 'song-item';
+                btn.setAttribute('data-id', song.id);
+
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'song-title';
+                titleSpan.textContent = song.title || 'Untitled';
+
+                const keySpan = document.createElement('span');
+                keySpan.className = 'song-key';
+                keySpan.textContent = song.key || 'C';
+
+                btn.appendChild(titleSpan);
+                btn.appendChild(keySpan);
+
+                btn.onclick = () => selectSong(song.id);
+
+                songListEl.appendChild(btn);
+            });
+        });
+    }
+
+    // ============================================================
+    // SEARCH / FILTER
+    // ============================================================
+    function filterSongs() {
+        const query = searchInput.value.toLowerCase().trim();
+
+        if (query.length > 0) {
+            clearSearchBtn.style.display = 'block';
+        } else {
+            clearSearchBtn.style.display = 'none';
+        }
+
+        if (query === '') {
+            filteredSongs = [...allSongs];
+        } else {
+            filteredSongs = allSongs.filter(song =>
+                song.title && song.title.toLowerCase().includes(query)
+            );
+        }
+
+        renderSongList();
+    }
+
+    // ============================================================
+    // CLEAR SEARCH
+    // ============================================================
+    function clearSearch() {
+        searchInput.value = '';
+        clearSearchBtn.style.display = 'none';
+        filteredSongs = [...allSongs];
+        renderSongList();
+        searchInput.focus();
+    }
+
+    // ============================================================
+    // SELECT SONG → GO TO CREATELEADSHEET WITH ID
+    // ============================================================
+    function selectSong(songId) {
+        window.location.href = `createleadsheet.html?edit=${songId}`;
+    }
+
+    // ============================================================
+    // GO BACK
+    // ============================================================
+    function goBack() {
+        window.location.href = "createleadsheet.html";
+    }
+
+    // ============================================================
+    // KEYBOARD SHORTCUTS
+    // ============================================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            goBack();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        songListEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
+    });
+
+    console.log('📝 Edit Leadsheets List loaded!');
+    console.log('Click a leadsheet to edit');
+    console.log('Press ESC to go back');
+</script>
+
+</body>
+</html>
