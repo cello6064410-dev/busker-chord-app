@@ -596,13 +596,11 @@
             window.location.href = "login.html";
             return;
         }
-        // Check URL for leadsheet ID
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         if (id) {
             loadLeadsheet(id);
         } else {
-            // No leadsheet selected, go to list
             window.location.href = "leadsheetslist.html";
         }
     });
@@ -631,13 +629,21 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET ENGINE
+    // RENDER LEADSHEET ENGINE — ONLY SLASH (/) 
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
             outputEl.innerHTML = '<div class="loading-text">⚠️ Empty leadsheet</div>';
             return;
         }
+
+        // --- Normalize: replace any dash with slash ---
+        // Convert ---- to ////
+        input = input.replace(/-{4}/g, '////');
+        // Convert -- to //
+        input = input.replace(/-{2}/g, '//');
+        // Convert single - to /
+        input = input.replace(/-/g, '/');
 
         // --- Tokenize ---
         const tokens = [];
@@ -745,23 +751,23 @@
                 }
             }
 
-            // ---- or //// (dash or slash sequence)
-            if (input.substring(i, i + 4) === '----' || input.substring(i, i + 4) === '////') {
-                tokens.push({ type: 'dash', value: input.substring(i, i + 4) });
+            // //// (four slash)
+            if (input.substring(i, i + 4) === '////') {
+                tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
                 i += 4;
                 continue;
             }
 
-            // -- (double dash)
-            if (input.substring(i, i + 2) === '--') {
-                tokens.push({ type: 'dash', value: '--', region: [...activeRegions] });
+            // // (double slash)
+            if (input.substring(i, i + 2) === '//') {
+                tokens.push({ type: 'slash', value: '//', region: [...activeRegions] });
                 i += 2;
                 continue;
             }
 
-            // - (single dash)
-            if (input[i] === '-') {
-                tokens.push({ type: 'dash', value: '-', region: [...activeRegions] });
+            // / (single slash)
+            if (input[i] === '/') {
+                tokens.push({ type: 'slash', value: '/', region: [...activeRegions] });
                 i++;
                 continue;
             }
@@ -772,7 +778,7 @@
         // --- Build blocks ---
         const blocks = [];
         let currentChord = null;
-        let currentDash = '';
+        let currentSlash = '';
         let currentRegion = [];
         let pendingSeparator = null;
         let pendingSeparatorSection = 'default';
@@ -780,10 +786,10 @@
 
         function flushChord() {
             if (currentChord !== null) {
-                const dash = currentDash || '- - - -';
-                blocks.push({ type: 'chord-block', chord: currentChord, dash: dash, region: [...currentRegion] });
+                const slash = currentSlash || '/ / / /';
+                blocks.push({ type: 'chord-block', chord: currentChord, dash: slash, region: [...currentRegion] });
                 currentChord = null;
-                currentDash = '';
+                currentSlash = '';
                 currentRegion = [];
             }
         }
@@ -805,13 +811,13 @@
                 flushChord();
                 currentChord = t.value;
                 currentRegion = t.region || [];
-            } else if (t.type === 'dash') {
+            } else if (t.type === 'slash') {
                 if (currentChord !== null) {
-                    let spaced = t.value.replace(/-/g, '- ').replace(/\//g, '/ ').trim();
-                    if (currentDash) currentDash += ' ' + spaced;
-                    else currentDash = spaced;
+                    let spaced = t.value.replace(/\//g, '/ ').trim();
+                    if (currentSlash) currentSlash += ' ' + spaced;
+                    else currentSlash = spaced;
                 } else {
-                    let spaced = t.value.replace(/-/g, '- ').replace(/\//g, '/ ').trim();
+                    let spaced = t.value.replace(/\//g, '/ ').trim();
                     flushSeparator();
                     flushChord();
                     blocks.push({ type: 'dash-block', dash: spaced, region: t.region || [] });
@@ -1104,7 +1110,7 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('Supports both ---- and //// for beats');
+    console.log('✅ Only slash (/) supported — dash (-) automatically converted');
 </script>
 
 </body>
