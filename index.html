@@ -188,6 +188,15 @@
       alert("Wrong password");
     }
   }
+  function logoutUser() {
+    if (confirm("Are you sure you want to logout?")) {
+      auth.signOut().then(() => {
+      window.location.href = "login.html";
+      }).catch(() => {
+      window.location.href = "login.html";
+      });
+    }
+  }
 </script>
 
 <script>
