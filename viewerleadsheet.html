@@ -745,17 +745,21 @@
                 }
             }
 
-            // Dashes
-            if (input.substring(i, i + 4) === '----') {
-                tokens.push({ type: 'dash', value: '----', region: [...activeRegions] });
+            // ---- or //// (dash or slash sequence)
+            if (input.substring(i, i + 4) === '----' || input.substring(i, i + 4) === '////') {
+                tokens.push({ type: 'dash', value: input.substring(i, i + 4) });
                 i += 4;
                 continue;
             }
+
+            // -- (double dash)
             if (input.substring(i, i + 2) === '--') {
                 tokens.push({ type: 'dash', value: '--', region: [...activeRegions] });
                 i += 2;
                 continue;
             }
+
+            // - (single dash)
             if (input[i] === '-') {
                 tokens.push({ type: 'dash', value: '-', region: [...activeRegions] });
                 i++;
@@ -803,11 +807,11 @@
                 currentRegion = t.region || [];
             } else if (t.type === 'dash') {
                 if (currentChord !== null) {
-                    let spaced = t.value.replace(/-/g, '- ').trim();
+                    let spaced = t.value.replace(/-/g, '- ').replace(/\//g, '/ ').trim();
                     if (currentDash) currentDash += ' ' + spaced;
                     else currentDash = spaced;
                 } else {
-                    let spaced = t.value.replace(/-/g, '- ').trim();
+                    let spaced = t.value.replace(/-/g, '- ').replace(/\//g, '/ ').trim();
                     flushSeparator();
                     flushChord();
                     blocks.push({ type: 'dash-block', dash: spaced, region: t.region || [] });
@@ -1082,7 +1086,6 @@
     // INIT
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Check URL for id param
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         if (id && auth.currentUser) {
@@ -1101,6 +1104,7 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
+    console.log('Supports both ---- and //// for beats');
 </script>
 
 </body>

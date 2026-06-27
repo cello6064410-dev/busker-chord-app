@@ -199,6 +199,16 @@
         display: inline-block;
     }
 
+    .btn-edit {
+        background: #4a2a7e;
+        color: #fff;
+        border: 1px solid #8a4abe;
+    }
+
+    .btn-edit:hover {
+        background: #5a3a8e;
+    }
+
     .btn-upload {
         background: #2a4a6e;
         color: #fff;
@@ -370,6 +380,8 @@
                 <span class="guide-item"><code>|A|</code> <span class="desc">Icon</span></span>
                 <span class="guide-divider">|</span>
                 <span class="guide-item"><code>----</code> <span class="desc">Beats</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>////</code> <span class="desc">Beats</span></span>
             </div>
             <div class="guide-row">
                 <span class="guide-item"><code>||:</code> <span class="desc">Repeat Start</span></span>
@@ -383,7 +395,7 @@
                 <span class="guide-item"><code>(.)</code> <span class="desc">Region End</span></span>
             </div>
             <div class="guide-row" style="margin-top:4px; color:#666; font-size:12px;">
-                <span class="guide-item">Example: <code style="color:#4fc3f7;">||: [1] [C]---- |A| [Am]---- | (1va) [G]---- (.) :|| "Outtro" [2] [C]---- |B| [Dm]---- |</code></span>
+                <span class="guide-item">Example: <code style="color:#4fc3f7;">||: [1] [C]//// |A| [Am]//// | (1va) [G]//// (.) :|| "Outtro" [2] [C]//// |B| [Dm]//// |</code></span>
             </div>
         </div>
     </div>
@@ -456,7 +468,7 @@
         <!-- Buttons -->
         <div class="btn-group">
             <button onclick="saveLeadsheet()" class="btn btn-primary" id="saveBtn">💾 Save</button>
-            <button onclick="openEditList()" class="btn btn-secondary" style="background: #4a2a7e; border: 1px solid #8a4abe;">📝 Edit Leadsheet</button>
+            <button onclick="openEditList()" class="btn btn-edit">📝 Edit Leadsheet</button>
             <button onclick="deleteLeadsheet()" class="btn btn-danger" id="deleteBtn">🗑️ Delete</button>
             <button onclick="goBack()" class="btn btn-secondary">⬅ Back</button>
         </div>
@@ -599,7 +611,16 @@
                 if (doc.exists) {
                     const data = doc.data();
                     titleInput.value = data.title || '';
-                    keySelect.value = data.key || 'C';
+                    
+                    // Key Signature mapping
+                    const keyMap = {
+                        'C': 'C', 'G': 'G', 'D': 'D', 'A': 'A', 'E': 'E', 'B': 'B',
+                        'F#': 'F#', 'C#': 'C#', 'F': 'F', 'Bb': 'Bb', 'Eb': 'Eb',
+                        'Ab': 'Ab', 'Db': 'Db', 'Gb': 'Gb', 'Cb': 'Cb'
+                    };
+                    const savedKey = data.key || 'C';
+                    keySelect.value = keyMap[savedKey] || savedKey;
+                    
                     timeSignature.value = data.timeSignature || '4/4';
                     tempoInput.value = data.tempo || '120';
                     contentTextarea.value = data.content || '';
@@ -683,8 +704,9 @@
     function goHome() {
         window.location.href = "index.html";
     }
+
     function openEditList() {
-    window.location.href = "leadsheetslistforedit.html";
+        window.location.href = "leadsheetslistforedit.html";
     }
 
     // ============================================================
