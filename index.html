@@ -45,20 +45,10 @@
 
     <div class="index-divider"></div>
 
-    <!-- Buttons -->
+    <!-- Buttons - TULIS (Admin) di Atas -->
     <div class="index-buttons">
       
-      <!-- 1. Baca Lirik & Kord - FREE -->
-      <button onclick="viewer()" class="index-btn viewer-btn">
-        <div class="index-btn-icon">📖</div>
-        <div class="index-btn-content">
-          <span class="index-btn-label">Baca Lirik &amp; Kord</span>
-          <span class="index-btn-desc">Baca lirik &amp; kord (termasuk transpose)</span>
-        </div>
-        <div class="index-btn-arrow">→</div>
-      </button>
-      
-      <!-- 2. Tulis Lirik & Kord - ADMIN -->
+      <!-- 1. Tulis Lirik & Kord - ADMIN -->
       <button onclick="admin()" class="index-btn admin-btn">
         <div class="index-btn-icon">✍️</div>
         <div class="index-btn-content">
@@ -68,22 +58,40 @@
         <div class="index-btn-arrow">→</div>
       </button>
 
-      <!-- 3. Baca Leadsheet - FREE -->
-      <button onclick="viewerLeadsheet()" class="index-btn leadsheet-viewer-btn">
-        <div class="index-btn-icon">🎼</div>
-        <div class="index-btn-content">
-          <span class="index-btn-label">Baca Leadsheet</span>
-          <span class="index-btn-desc">Baca leadsheet (icon &amp; region color)</span>
-        </div>
-        <div class="index-btn-arrow">→</div>
-      </button>
-
-      <!-- 4. Tulis Leadsheet - ADMIN -->
+      <!-- 2. Tulis Leadsheet - ADMIN -->
       <button onclick="adminLeadsheet()" class="index-btn leadsheet-admin-btn">
         <div class="index-btn-icon">🖋️</div>
         <div class="index-btn-content">
           <span class="index-btn-label">Tulis Leadsheet</span>
           <span class="index-btn-desc">Tulis leadsheet (upload .txt)</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
+      </button>
+
+    </div>
+
+    <!-- Divider Antara Tulis dan Baca -->
+    <div class="index-divider-light"></div>
+
+    <!-- Buttons - BACA (Public) di Bawah -->
+    <div class="index-buttons">
+      
+      <!-- 3. Baca Lirik & Kord - FREE -->
+      <button onclick="viewer()" class="index-btn viewer-btn">
+        <div class="index-btn-icon">📖</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Baca Lirik &amp; Kord</span>
+          <span class="index-btn-desc">Baca lirik &amp; kord (termasuk transpose)</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
+      </button>
+
+      <!-- 4. Baca Leadsheet - FREE -->
+      <button onclick="viewerLeadsheet()" class="index-btn leadsheet-viewer-btn">
+        <div class="index-btn-icon">🎼</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Baca Leadsheet</span>
+          <span class="index-btn-desc">Baca leadsheet (icon &amp; region color)</span>
         </div>
         <div class="index-btn-arrow">→</div>
       </button>
@@ -131,14 +139,7 @@
   });
 
   // ============================================
-  // 1. BACA LIRIK & KORD - FREE
-  // ============================================
-  function viewer() {
-    window.location.href = "songslist.html";
-  }
-
-  // ============================================
-  // 2. TULIS LIRIK & KORD - ADMIN
+  // TULIS LIRIK & KORD - ADMIN
   // ============================================
   function admin() {
     let pass = prompt("Enter admin password:");
@@ -150,14 +151,7 @@
   }
 
   // ============================================
-  // 3. BACA LEADSHEET - FREE
-  // ============================================
-  function viewerLeadsheet() {
-    window.location.href = "leadsheetslist.html";
-  }
-
-  // ============================================
-  // 4. TULIS LEADSHEET - ADMIN
+  // TULIS LEADSHEET - ADMIN
   // ============================================
   function adminLeadsheet() {
     let pass = prompt("Enter admin password:");
@@ -169,7 +163,21 @@
   }
 
   // ============================================
-  // 5. DASHBOARD - ADMIN
+  // BACA LIRIK & KORD - FREE
+  // ============================================
+  function viewer() {
+    window.location.href = "songslist.html";
+  }
+
+  // ============================================
+  // BACA LEADSHEET - FREE
+  // ============================================
+  function viewerLeadsheet() {
+    window.location.href = "leadsheetslist.html";
+  }
+
+  // ============================================
+  // DASHBOARD - ADMIN
   // ============================================
   function dashboard() {
     let pass = prompt("Enter admin password:");
@@ -314,17 +322,24 @@ if ('serviceWorker' in navigator) {
     margin: 20px auto 30px;
   }
 
+  .index-divider-light {
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 8px 0 16px 0;
+  }
+
   .index-buttons {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .index-btn {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 18px 22px;
+    padding: 16px 20px;
     border: none;
     border-radius: 16px;
     cursor: pointer;
@@ -356,10 +371,10 @@ if ('serviceWorker' in navigator) {
   }
 
   .index-btn-icon {
-    font-size: 2rem;
+    font-size: 1.8rem;
     flex-shrink: 0;
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -374,20 +389,20 @@ if ('serviceWorker' in navigator) {
   }
 
   .index-btn-label {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #fff;
     font-family: 'Segoe UI', Arial, sans-serif;
   }
 
   .index-btn-desc {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.5);
     font-family: Arial, sans-serif;
   }
 
   .index-btn-arrow {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: rgba(255, 255, 255, 0.3);
     transition: all 0.3s ease;
   }
@@ -469,42 +484,48 @@ if ('serviceWorker' in navigator) {
   }
 
   .index-footer {
-    margin-top: 30px;
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 0.8rem;
+    margin-top: 24px;
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 0.75rem;
     font-family: Arial, sans-serif;
     letter-spacing: 0.5px;
   }
 
   @media (max-width: 480px) {
     .index-card {
-      padding: 35px 25px;
+      padding: 30px 20px;
       border-radius: 24px;
     }
     .index-header h1 {
-      font-size: 2.2rem;
+      font-size: 2rem;
     }
     .index-icon {
-      font-size: 3rem;
+      font-size: 2.8rem;
     }
     .index-btn {
-      padding: 14px 18px;
+      padding: 12px 16px;
       gap: 12px;
     }
     .index-btn-icon {
-      font-size: 1.5rem;
-      width: 42px;
-      height: 42px;
+      font-size: 1.3rem;
+      width: 40px;
+      height: 40px;
     }
     .index-btn-label {
-      font-size: 1rem;
+      font-size: 0.95rem;
     }
     .index-btn-desc {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
     }
     .logout-btn-index {
       font-size: 0.8rem;
       padding: 6px 16px;
+    }
+    .index-divider-light {
+      margin: 6px 0 12px 0;
+    }
+    .index-buttons {
+      gap: 10px;
     }
   }
 </style>
