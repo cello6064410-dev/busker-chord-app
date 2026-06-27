@@ -171,7 +171,6 @@
         font-size: 0.8rem;
     }
 
-    /* ===== OUTPUT ===== */
     #output {
         flex: 1;
         background: #0a0a0a;
@@ -197,7 +196,6 @@
         padding: 40px 0;
     }
 
-    /* ===== CHORD BLOCK ===== */
     .chord-block {
         display: inline-block;
         text-align: center;
@@ -339,7 +337,6 @@
         color: #ffcc00;
     }
 
-    /* ===== FLOATING CONTROL BAR ===== */
     .floating-bar {
         position: fixed;
         bottom: 12px;
@@ -400,77 +397,27 @@
         background: #5a3a3a;
     }
 
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 600px) {
-        body {
-            padding: 6px;
-        }
-        .container {
-            padding-bottom: 75px;
-        }
-        .header-top h2 {
-            font-size: 0.95rem;
-        }
-        .header-btn {
-            font-size: 0.8rem;
-            padding: 4px 8px;
-            min-height: 32px;
-        }
-        .info-bar #songTitle {
-            font-size: 0.85rem;
-        }
-        .info-bar #keyDisplay {
-            font-size: 0.75rem;
-            padding: 1px 8px;
-        }
-        #output {
-            padding: 10px;
-            font-size: 14px;
-        }
-        .chord {
-            font-size: 14px;
-        }
-        .beat {
-            font-size: 14px;
-        }
-        .floating-bar {
-            gap: 4px;
-            padding: 6px 8px;
-            border-radius: 12px;
-            bottom: 6px;
-            width: 98%;
-            justify-content: space-around;
-        }
-        .floating-bar button {
-            font-size: 0.9rem;
-            padding: 6px 8px;
-            min-width: 36px;
-            min-height: 38px;
-        }
+        body { padding: 6px; }
+        .container { padding-bottom: 75px; }
+        .header-top h2 { font-size: 0.95rem; }
+        .header-btn { font-size: 0.8rem; padding: 4px 8px; min-height: 32px; }
+        .info-bar #songTitle { font-size: 0.85rem; }
+        .info-bar #keyDisplay { font-size: 0.75rem; padding: 1px 8px; }
+        #output { padding: 10px; font-size: 14px; }
+        .chord { font-size: 14px; }
+        .beat { font-size: 14px; }
+        .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
+        .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
     }
 
     @media (min-width: 769px) {
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            padding-bottom: 100px;
-        }
-        #output {
-            min-height: 300px;
-            padding: 20px;
-        }
-        .floating-bar {
-            gap: 10px;
-            padding: 10px 20px;
-        }
-        .floating-bar button {
-            padding: 10px 18px;
-            min-width: 50px;
-        }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+        #output { min-height: 300px; padding: 20px; }
+        .floating-bar { gap: 10px; padding: 10px 20px; }
+        .floating-bar button { padding: 10px 18px; min-width: 50px; }
     }
 
-    /* Fullscreen mode */
     .fullscreen-mode .header,
     .fullscreen-mode .info-bar,
     .fullscreen-mode .floating-bar {
@@ -501,7 +448,6 @@
 
 <div class="container">
 
-    <!-- HEADER -->
     <div class="header">
         <div class="header-top">
             <h2>🎵 Leadsheet Viewer</h2>
@@ -522,12 +468,10 @@
         </div>
     </div>
 
-    <!-- OUTPUT -->
     <div id="output">
         <div class="loading-text">⏳ Loading leadsheet...</div>
     </div>
 
-    <!-- FLOATING CONTROL BAR -->
     <div class="floating-bar">
         <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
         <button onclick="changeFontSize(-2)" title="Decrease Font">A−</button>
@@ -629,7 +573,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET ENGINE — ONLY SLASH (/) 
+    // RENDER LEADSHEET ENGINE — PATCHED (3 CHANGES)
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
@@ -637,13 +581,11 @@
             return;
         }
 
-        // --- Normalize: replace any dash with slash ---
-        // Convert ---- to ////
-        input = input.replace(/-{4}/g, '////');
-        // Convert -- to //
-        input = input.replace(/-{2}/g, '//');
-        // Convert single - to /
+        // ============================================================
+        // FIX 1: NORMALIZE FULL BEFORE TOKENIZE
+        // ============================================================
         input = input.replace(/-/g, '/');
+        input = input.replace(/\/+/g, (m) => '/'.repeat(m.length));
 
         // --- Tokenize ---
         const tokens = [];
@@ -656,7 +598,6 @@
                 continue;
             }
 
-            // Region Start: (1va) (2va) (3va) (4va) (1,2va) etc
             const regionStartMatch = input.substring(i).match(/^\(([0-9,]+)va\)/);
             if (regionStartMatch) {
                 const numbers = regionStartMatch[1].split(',').map(Number);
@@ -671,7 +612,6 @@
                 }
             }
 
-            // Region End: (.)
             if (input.substring(i, i + 3) === '(.)') {
                 tokens.push({ type: 'region_end' });
                 activeRegions = [];
@@ -679,7 +619,6 @@
                 continue;
             }
 
-            // Icon: |A| |B| ... |Z|
             const iconMatch = input.substring(i).match(/^\|([A-Za-z])\|/);
             if (iconMatch) {
                 const letter = iconMatch[1].toUpperCase();
@@ -688,7 +627,6 @@
                 continue;
             }
 
-            // Text label: "Text"
             if (input[i] === '"') {
                 const j = input.indexOf('"', i + 1);
                 if (j !== -1) {
@@ -699,42 +637,36 @@
                 }
             }
 
-            // ||:
             if (input.substring(i, i + 3) === '||:') {
                 tokens.push({ type: 'separator', value: '||:', section: 'repeat1', region: [...activeRegions] });
                 i += 3;
                 continue;
             }
 
-            // :||
             if (input.substring(i, i + 3) === ':||') {
                 tokens.push({ type: 'separator', value: ':||', section: 'repeat1', region: [...activeRegions] });
                 i += 3;
                 continue;
             }
 
-            // :.|
             if (input.substring(i, i + 3) === ':.|') {
                 tokens.push({ type: 'separator', value: ':.|', section: 'repeat1', region: [...activeRegions] });
                 i += 3;
                 continue;
             }
 
-            // ||
             if (input.substring(i, i + 2) === '||') {
                 tokens.push({ type: 'separator', value: '||', section: 'repeat2', region: [...activeRegions] });
                 i += 2;
                 continue;
             }
 
-            // |
             if (input[i] === '|') {
                 tokens.push({ type: 'separator', value: '|', section: 'default', region: [...activeRegions] });
                 i++;
                 continue;
             }
 
-            // [number] = section marker, [letter] = chord
             if (input[i] === '[') {
                 const j = input.indexOf(']', i);
                 if (j !== -1) {
@@ -751,21 +683,21 @@
                 }
             }
 
-            // //// (four slash)
+            // ============================================================
+            // FIX 2: SLASH TOKENIZATION — CONSISTENT
+            // ============================================================
             if (input.substring(i, i + 4) === '////') {
                 tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
                 i += 4;
                 continue;
             }
 
-            // // (double slash)
             if (input.substring(i, i + 2) === '//') {
                 tokens.push({ type: 'slash', value: '//', region: [...activeRegions] });
                 i += 2;
                 continue;
             }
 
-            // / (single slash)
             if (input[i] === '/') {
                 tokens.push({ type: 'slash', value: '/', region: [...activeRegions] });
                 i++;
@@ -813,11 +745,14 @@
                 currentRegion = t.region || [];
             } else if (t.type === 'slash') {
                 if (currentChord !== null) {
-                    let spaced = t.value.replace(/\//g, '/ ').trim();
+                    // ============================================================
+                    // FIX 3: CONSISTENT SLASH RENDER
+                    // ============================================================
+                    let spaced = t.value.split('').map(() => '/').join(' ');
                     if (currentSlash) currentSlash += ' ' + spaced;
                     else currentSlash = spaced;
                 } else {
-                    let spaced = t.value.replace(/\//g, '/ ').trim();
+                    let spaced = t.value.split('').map(() => '/').join(' ');
                     flushSeparator();
                     flushChord();
                     blocks.push({ type: 'dash-block', dash: spaced, region: t.region || [] });
@@ -1035,7 +970,7 @@
     });
 
     // ============================================================
-    // TRANSPOSE (visual only for now)
+    // TRANSPOSE (visual only)
     // ============================================================
     function transposeUp() {
         console.log('Transpose Up');
