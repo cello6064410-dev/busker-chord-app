@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Create Leadsheet</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #0f0f0f;
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+        width: 100%;
+    }
+
+    .header {
+        text-align: center;
+        padding: 20px 0;
+        border-bottom: 2px solid #2a2a4e;
+        margin-bottom: 20px;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .home-btn {
+        background: #2a2a4e;
+        border: none;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        min-height: 40px;
+        min-width: 40px;
+    }
+
+    .home-btn:hover {
+        background: #3a3a6e;
+    }
+
+    .section {
+        background: #1a1a2e;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #2a2a4e;
+    }
+
+    .section-title {
+        color: #aaa;
+        font-size: 0.8rem;
+        font-family: Arial, sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        color: #aaa;
+        font-family: Arial, sans-serif;
+        margin-bottom: 6px;
+    }
+
+    .form-input,
+    .form-select {
+        width: 100%;
+        padding: 12px 14px;
+        background: #0f0f0f;
+        border: 1px solid #2a2a4e;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 1rem;
+        font-family: 'Courier New', monospace;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+        border-color: #ffcc00;
+    }
+
+    .form-select option {
+        background: #1a1a2e;
+        color: #fff;
+    }
+
+    .form-textarea {
+        width: 100%;
+        min-height: 250px;
+        padding: 14px;
+        background: #0f0f0f;
+        border: 1px solid #2a2a4e;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 15px;
+        font-family: 'Courier New', monospace;
+        resize: vertical;
+        outline: none;
+        line-height: 1.6;
+        transition: border-color 0.3s;
+    }
+
+    .form-textarea:focus {
+        border-color: #ffcc00;
+    }
+
+    .form-textarea::placeholder {
+        color: #444;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        transition: all 0.2s;
+        min-height: 44px;
+    }
+
+    .btn:hover {
+        transform: scale(1.02);
+    }
+
+    .btn:active {
+        transform: scale(0.96);
+    }
+
+    .btn-primary {
+        background: #ffcc00;
+        color: #0f0f0f;
+    }
+
+    .btn-primary:hover {
+        background: #ffd633;
+    }
+
+    .btn-secondary {
+        background: #2a2a4e;
+        color: #fff;
+    }
+
+    .btn-secondary:hover {
+        background: #3a3a6e;
+    }
+
+    .btn-danger {
+        background: #6e2a2a;
+        color: #fff;
+        border: 1px solid #ff4444;
+        display: none;
+    }
+
+    .btn-danger.active {
+        display: inline-block;
+    }
+
+    .btn-upload {
+        background: #2a4a6e;
+        color: #fff;
+        border: 1px solid #4a8abe;
+    }
+
+    .btn-upload:hover {
+        background: #3a5a7e;
+    }
+
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .btn-group .btn {
+        flex: 0 1 auto;
+    }
+
+    .status-message {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: Arial, sans-serif;
+        margin-top: 12px;
+        display: none;
+    }
+
+    .status-message.success {
+        display: block;
+        background: rgba(0, 200, 83, 0.2);
+        color: #00e676;
+        border: 1px solid #00c853;
+    }
+
+    .status-message.error {
+        display: block;
+        background: rgba(255, 68, 68, 0.2);
+        color: #ff4444;
+        border: 1px solid #ff4444;
+    }
+
+    .status-message.info {
+        display: block;
+        background: rgba(79, 195, 247, 0.2);
+        color: #4fc3f7;
+        border: 1px solid #4fc3f7;
+    }
+
+    /* ===== GUIDE BOX ===== */
+    .guide-box {
+        background: #0f0f0f;
+        border: 1px solid #2a2a4e;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.8;
+        color: #888;
+    }
+
+    .guide-box .guide-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+    }
+
+    .guide-box .guide-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .guide-box .guide-item code {
+        color: #ffcc00;
+        background: #1a1a2e;
+        padding: 0 6px;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+
+    .guide-box .guide-item .desc {
+        color: #666;
+        font-size: 12px;
+        font-family: Arial, sans-serif;
+    }
+
+    .guide-box .guide-divider {
+        color: #2a2a4e;
+        padding: 0 4px;
+    }
+
+    /* Hide file input */
+    #fileInput {
+        display: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+        body {
+            padding: 10px;
+        }
+        .section {
+            padding: 14px;
+        }
+        .header h1 {
+            font-size: 1.3rem;
+        }
+        .form-textarea {
+            min-height: 180px;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+        .guide-box {
+            font-size: 12px;
+            padding: 10px 12px;
+        }
+        .guide-box .guide-item code {
+            font-size: 12px;
+        }
+    }
+</style>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-top">
+            <h1>🎵 Create Leadsheet</h1>
+            <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
+        </div>
+        <p style="color: #666; font-size: 0.9rem; font-family: Arial, sans-serif; margin-top: 4px;" id="modeLabel">Create a new leadsheet</p>
+    </div>
+
+    <!-- GUIDE BOX (di luar textarea) -->
+    <div class="section">
+        <div class="section-title">📋 Format Guide</div>
+        <div class="guide-box">
+            <div class="guide-row">
+                <span class="guide-item"><code>[C]</code> <span class="desc">Chord</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>[1]</code> <span class="desc">Section</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>"Text"</code> <span class="desc">Label</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>|A|</code> <span class="desc">Icon</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>----</code> <span class="desc">Beats</span></span>
+            </div>
+            <div class="guide-row">
+                <span class="guide-item"><code>||:</code> <span class="desc">Repeat Start</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>:||</code> <span class="desc">Repeat End</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>|</code> <span class="desc">Bar Line</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>(1va)</code> <span class="desc">Region Start</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>(.)</code> <span class="desc">Region End</span></span>
+            </div>
+            <div class="guide-row" style="margin-top:4px; color:#666; font-size:12px;">
+                <span class="guide-item">Example: <code style="color:#4fc3f7;">||: [1] [C]---- |A| [Am]---- | (1va) [G]---- (.) :|| "Outtro" [2] [C]---- |B| [Dm]---- |</code></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="section">
+        <!-- Hidden ID for edit mode -->
+        <input type="hidden" id="leadsheetId" />
+
+        <!-- Title -->
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input id="title" class="form-input" placeholder="Enter leadsheet title..." />
+        </div>
+
+        <!-- Key Signature -->
+        <div class="form-group">
+            <label for="keySelect">Key Signature</label>
+            <select id="keySelect" class="form-select">
+                <option value="C">C</option>
+                <option value="G">G</option>
+                <option value="D">D</option>
+                <option value="A">A</option>
+                <option value="E">E</option>
+                <option value="B">B</option>
+                <option value="F#">F♯</option>
+                <option value="C#">C♯</option>
+                <option value="F">F</option>
+                <option value="Bb">B♭</option>
+                <option value="Eb">E♭</option>
+                <option value="Ab">A♭</option>
+                <option value="Db">D♭</option>
+                <option value="Gb">G♭</option>
+            </select>
+        </div>
+
+        <!-- Upload & Clear -->
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <button onclick="document.getElementById('fileInput').click()" class="btn btn-upload">📤 Upload .txt</button>
+            <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)" />
+            <button onclick="clearForm()" class="btn btn-secondary">🔄 Clear</button>
+            <span id="fileName" style="color: #666; font-size: 0.8rem; font-family: Arial, sans-serif;"></span>
+        </div>
+
+        <!-- Content Textarea -->
+        <div class="form-group">
+            <label for="content">Leadsheet Content</label>
+            <textarea id="content" class="form-textarea" placeholder="Paste or type your leadsheet here..."></textarea>
+        </div>
+
+        <!-- Buttons -->
+        <div class="btn-group">
+            <button onclick="saveLeadsheet()" class="btn btn-primary" id="saveBtn">💾 Save</button>
+            <button onclick="deleteLeadsheet()" class="btn btn-danger" id="deleteBtn">🗑️ Delete</button>
+            <button onclick="goBack()" class="btn btn-secondary">⬅ Back</button>
+        </div>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+</div>
+
+<script>
+    // ============================================================
+    // FIREBASE CONFIG
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+        authDomain: "busker-chord-app.firebaseapp.com",
+        projectId: "busker-chord-app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ============================================================
+    // DOM REFS
+    // ============================================================
+    const titleInput = document.getElementById('title');
+    const keySelect = document.getElementById('keySelect');
+    const contentTextarea = document.getElementById('content');
+    const leadsheetIdInput = document.getElementById('leadsheetId');
+    const saveBtn = document.getElementById('saveBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const modeLabel = document.getElementById('modeLabel');
+    const statusMsg = document.getElementById('statusMessage');
+    const fileName = document.getElementById('fileName');
+
+    let currentId = null;
+
+    // ============================================================
+    // AUTH CHECK
+    // ============================================================
+    auth.onAuthStateChanged(function(user) {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+        // Check URL for edit mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('edit');
+        if (editId) {
+            loadLeadsheetForEdit(editId);
+        }
+    });
+
+    // ============================================================
+    // FILE UPLOAD
+    // ============================================================
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        fileName.textContent = `📄 ${file.name}`;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            contentTextarea.value = e.target.result;
+            showStatus('✅ File loaded successfully!', 'success');
+        };
+        reader.onerror = function() {
+            showStatus('❌ Error reading file', 'error');
+        };
+        reader.readAsText(file);
+        // Reset input so same file can be re-uploaded
+        event.target.value = '';
+    }
+
+    // ============================================================
+    // SAVE LEADSHEET
+    // ============================================================
+    function saveLeadsheet() {
+        const title = titleInput.value.trim();
+        const key = keySelect.value;
+        const content = contentTextarea.value.trim();
+
+        if (!title) {
+            showStatus('⚠️ Please enter a title', 'error');
+            return;
+        }
+
+        if (!content) {
+            showStatus('⚠️ Please enter leadsheet content', 'error');
+            return;
+        }
+
+        const data = {
+            title: title,
+            key: key,
+            content: content,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        let promise;
+        let action;
+
+        if (currentId) {
+            promise = db.collection('leadsheets').doc(currentId).update(data);
+            action = 'updated';
+        } else {
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            promise = db.collection('leadsheets').add(data);
+            action = 'saved';
+        }
+
+        showStatus('⏳ Saving...', 'info');
+
+        promise
+            .then(() => {
+                showStatus(`✅ Leadsheet ${action} successfully!`, 'success');
+                if (!currentId) {
+                    clearForm();
+                }
+            })
+            .catch(err => {
+                showStatus(`❌ Error: ${err.message}`, 'error');
+            });
+    }
+
+    // ============================================================
+    // LOAD LEADSHEET FOR EDIT
+    // ============================================================
+    function loadLeadsheetForEdit(id) {
+        currentId = id;
+        leadsheetIdInput.value = id;
+
+        showStatus('⏳ Loading...', 'info');
+
+        db.collection('leadsheets').doc(id).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    titleInput.value = data.title || '';
+                    keySelect.value = data.key || 'C';
+                    contentTextarea.value = data.content || '';
+                    saveBtn.textContent = '✏️ Update';
+                    modeLabel.textContent = `Editing: ${data.title || 'Untitled'}`;
+                    deleteBtn.classList.add('active');
+                    showStatus('✅ Loaded for editing', 'success');
+                } else {
+                    showStatus('❌ Leadsheet not found', 'error');
+                    clearForm();
+                }
+            })
+            .catch(err => {
+                showStatus(`❌ Error: ${err.message}`, 'error');
+            });
+    }
+
+    // ============================================================
+    // DELETE LEADSHEET
+    // ============================================================
+    function deleteLeadsheet() {
+        if (!currentId) {
+            showStatus('⚠️ No leadsheet to delete', 'error');
+            return;
+        }
+
+        if (!confirm('Delete this leadsheet permanently?')) {
+            return;
+        }
+
+        showStatus('⏳ Deleting...', 'info');
+
+        db.collection('leadsheets').doc(currentId).delete()
+            .then(() => {
+                showStatus('✅ Leadsheet deleted!', 'success');
+                clearForm();
+            })
+            .catch(err => {
+                showStatus(`❌ Delete failed: ${err.message}`, 'error');
+            });
+    }
+
+    // ============================================================
+    // CLEAR FORM
+    // ============================================================
+    function clearForm() {
+        currentId = null;
+        leadsheetIdInput.value = '';
+        titleInput.value = '';
+        keySelect.value = 'C';
+        contentTextarea.value = '';
+        saveBtn.textContent = '💾 Save';
+        modeLabel.textContent = 'Create a new leadsheet';
+        deleteBtn.classList.remove('active');
+        fileName.textContent = '';
+        showStatus('', '');
+        if (window.history && window.history.replaceState) {
+            const url = window.location.href.split('?')[0];
+            window.history.replaceState({}, document.title, url);
+        }
+        titleInput.focus();
+    }
+
+    // ============================================================
+    // STATUS MESSAGE
+    // ============================================================
+    function showStatus(message, type) {
+        statusMsg.textContent = message;
+        statusMsg.className = 'status-message';
+        if (message && type) {
+            statusMsg.classList.add(type);
+        }
+    }
+
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
+    function goBack() {
+        window.location.href = "viewerleadsheet.html";
+    }
+
+    function goHome() {
+        window.location.href = "index.html";
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check for edit mode in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('edit');
+        if (editId && auth.currentUser) {
+            loadLeadsheetForEdit(editId);
+        }
+    });
+</script>
+
+</body>
+</html>

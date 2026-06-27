@@ -43,32 +43,52 @@
     <!-- Buttons -->
     <div class="index-buttons">
       
-      <!-- Viewer Button - FREE (sudah login) -->
+      <!-- 1. Baca Lirik & Kord - FREE -->
       <button onclick="viewer()" class="index-btn viewer-btn">
-        <div class="index-btn-icon">🎵</div>
+        <div class="index-btn-icon">📖</div>
         <div class="index-btn-content">
-          <span class="index-btn-label">Tukang Baca</span>
-          <span class="index-btn-desc">Baca Lirik &amp; Kords (Termasuk Transpose)</span>
+          <span class="index-btn-label">Baca Lirik &amp; Kord</span>
+          <span class="index-btn-desc">Baca lirik &amp; kord (termasuk transpose)</span>
         </div>
         <div class="index-btn-arrow">→</div>
       </button>
       
-      <!-- Admin Button - PERLU PASSWORD -->
+      <!-- 2. Tulis Lirik & Kord - ADMIN -->
       <button onclick="admin()" class="index-btn admin-btn">
-        <div class="index-btn-icon">🎼</div>
+        <div class="index-btn-icon">✍️</div>
         <div class="index-btn-content">
-          <span class="index-btn-label">Tukang Tulis</span>
-          <span class="index-btn-desc">Tulis Lirik &amp; Kords Lagu</span>
+          <span class="index-btn-label">Tulis Lirik &amp; Kord</span>
+          <span class="index-btn-desc">Tulis lirik &amp; kord lagu</span>
         </div>
         <div class="index-btn-arrow">→</div>
       </button>
 
-      <!-- Dashboard Button - PERLU PASSWORD -->
+      <!-- 3. Baca Leadsheet - FREE -->
+      <button onclick="viewerLeadsheet()" class="index-btn leadsheet-viewer-btn">
+        <div class="index-btn-icon">🎼</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Baca Leadsheet</span>
+          <span class="index-btn-desc">Baca leadsheet (icon &amp; region color)</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
+      </button>
+
+      <!-- 4. Tulis Leadsheet - ADMIN -->
+      <button onclick="adminLeadsheet()" class="index-btn leadsheet-admin-btn">
+        <div class="index-btn-icon">🖋️</div>
+        <div class="index-btn-content">
+          <span class="index-btn-label">Tulis Leadsheet</span>
+          <span class="index-btn-desc">Tulis leadsheet (upload .txt)</span>
+        </div>
+        <div class="index-btn-arrow">→</div>
+      </button>
+
+      <!-- 5. Dashboard - ADMIN -->
       <button onclick="dashboard()" class="index-btn dashboard-btn">
         <div class="index-btn-icon">📊</div>
         <div class="index-btn-content">
           <span class="index-btn-label">Dashboard</span>
-          <span class="index-btn-desc">Lihat Statistik Pengguna &amp; Lagu</span>
+          <span class="index-btn-desc">Lihat statistik pengguna &amp; lagu</span>
         </div>
         <div class="index-btn-arrow">→</div>
       </button>
@@ -109,14 +129,14 @@
   });
 
   // ============================================
-  // VIEWER - FREE ACCESS
+  // 1. BACA LIRIK & KORD - FREE
   // ============================================
   function viewer() {
-    window.location.href = "songs.html";
+    window.location.href = "viewer.html";
   }
 
   // ============================================
-  // ADMIN - NEED PASSWORD
+  // 2. TULIS LIRIK & KORD - ADMIN
   // ============================================
   function admin() {
     let pass = prompt("Enter admin password:");
@@ -128,7 +148,26 @@
   }
 
   // ============================================
-  // DASHBOARD - NEED PASSWORD
+  // 3. BACA LEADSHEET - FREE
+  // ============================================
+  function viewerLeadsheet() {
+    window.location.href = "viewerleadsheet.html";
+  }
+
+  // ============================================
+  // 4. TULIS LEADSHEET - ADMIN
+  // ============================================
+  function adminLeadsheet() {
+    let pass = prompt("Enter admin password:");
+    if (pass === "admin123") {
+      window.location.href = "createleadsheet.html";
+    } else if (pass !== null) {
+      alert("Wrong password");
+    }
+  }
+
+  // ============================================
+  // 5. DASHBOARD - ADMIN
   // ============================================
   function dashboard() {
     let pass = prompt("Enter admin password:");
@@ -139,6 +178,7 @@
     }
   }
 </script>
+
 <script>
 // Register Service Worker
 if ('serviceWorker' in navigator) {
@@ -147,5 +187,105 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.error('❌ SW registration failed:', err));
 }
 </script>
+
+<!-- ============================================================
+     EXTRA STYLING UNTUK LEADSHEET BUTTONS
+     ============================================================ -->
+<style>
+  /* Leadsheet Viewer Button - Warna Hijau/Biru */
+  .leadsheet-viewer-btn {
+    background: linear-gradient(135deg, #1a3a3e, #2a5a6e) !important;
+    border: 1px solid rgba(58, 142, 158, 0.4) !important;
+  }
+
+  .leadsheet-viewer-btn .index-btn-icon {
+    background: rgba(58, 142, 158, 0.3) !important;
+  }
+
+  .leadsheet-viewer-btn:hover {
+    border-color: rgba(58, 142, 158, 0.8) !important;
+    box-shadow: 0 8px 30px rgba(58, 142, 158, 0.3) !important;
+  }
+
+  /* Leadsheet Admin Button - Warna Ungu */
+  .leadsheet-admin-btn {
+    background: linear-gradient(135deg, #2a1a4e, #4a2a7e) !important;
+    border: 1px solid rgba(108, 58, 142, 0.4) !important;
+  }
+
+  .leadsheet-admin-btn .index-btn-icon {
+    background: rgba(108, 58, 142, 0.3) !important;
+  }
+
+  .leadsheet-admin-btn:hover {
+    border-color: rgba(108, 58, 142, 0.8) !important;
+    box-shadow: 0 8px 30px rgba(108, 58, 142, 0.3) !important;
+  }
+
+  /* Viewer Button - Warna Biru (sedia ada) */
+  .viewer-btn {
+    background: linear-gradient(135deg, #1a2a4e, #2a4a6e) !important;
+    border: 1px solid rgba(58, 106, 142, 0.4) !important;
+  }
+
+  .viewer-btn .index-btn-icon {
+    background: rgba(58, 106, 142, 0.3) !important;
+  }
+
+  .viewer-btn:hover {
+    border-color: rgba(58, 106, 142, 0.8) !important;
+    box-shadow: 0 8px 30px rgba(58, 106, 142, 0.3) !important;
+  }
+
+  /* Admin Button - Warna Ungu Gelap (sedia ada) */
+  .admin-btn {
+    background: linear-gradient(135deg, #2a1a4e, #3a2a6e) !important;
+    border: 1px solid rgba(74, 58, 142, 0.4) !important;
+  }
+
+  .admin-btn .index-btn-icon {
+    background: rgba(74, 58, 142, 0.3) !important;
+  }
+
+  .admin-btn:hover {
+    border-color: rgba(74, 58, 142, 0.8) !important;
+    box-shadow: 0 8px 30px rgba(74, 58, 142, 0.3) !important;
+  }
+
+  /* Dashboard Button - Warna Hijau (sedia ada) */
+  .dashboard-btn {
+    background: linear-gradient(135deg, #1a3a2e, #2a5a4e) !important;
+    border: 1px solid rgba(58, 142, 106, 0.4) !important;
+  }
+
+  .dashboard-btn .index-btn-icon {
+    background: rgba(58, 142, 106, 0.3) !important;
+  }
+
+  .dashboard-btn:hover {
+    border-color: rgba(58, 142, 106, 0.8) !important;
+    box-shadow: 0 8px 30px rgba(58, 142, 106, 0.3) !important;
+  }
+
+  /* Mobile adjustment */
+  @media (max-width: 480px) {
+    .index-btn-label {
+      font-size: 0.9rem !important;
+    }
+    .index-btn-desc {
+      font-size: 0.65rem !important;
+    }
+    .index-btn-icon {
+      font-size: 1.3rem !important;
+      width: 36px !important;
+      height: 36px !important;
+    }
+    .index-btn {
+      padding: 12px 14px !important;
+      gap: 10px !important;
+    }
+  }
+</style>
+
 </body>
 </html>
