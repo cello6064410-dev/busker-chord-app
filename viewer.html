@@ -31,7 +31,6 @@
       <h2>🎵 Song Viewer</h2>
       <div style="display: flex; gap: 8px; align-items: center;">
         <span id="userName" style="color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; display: none;"></span>
-        <!-- BUTTON: SONGS LIST - BARU -->
         <button onclick="openSongsList()" class="songs-list-btn" title="Songs List" style="background: #2a4a6e; border: none; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 40px; font-family: Arial, sans-serif; display: flex; align-items: center; gap: 6px;">
           📋 Songs List
         </button>
@@ -45,9 +44,6 @@
       <button onclick="openTransposePopup()" id="transposeBtn" title="Transpose" style="background: #2a2a4e; border: none; color: white; padding: 4px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; min-height: 32px;">🎵 Transpose</button>
     </div>
   </div>
-
-  <!-- SEARCH BAR - DI BUANG -->
-  <!-- SONG LIST - DI BUANG -->
 
   <!-- LYRICS OUTPUT -->
   <div id="output" class="output" style="flex: 1; height: auto; min-height: 300px;">Loading songs...</div>
@@ -63,35 +59,35 @@
     <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
   </div>
 
-<!-- TRANSPOSE POPUP MODAL -->
-<div id="transposeModal" class="modal-overlay" style="display:none;">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>🎵 Transpose</h2>
-      <button onclick="closeTransposePopup()" class="modal-close">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-current-key">
-        <span>Current Key: </span>
-        <span id="modalCurrentKey" style="color: #ffcc00; font-weight: bold;">C / Am</span>
+  <!-- TRANSPOSE POPUP MODAL -->
+  <div id="transposeModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🎵 Transpose</h2>
+        <button onclick="closeTransposePopup()" class="modal-close">✕</button>
       </div>
-      <div class="modal-enharmonic">
-        <label class="toggle-switch">
-          <input type="checkbox" id="enharmonicToggle" onchange="toggleEnharmonic()">
-          <span class="toggle-slider"></span>
-        </label>
-        <span id="enharmonicLabel" style="color: #888; font-size: 0.9rem;">Enharmonic: OFF</span>
-        <span style="color: #666; font-size: 0.8rem; margin-left: 8px;">(6♯/7♯/6♭/7♭ only)</span>
+      <div class="modal-body">
+        <div class="modal-current-key">
+          <span>Current Key: </span>
+          <span id="modalCurrentKey" style="color: #ffcc00; font-weight: bold;">C / Am</span>
+        </div>
+        <div class="modal-enharmonic">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enharmonicToggle" onchange="toggleEnharmonic()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span id="enharmonicLabel" style="color: #888; font-size: 0.9rem;">Enharmonic: OFF</span>
+          <span style="color: #666; font-size: 0.8rem; margin-left: 8px;">(6♯/7♯/6♭/7♭ only)</span>
+        </div>
+        <div id="keyListContainer" class="key-list-container">
+          <!-- Key list will be rendered here -->
+        </div>
       </div>
-      <div id="keyListContainer" class="key-list-container">
-        <!-- Key list will be rendered here -->
+      <div class="modal-footer">
+        <button onclick="closeTransposePopup()" class="modal-cancel-btn">Cancel</button>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button onclick="closeTransposePopup()" class="modal-cancel-btn">Cancel</button>
     </div>
   </div>
-</div>
 
 <script>
   // ============================================
@@ -195,22 +191,23 @@
       loginCount: firebase.firestore.FieldValue.increment(1)
     }, { merge: true }).catch(err => console.error('Error updating login:', err));
     
-    // Check if there's a song to load from localStorage (from songs.html)
-    const savedSongId = localStorage.getItem('selectedSongId');
-    if (savedSongId) {
-      // Load songs first, then select the saved song
+    // Check URL for song ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const songId = urlParams.get('id');
+
+    if (songId) {
+      // Load specific song
       loadSongsWithCallback(function() {
-        const song = songs.find(s => s.id === savedSongId);
+        const song = songs.find(s => s.id === songId);
         if (song) {
-          selectSong(savedSongId);
-          localStorage.removeItem('selectedSongId'); // Clear after loading
+          selectSong(songId);
         } else {
-          // If song not found, load first song
-          loadFirstSong();
+          // If song not found, go to list
+          window.location.href = "songslist.html";
         }
       });
     } else {
-      // No saved song, load songs and select first
+      // No song selected, go to list
       window.location.href = "songslist.html";
     }
   });
@@ -276,10 +273,10 @@
   }
 
   // ============================================
-  // OPEN SONGS LIST (NEW FUNCTION)
+  // OPEN SONGS LIST
   // ============================================
   function openSongsList() {
-    window.location.href = "songs.html";
+    window.location.href = "songslist.html";
   }
 
   // ============================================
@@ -816,6 +813,7 @@
   console.log('  📋 Songs List - Open songs list');
   console.log('  ⛶ Fullscreen - Only lyrics & chords');
 </script>
+
 <script>
 // Register Service Worker
 if ('serviceWorker' in navigator) {
@@ -824,5 +822,6 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.error('❌ SW registration failed:', err));
 }
 </script>
+
 </body>
 </html>

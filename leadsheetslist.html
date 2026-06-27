@@ -367,7 +367,7 @@
 
     <!-- FLOATING BACK BUTTON -->
     <div class="floating-bar">
-        <button onclick="goBack()">⬅ Back to Viewer</button>
+        <button onclick="goBack()">⬅ Back</button>
     </div>
 
 </div>
@@ -470,55 +470,63 @@
             return;
         }
 
-        const resultCount = document.createElement('div');
-        resultCount.className = 'result-count';
-        resultCount.textContent = `Showing ${filteredSongs.length} leadsheets`;
-        songListEl.appendChild(resultCount);
-
-        const displayResults = filteredSongs.slice(0, DISPLAY_RESULTS);
-        const hiddenResults = filteredSongs.slice(DISPLAY_RESULTS);
-
-        displayResults.forEach((song) => {
-            const btn = createSongButton(song);
-            songListEl.appendChild(btn);
+        // Group by first letter
+        const grouped = {};
+        filteredSongs.forEach(song => {
+            const title = song.title || 'Untitled';
+            const firstLetter = title.charAt(0).toUpperCase();
+            if (!grouped[firstLetter]) {
+                grouped[firstLetter] = [];
+            }
+            grouped[firstLetter].push(song);
         });
 
-        if (hiddenResults.length > 0) {
-            const hint = document.createElement('div');
-            hint.className = 'scroll-hint';
-            hint.textContent = `⬇️ ${hiddenResults.length} more results (scroll down)`;
-            songListEl.appendChild(hint);
+        const sortedKeys = Object.keys(grouped).sort();
 
-            hiddenResults.forEach((song) => {
-                const btn = createSongButton(song);
-                btn.className += ' hidden-result';
+        sortedKeys.forEach(letter => {
+            // Letter header
+            const header = document.createElement('div');
+            header.style.cssText = `
+                padding: 8px 12px;
+                margin: 8px 0 4px 0;
+                color: #ffcc00;
+                font-size: 1.1rem;
+                font-weight: bold;
+                font-family: Arial, sans-serif;
+                background: #1a1a2e;
+                border-radius: 6px;
+                border-left: 3px solid #ffcc00;
+            `;
+            header.textContent = letter;
+            songListEl.appendChild(header);
+
+            grouped[letter].sort((a, b) => {
+                const titleA = a.title || 'Untitled';
+                const titleB = b.title || 'Untitled';
+                return titleA.localeCompare(titleB);
+            });
+
+            grouped[letter].forEach((song) => {
+                const btn = document.createElement('button');
+                btn.className = 'song-item';
+                btn.setAttribute('data-id', song.id);
+
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'song-title';
+                titleSpan.textContent = song.title || 'Untitled';
+
+                const keySpan = document.createElement('span');
+                keySpan.className = 'song-key';
+                keySpan.textContent = song.key || 'C';
+
+                btn.appendChild(titleSpan);
+                btn.appendChild(keySpan);
+
+                btn.onclick = () => selectSong(song.id);
+
                 songListEl.appendChild(btn);
             });
-        }
-    }
-
-    // ============================================================
-    // CREATE SONG BUTTON
-    // ============================================================
-    function createSongButton(song) {
-        const btn = document.createElement('button');
-        btn.className = 'song-item';
-        btn.setAttribute('data-id', song.id);
-
-        const titleSpan = document.createElement('span');
-        titleSpan.className = 'song-title';
-        titleSpan.textContent = song.title || 'Untitled';
-
-        const keySpan = document.createElement('span');
-        keySpan.className = 'song-key';
-        keySpan.textContent = song.key || 'C';
-
-        btn.appendChild(titleSpan);
-        btn.appendChild(keySpan);
-
-        btn.onclick = () => selectSong(song.id);
-
-        return btn;
+        });
     }
 
     // ============================================================
@@ -559,14 +567,14 @@
     // SELECT SONG → GO TO VIEWER
     // ============================================================
     function selectSong(songId) {
-        window.location.href = `viewerleadsheet.html?edit=${songId}`;
+        window.location.href = `viewerleadsheet.html?id=${songId}`;
     }
 
     // ============================================================
     // GO BACK
     // ============================================================
     function goBack() {
-        window.location.href = "viewerleadsheet.html";
+        window.location.href = "index.html";
     }
 
     // ============================================================
@@ -586,7 +594,6 @@
     // INIT
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Initial state
         songListEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheets...</div>';
     });
 

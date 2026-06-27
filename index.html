@@ -115,15 +115,12 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
-</script>
 
-<script>
   // ============================================
   // CHECK LOGIN STATUS
   // ============================================
   auth.onAuthStateChanged(function(user) {
     if (!user) {
-      // Not logged in - redirect to login
       window.location.href = "login.html";
     }
   });
@@ -132,7 +129,7 @@
   // 1. BACA LIRIK & KORD - FREE
   // ============================================
   function viewer() {
-    window.location.href = "viewer.html";
+    window.location.href = "songslist.html";
   }
 
   // ============================================
@@ -188,9 +185,6 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- ============================================================
-     EXTRA STYLING UNTUK LEADSHEET BUTTONS
-     ============================================================ -->
 <style>
   /* Leadsheet Viewer Button - Warna Hijau/Biru */
   .leadsheet-viewer-btn {
@@ -222,7 +216,7 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(108, 58, 142, 0.3) !important;
   }
 
-  /* Viewer Button - Warna Biru (sedia ada) */
+  /* Viewer Button - Warna Biru */
   .viewer-btn {
     background: linear-gradient(135deg, #1a2a4e, #2a4a6e) !important;
     border: 1px solid rgba(58, 106, 142, 0.4) !important;
@@ -237,7 +231,7 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(58, 106, 142, 0.3) !important;
   }
 
-  /* Admin Button - Warna Ungu Gelap (sedia ada) */
+  /* Admin Button - Warna Ungu Gelap */
   .admin-btn {
     background: linear-gradient(135deg, #2a1a4e, #3a2a6e) !important;
     border: 1px solid rgba(74, 58, 142, 0.4) !important;
@@ -252,7 +246,7 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(74, 58, 142, 0.3) !important;
   }
 
-  /* Dashboard Button - Warna Hijau (sedia ada) */
+  /* Dashboard Button - Warna Hijau */
   .dashboard-btn {
     background: linear-gradient(135deg, #1a3a2e, #2a5a4e) !important;
     border: 1px solid rgba(58, 142, 106, 0.4) !important;
@@ -267,7 +261,6 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(58, 142, 106, 0.3) !important;
   }
 
-  /* Mobile adjustment */
   @media (max-width: 480px) {
     .index-btn-label {
       font-size: 0.9rem !important;

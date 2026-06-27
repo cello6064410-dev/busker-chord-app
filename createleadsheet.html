@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>Create Leadsheet</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="manifest" href="manifest.json" />
@@ -249,7 +250,6 @@
         border: 1px solid #4fc3f7;
     }
 
-    /* ===== GUIDE BOX ===== */
     .guide-box {
         background: #0f0f0f;
         border: 1px solid #2a2a4e;
@@ -293,12 +293,10 @@
         padding: 0 4px;
     }
 
-    /* Hide file input */
     #fileInput {
         display: none;
     }
 
-    /* Responsive */
     @media (max-width: 600px) {
         body {
             padding: 10px;
@@ -332,13 +330,13 @@
     <!-- HEADER -->
     <div class="header">
         <div class="header-top">
-            <h1>🎵 Create Leadsheet</h1>
+            <h1>🖋️ Create Leadsheet</h1>
             <button onclick="goHome()" class="home-btn" title="Go to Home">🏠</button>
         </div>
         <p style="color: #666; font-size: 0.9rem; font-family: Arial, sans-serif; margin-top: 4px;" id="modeLabel">Create a new leadsheet</p>
     </div>
 
-    <!-- GUIDE BOX (di luar textarea) -->
+    <!-- GUIDE BOX -->
     <div class="section">
         <div class="section-title">📋 Format Guide</div>
         <div class="guide-box">
@@ -372,16 +370,13 @@
 
     <!-- FORM -->
     <div class="section">
-        <!-- Hidden ID for edit mode -->
         <input type="hidden" id="leadsheetId" />
 
-        <!-- Title -->
         <div class="form-group">
             <label for="title">Title</label>
             <input id="title" class="form-input" placeholder="Enter leadsheet title..." />
         </div>
 
-        <!-- Key Signature -->
         <div class="form-group">
             <label for="keySelect">Key Signature</label>
             <select id="keySelect" class="form-select">
@@ -402,7 +397,6 @@
             </select>
         </div>
 
-        <!-- Upload & Clear -->
         <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px;">
             <button onclick="document.getElementById('fileInput').click()" class="btn btn-upload">📤 Upload .txt</button>
             <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)" />
@@ -410,20 +404,17 @@
             <span id="fileName" style="color: #666; font-size: 0.8rem; font-family: Arial, sans-serif;"></span>
         </div>
 
-        <!-- Content Textarea -->
         <div class="form-group">
             <label for="content">Leadsheet Content</label>
             <textarea id="content" class="form-textarea" placeholder="Paste or type your leadsheet here..."></textarea>
         </div>
 
-        <!-- Buttons -->
         <div class="btn-group">
             <button onclick="saveLeadsheet()" class="btn btn-primary" id="saveBtn">💾 Save</button>
             <button onclick="deleteLeadsheet()" class="btn btn-danger" id="deleteBtn">🗑️ Delete</button>
             <button onclick="goBack()" class="btn btn-secondary">⬅ Back</button>
         </div>
 
-        <!-- Status Message -->
         <div id="statusMessage" class="status-message"></div>
     </div>
 
@@ -466,7 +457,6 @@
             window.location.href = "login.html";
             return;
         }
-        // Check URL for edit mode
         const urlParams = new URLSearchParams(window.location.search);
         const editId = urlParams.get('edit');
         if (editId) {
@@ -480,9 +470,7 @@
     function handleFileUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         fileName.textContent = `📄 ${file.name}`;
-
         const reader = new FileReader();
         reader.onload = function(e) {
             contentTextarea.value = e.target.result;
@@ -492,7 +480,6 @@
             showStatus('❌ Error reading file', 'error');
         };
         reader.readAsText(file);
-        // Reset input so same file can be re-uploaded
         event.target.value = '';
     }
 
@@ -508,7 +495,6 @@
             showStatus('⚠️ Please enter a title', 'error');
             return;
         }
-
         if (!content) {
             showStatus('⚠️ Please enter leadsheet content', 'error');
             return;
@@ -585,13 +571,10 @@
             showStatus('⚠️ No leadsheet to delete', 'error');
             return;
         }
-
         if (!confirm('Delete this leadsheet permanently?')) {
             return;
         }
-
         showStatus('⏳ Deleting...', 'info');
-
         db.collection('leadsheets').doc(currentId).delete()
             .then(() => {
                 showStatus('✅ Leadsheet deleted!', 'success');
@@ -638,7 +621,7 @@
     // NAVIGATION
     // ============================================================
     function goBack() {
-        window.location.href = "viewerleadsheet.html";
+        window.location.href = "leadsheetslist.html";
     }
 
     function goHome() {
@@ -649,7 +632,6 @@
     // INIT
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Check for edit mode in URL
         const urlParams = new URLSearchParams(window.location.search);
         const editId = urlParams.get('edit');
         if (editId && auth.currentUser) {

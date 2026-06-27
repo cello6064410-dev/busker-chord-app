@@ -598,11 +598,12 @@
         }
         // Check URL for leadsheet ID
         const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('edit');
+        const id = urlParams.get('id');
         if (id) {
             loadLeadsheet(id);
         } else {
-            outputEl.innerHTML = '<div class="loading-text">📋 No leadsheet selected. Go to List.</div>';
+            // No leadsheet selected, go to list
+            window.location.href = "leadsheetslist.html";
         }
     });
 
@@ -630,7 +631,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET ENGINE (sama macam leadsheet.html)
+    // RENDER LEADSHEET ENGINE
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
@@ -1027,12 +1028,10 @@
     // TRANSPOSE (visual only for now)
     // ============================================================
     function transposeUp() {
-        // Placeholder - will implement later
         console.log('Transpose Up');
     }
 
     function transposeDown() {
-        // Placeholder - will implement later
         console.log('Transpose Down');
     }
 
@@ -1083,9 +1082,9 @@
     // INIT
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Check URL for edit param
+        // Check URL for id param
         const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('edit');
+        const id = urlParams.get('id');
         if (id && auth.currentUser) {
             loadLeadsheet(id);
         }
