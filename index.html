@@ -36,18 +36,9 @@
         <span class="color-chords">Chords</span>
       </h1>
       <p class="index-subtitle">Penolong Anda Dikala Pening Dengan Chords Lagu-Lagu Asli Melayu</p>
-      <button onclick="logoutUser()" style="
-        background: #4a2a2a;
-        border: 1px solid #ff4444;
-        color: white;
-        padding: 8px 20px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        font-family: Arial, sans-serif;
-        margin-top: 10px;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#5a3a3a'" onmouseout="this.style.background='#4a2a2a'">
+      
+      <!-- Logout Button -->
+      <button onclick="logoutUser()" class="logout-btn-index" title="Logout">
         🚪 Logout
       </button>
     </div>
@@ -188,13 +179,19 @@
       alert("Wrong password");
     }
   }
+
+  // ============================================
+  // LOGOUT
+  // ============================================
   function logoutUser() {
     if (confirm("Are you sure you want to logout?")) {
-      auth.signOut().then(() => {
-      window.location.href = "login.html";
-      }).catch(() => {
-      window.location.href = "login.html";
-      });
+      auth.signOut()
+        .then(() => {
+          window.location.href = "login.html";
+        })
+        .catch(() => {
+          window.location.href = "login.html";
+        });
     }
   }
 </script>
@@ -209,7 +206,198 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <style>
-  /* Leadsheet Viewer Button - Warna Hijau/Biru */
+  /* ============================================
+     INDEX PAGE STYLING
+     ============================================ */
+  .index-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .index-card {
+    background: rgba(26, 26, 46, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 32px;
+    padding: 50px 45px;
+    max-width: 520px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+
+  .index-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .index-header {
+    margin-bottom: 10px;
+  }
+
+  .index-icon {
+    font-size: 4rem;
+    margin-bottom: 8px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .index-header h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -1px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .index-header h1 .color-asli {
+    background: linear-gradient(135deg, #ffcc00 0%, #f5a623 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .index-header h1 .color-busker {
+    background: linear-gradient(135deg, #ff8800 0%, #e65c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .index-header h1 .color-chords {
+    background: linear-gradient(135deg, #ff4400 0%, #cc0000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .index-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    margin-top: 4px;
+    font-family: Arial, sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  /* Logout Button */
+  .logout-btn-index {
+    background: #4a2a2a;
+    border: 1px solid #ff4444;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    margin-top: 12px;
+    transition: background 0.2s;
+  }
+
+  .logout-btn-index:hover {
+    background: #5a3a3a;
+  }
+
+  .index-divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ffcc00, #ff8800);
+    border-radius: 10px;
+    margin: 20px auto 30px;
+  }
+
+  .index-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .index-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    width: 100%;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .index-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .index-btn:hover::before {
+    opacity: 1;
+  }
+
+  .index-btn:active {
+    transform: scale(0.97);
+  }
+
+  .index-btn-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .index-btn-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .index-btn-label {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  .index-btn-desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: Arial, sans-serif;
+  }
+
+  .index-btn-arrow {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .index-btn:hover .index-btn-arrow {
+    color: #fff;
+    transform: translateX(4px);
+  }
+
+  /* Button Colors */
   .leadsheet-viewer-btn {
     background: linear-gradient(135deg, #1a3a3e, #2a5a6e) !important;
     border: 1px solid rgba(58, 142, 158, 0.4) !important;
@@ -224,7 +412,6 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(58, 142, 158, 0.3) !important;
   }
 
-  /* Leadsheet Admin Button - Warna Ungu */
   .leadsheet-admin-btn {
     background: linear-gradient(135deg, #2a1a4e, #4a2a7e) !important;
     border: 1px solid rgba(108, 58, 142, 0.4) !important;
@@ -239,7 +426,6 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(108, 58, 142, 0.3) !important;
   }
 
-  /* Viewer Button - Warna Biru */
   .viewer-btn {
     background: linear-gradient(135deg, #1a2a4e, #2a4a6e) !important;
     border: 1px solid rgba(58, 106, 142, 0.4) !important;
@@ -254,7 +440,6 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(58, 106, 142, 0.3) !important;
   }
 
-  /* Admin Button - Warna Ungu Gelap */
   .admin-btn {
     background: linear-gradient(135deg, #2a1a4e, #3a2a6e) !important;
     border: 1px solid rgba(74, 58, 142, 0.4) !important;
@@ -269,7 +454,6 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(74, 58, 142, 0.3) !important;
   }
 
-  /* Dashboard Button - Warna Hijau */
   .dashboard-btn {
     background: linear-gradient(135deg, #1a3a2e, #2a5a4e) !important;
     border: 1px solid rgba(58, 142, 106, 0.4) !important;
@@ -284,21 +468,43 @@ if ('serviceWorker' in navigator) {
     box-shadow: 0 8px 30px rgba(58, 142, 106, 0.3) !important;
   }
 
+  .index-footer {
+    margin-top: 30px;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 0.8rem;
+    font-family: Arial, sans-serif;
+    letter-spacing: 0.5px;
+  }
+
   @media (max-width: 480px) {
-    .index-btn-label {
-      font-size: 0.9rem !important;
+    .index-card {
+      padding: 35px 25px;
+      border-radius: 24px;
     }
-    .index-btn-desc {
-      font-size: 0.65rem !important;
+    .index-header h1 {
+      font-size: 2.2rem;
     }
-    .index-btn-icon {
-      font-size: 1.3rem !important;
-      width: 36px !important;
-      height: 36px !important;
+    .index-icon {
+      font-size: 3rem;
     }
     .index-btn {
-      padding: 12px 14px !important;
-      gap: 10px !important;
+      padding: 14px 18px;
+      gap: 12px;
+    }
+    .index-btn-icon {
+      font-size: 1.5rem;
+      width: 42px;
+      height: 42px;
+    }
+    .index-btn-label {
+      font-size: 1rem;
+    }
+    .index-btn-desc {
+      font-size: 0.7rem;
+    }
+    .logout-btn-index {
+      font-size: 0.8rem;
+      padding: 6px 16px;
     }
   }
 </style>
