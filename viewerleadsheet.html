@@ -916,8 +916,18 @@
             } else if (block.type === 'separator_line') {
                 const div = document.createElement('div');
                 div.className = 'separator-line';
-                // Separator — 20 underscore
-                div.textContent = '____________________';
+    
+                // Cari text label terdekat (sebelum separator)
+                let textLength = 10; // default
+                for (let j = blocks.indexOf(block) - 1; j >= 0; j--) {
+                    if (blocks[j].type === 'textlabel') {
+                        textLength = blocks[j].value.length;
+                        break;
+                    }
+                }
+                const separatorCount = textLength + 2;
+                const separatorText = '_'.repeat(separatorCount);
+                div.textContent = separatorText;
                 outputEl.appendChild(div);
             }
         }
