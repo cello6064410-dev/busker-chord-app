@@ -337,19 +337,20 @@
         color: #ffcc00;
     }
 
-    /* ===== SEPARATOR LINE — ONLY UNDERLINE ===== */
+    /* ===== SEPARATOR LINE — AUTOMATIC BASED ON TEXT LENGTH ===== */
     .separator-line {
         width: 100%;
         text-align: center;
-        padding: 6px 0 6px 0;
+        padding: 4px 0 4px 0;
         margin: 4px 0 4px 0;
-        border-bottom: 2px solid #4fc3f7;
-        opacity: 0.5;
-    }
-
-    /* Spacer removed — hidden */
-    .separator-spacer {
-        display: none;
+        color: #4fc3f7;
+        font-size: 14px;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 1px;
+        opacity: 0.4;
+        line-height: 1.2;
+        white-space: pre-wrap;
+        word-break: break-all;
     }
 
     .floating-bar {
@@ -424,7 +425,7 @@
         .beat { font-size: 14px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
-        .separator-line { padding: 4px 0 4px 0; border-bottom-width: 1px; }
+        .separator-line { font-size: 12px; padding: 2px 0; }
     }
 
     @media (min-width: 769px) {
@@ -432,7 +433,7 @@
         #output { min-height: 300px; padding: 20px; }
         .floating-bar { gap: 10px; padding: 10px 20px; }
         .floating-bar button { padding: 10px 18px; min-width: 50px; }
-        .separator-line { padding: 8px 0 8px 0; }
+        .separator-line { font-size: 14px; padding: 6px 0; }
     }
 
     .fullscreen-mode .header,
@@ -462,8 +463,8 @@
         font-size: 18px !important;
     }
     .fullscreen-mode .separator-line {
-        border-bottom-width: 2px !important;
-        padding: 10px 0 10px 0 !important;
+        font-size: 16px !important;
+        padding: 8px 0 !important;
     }
 </style>
 
@@ -594,7 +595,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET ENGINE — WITH AUTOMATIC SEPARATOR (UNDERLINE ONLY)
+    // RENDER LEADSHEET ENGINE — WITH AUTOMATIC SEPARATOR (TEXT LENGTH + 2)
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
@@ -621,7 +622,7 @@
             const isTextLabel = input[i] === '"';
             const isSectionMarker = input[i] === '[' && i + 1 < input.length && /^[0-9]+$/.test(input[i + 1]);
 
-            // If text label or section marker, and not the first token, add separator (underline only)
+            // If text label or section marker, and not the first token, add separator
             if ((isTextLabel || isSectionMarker) && tokens.length > 0) {
                 const lastToken = tokens[tokens.length - 1];
                 if (lastToken && lastToken.type !== 'separator_line') {
@@ -921,6 +922,21 @@
             } else if (block.type === 'separator_line') {
                 const div = document.createElement('div');
                 div.className = 'separator-line';
+                // ============================================================
+                // SEPARATOR: PANJANG = TEXT LENGTH + 2
+                // ============================================================
+                // Cari text label terdekat (sebelum separator)
+                let textLength = 10; // default
+                // Look backward in blocks to find previous textlabel
+                for (let j = blocks.indexOf(block) - 1; j >= 0; j--) {
+                    if (blocks[j].type === 'textlabel') {
+                        textLength = blocks[j].value.length;
+                        break;
+                    }
+                }
+                const separatorCount = textLength + 2;
+                const separatorText = '_'.repeat(separatorCount);
+                div.textContent = separatorText;
                 outputEl.appendChild(div);
             }
         }
@@ -939,7 +955,7 @@
 
     function applyFontSize(size) {
         outputEl.style.fontSize = size + 'px';
-        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-repeat1, .sep-repeat2, .sep-default, .ending-marker, .region-marker')
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-repeat1, .sep-repeat2, .sep-default, .ending-marker, .region-marker, .separator-line')
             .forEach(el => {
                 el.style.fontSize = size + 'px';
             });
@@ -1082,7 +1098,7 @@
 
     console.log('🎵 Leadsheet Viewer loaded!');
     console.log('✅ Only slash (/) supported — dash (-) automatically converted');
-    console.log('✅ Automatic separator (underline only) between sections');
+    console.log('✅ Automatic separator (text length + 2)');
 </script>
 
 </body>
