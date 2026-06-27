@@ -337,19 +337,6 @@
         color: #ffcc00;
     }
 
-    /* Separator Line */
-    .separator-line {
-        width: 100%;
-        text-align: center;
-        color: #444;
-        font-size: 14px;
-        font-family: 'Courier New', monospace;
-        padding: 4px 0;
-        letter-spacing: 2px;
-        border-bottom: 1px solid #2a2a4e;
-        margin: 4px 0;
-    }
-
     .floating-bar {
         position: fixed;
         bottom: 12px;
@@ -422,7 +409,6 @@
         .beat { font-size: 14px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
-        .separator-line { font-size: 12px; }
     }
 
     @media (min-width: 769px) {
@@ -430,7 +416,6 @@
         #output { min-height: 300px; padding: 20px; }
         .floating-bar { gap: 10px; padding: 10px 20px; }
         .floating-bar button { padding: 10px 18px; min-width: 50px; }
-        .separator-line { font-size: 14px; }
     }
 
     .fullscreen-mode .header,
@@ -458,9 +443,6 @@
     }
     .fullscreen-mode .beat {
         font-size: 18px !important;
-    }
-    .fullscreen-mode .separator-line {
-        font-size: 16px !important;
     }
 </style>
 
@@ -591,7 +573,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET ENGINE — WITH SEPARATOR LINE ---
+    // RENDER LEADSHEET ENGINE — STABLE VERSION (NO SEPARATOR)
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
@@ -611,15 +593,6 @@
         while (i < input.length) {
             if (input[i] === ' ' || input[i] === '\t') {
                 i++;
-                continue;
-            }
-
-            // ============================================================
-            // SEPARATOR LINE ---
-            // ============================================================
-            if (input.substring(i, i + 3) === '---') {
-                tokens.push({ type: 'separator_line' });
-                i += 3;
                 continue;
             }
 
@@ -806,10 +779,6 @@
                 flushSeparator();
                 flushChord();
                 // Do nothing — hidden
-            } else if (t.type === 'separator_line') {
-                flushSeparator();
-                flushChord();
-                blocks.push({ type: 'separator_line' });
             }
         }
 
@@ -910,12 +879,6 @@
                 div.style.padding = '0 6px';
                 div.style.borderRadius = '4px';
                 outputEl.appendChild(div);
-
-            } else if (block.type === 'separator_line') {
-                const div = document.createElement('div');
-                div.className = 'separator-line';
-                div.textContent = '─'.repeat(40);
-                outputEl.appendChild(div);
             }
         }
 
@@ -933,7 +896,7 @@
 
     function applyFontSize(size) {
         outputEl.style.fontSize = size + 'px';
-        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-repeat1, .sep-repeat2, .sep-default, .ending-marker, .region-marker, .separator-line')
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-repeat1, .sep-repeat2, .sep-default, .ending-marker, .region-marker')
             .forEach(el => {
                 el.style.fontSize = size + 'px';
             });
@@ -1076,7 +1039,6 @@
 
     console.log('🎵 Leadsheet Viewer loaded!');
     console.log('✅ Only slash (/) supported — dash (-) automatically converted');
-    console.log('✅ Separator line supported: ---');
 </script>
 
 </body>
