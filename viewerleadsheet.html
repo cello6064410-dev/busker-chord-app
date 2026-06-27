@@ -181,10 +181,11 @@
         font-family: 'Courier New', monospace;
         display: flex;
         flex-wrap: wrap;
-        align-items: flex-start;
-        gap: 4px 12px;
+        align-items: center;
+        gap: 2px 4px;
         overflow-y: auto;
-        line-height: 1.6;
+        line-height: 1.8;
+        align-content: flex-start;
     }
 
     #output .loading-text {
@@ -196,13 +197,13 @@
         padding: 40px 0;
     }
 
+    /* ===== HORIZONTAL ELEMENTS ===== */
     .chord-block {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 40px;
+        margin: 0 2px;
+        vertical-align: middle;
+        min-width: 20px;
     }
 
     .chord {
@@ -210,23 +211,25 @@
         font-size: 16px;
         font-family: 'Courier New', monospace;
         transition: color 0.2s;
+        display: inline;
     }
 
     .beat {
         font-family: 'Courier New', monospace;
         font-size: 16px;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
         white-space: nowrap;
         transition: color 0.2s;
+        display: inline;
+        margin-left: 2px;
     }
 
     .section-marker {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 30px;
+        margin: 0 2px;
+        vertical-align: middle;
+        min-width: 20px;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
@@ -236,15 +239,13 @@
     .text-label {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 30px;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
         background: #2a2a4e;
-        padding: 0 8px;
+        padding: 0 6px;
         border-radius: 4px;
         transition: color 0.2s, background 0.2s;
     }
@@ -252,10 +253,8 @@
     .sep-repeat1 {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 20px;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
@@ -265,10 +264,8 @@
     .sep-repeat2 {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 20px;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
@@ -278,10 +275,8 @@
     .sep-default {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 20px;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
@@ -291,15 +286,14 @@
     .sep-icon {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
+        margin: 0 2px;
         vertical-align: middle;
-        min-width: 30px;
+        min-width: 20px;
     }
 
     .sep-icon img {
-        display: block;
-        height: 20px;
+        display: inline-block;
+        height: 18px;
         width: auto;
         vertical-align: middle;
     }
@@ -307,10 +301,8 @@
     .ending-marker {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 30px;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
@@ -320,10 +312,8 @@
     .region-marker {
         display: inline-block;
         text-align: center;
-        margin-right: 4px;
-        margin-bottom: 4px;
-        vertical-align: top;
-        min-width: 30px;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
@@ -337,12 +327,12 @@
         color: #ffcc00;
     }
 
-    /* ===== SEPARATOR LINE — AUTOMATIC BASED ON TEXT LENGTH ===== */
+    /* ===== SEPARATOR LINE ===== */
     .separator-line {
         width: 100%;
         text-align: center;
-        padding: 4px 0 4px 0;
-        margin: 4px 0 4px 0;
+        padding: 4px 0;
+        margin: 4px 0;
         color: #4fc3f7;
         font-size: 14px;
         font-family: 'Courier New', monospace;
@@ -420,9 +410,12 @@
         .header-btn { font-size: 0.8rem; padding: 4px 8px; min-height: 32px; }
         .info-bar #songTitle { font-size: 0.85rem; }
         .info-bar #keyDisplay { font-size: 0.75rem; padding: 1px 8px; }
-        #output { padding: 10px; font-size: 14px; }
+        #output { padding: 10px; font-size: 14px; gap: 1px 3px; }
         .chord { font-size: 14px; }
         .beat { font-size: 14px; }
+        .text-label { font-size: 14px; }
+        .section-marker { font-size: 14px; }
+        .sep-repeat1, .sep-repeat2, .sep-default { font-size: 14px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
         .separator-line { font-size: 12px; padding: 2px 0; }
@@ -430,7 +423,7 @@
 
     @media (min-width: 769px) {
         .container { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-        #output { min-height: 300px; padding: 20px; }
+        #output { min-height: 300px; padding: 20px; gap: 2px 6px; }
         .floating-bar { gap: 10px; padding: 10px 20px; }
         .floating-bar button { padding: 10px 18px; min-width: 50px; }
         .separator-line { font-size: 14px; padding: 6px 0; }
@@ -460,6 +453,12 @@
         font-size: 18px !important;
     }
     .fullscreen-mode .beat {
+        font-size: 18px !important;
+    }
+    .fullscreen-mode .text-label {
+        font-size: 18px !important;
+    }
+    .fullscreen-mode .section-marker {
         font-size: 18px !important;
     }
     .fullscreen-mode .separator-line {
@@ -595,7 +594,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET ENGINE — WITH AUTOMATIC SEPARATOR (TEXT LENGTH + 2)
+    // RENDER LEADSHEET — HORIZONTAL + WRAP + SEPARATOR
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
@@ -834,11 +833,11 @@
             if (block.type === 'chord-block') {
                 const div = document.createElement('div');
                 div.className = 'chord-block';
-                const chordEl = document.createElement('div');
+                const chordEl = document.createElement('span');
                 chordEl.className = 'chord';
                 chordEl.textContent = block.chord;
                 chordEl.style.color = regionColor || DEFAULT_COLORS.chord;
-                const beatEl = document.createElement('div');
+                const beatEl = document.createElement('span');
                 beatEl.className = 'beat';
                 beatEl.textContent = block.dash;
                 beatEl.style.color = regionColor || DEFAULT_COLORS.beat;
@@ -849,20 +848,15 @@
             } else if (block.type === 'dash-block') {
                 const div = document.createElement('div');
                 div.className = 'chord-block';
-                const chordEl = document.createElement('div');
-                chordEl.className = 'chord';
-                chordEl.textContent = '';
-                chordEl.style.color = regionColor || DEFAULT_COLORS.chord;
-                const beatEl = document.createElement('div');
+                const beatEl = document.createElement('span');
                 beatEl.className = 'beat';
                 beatEl.textContent = block.dash;
                 beatEl.style.color = regionColor || DEFAULT_COLORS.beat;
-                div.appendChild(chordEl);
                 div.appendChild(beatEl);
                 outputEl.appendChild(div);
 
             } else if (block.type === 'separator') {
-                const div = document.createElement('div');
+                const div = document.createElement('span');
                 if (block.section === 'repeat1') {
                     div.className = 'sep-repeat1';
                     div.style.color = regionColor || DEFAULT_COLORS.repeat1;
@@ -877,14 +871,14 @@
                 outputEl.appendChild(div);
 
             } else if (block.type === 'section') {
-                const div = document.createElement('div');
+                const div = document.createElement('span');
                 div.className = 'section-marker';
                 div.textContent = `[${block.value}]`;
                 div.style.color = regionColor || DEFAULT_COLORS.section;
                 outputEl.appendChild(div);
 
             } else if (block.type === 'textlabel') {
-                const div = document.createElement('div');
+                const div = document.createElement('span');
                 div.className = 'text-label';
                 div.textContent = `"${block.value}"`;
                 div.style.color = regionColor || DEFAULT_COLORS.textlabel;
@@ -894,12 +888,12 @@
                 outputEl.appendChild(div);
 
             } else if (block.type === 'icon') {
-                const div = document.createElement('div');
+                const div = document.createElement('span');
                 div.className = 'sep-icon';
                 const img = document.createElement('img');
                 img.src = `icons/${block.letter}100.png`;
                 img.alt = block.letter;
-                img.style.height = '20px';
+                img.style.height = '18px';
                 img.style.width = 'auto';
                 img.style.verticalAlign = 'middle';
                 if (regionColor) {
@@ -909,7 +903,7 @@
                 outputEl.appendChild(div);
 
             } else if (block.type === 'region_start') {
-                const div = document.createElement('div');
+                const div = document.createElement('span');
                 div.className = 'region-marker region-start';
                 const colors = block.numbers.map(n => REGION_COLORS[n]).join(' ');
                 div.textContent = block.value;
@@ -922,21 +916,8 @@
             } else if (block.type === 'separator_line') {
                 const div = document.createElement('div');
                 div.className = 'separator-line';
-                // ============================================================
-                // SEPARATOR: PANJANG = TEXT LENGTH + 2
-                // ============================================================
-                // Cari text label terdekat (sebelum separator)
-                let textLength = 10; // default
-                // Look backward in blocks to find previous textlabel
-                for (let j = blocks.indexOf(block) - 1; j >= 0; j--) {
-                    if (blocks[j].type === 'textlabel') {
-                        textLength = blocks[j].value.length;
-                        break;
-                    }
-                }
-                const separatorCount = textLength + 2;
-                const separatorText = '_'.repeat(separatorCount);
-                div.textContent = separatorText;
+                // Separator — 20 underscore
+                div.textContent = '____________________';
                 outputEl.appendChild(div);
             }
         }
@@ -1097,8 +1078,8 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ Only slash (/) supported — dash (-) automatically converted');
-    console.log('✅ Automatic separator (text length + 2)');
+    console.log('✅ Horizontal render with wrap');
+    console.log('✅ Separator: 20 underscore');
 </script>
 
 </body>
