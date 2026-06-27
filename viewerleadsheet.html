@@ -331,8 +331,8 @@
     .separator-line {
         width: 100%;
         text-align: center;
-        padding: 4px 0;
-        margin: 4px 0;
+        padding: 4px 0 4px 0;
+        margin: 2px 0 2px 0;
         color: #4fc3f7;
         font-size: 14px;
         font-family: 'Courier New', monospace;
@@ -594,7 +594,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET — HORIZONTAL + WRAP + SEPARATOR
+    // RENDER LEADSHEET — SEPARATOR SELEPAS SETIAP ELEMEN
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
@@ -611,22 +611,24 @@
         let i = 0;
         let activeRegions = [];
 
+        // Helper: get element length for separator
+        function getElementLength(token) {
+            if (token.type === 'textlabel') return token.value.length + 2;
+            if (token.type === 'section') return token.value.length + 3;
+            if (token.type === 'chord') return token.value.length + 2;
+            if (token.type === 'slash') return token.value.length + 2;
+            if (token.type === 'icon') return 3;
+            if (token.type === 'separator') return token.value.length + 2;
+            if (token.type === 'region_start') return token.value.length + 2;
+            if (token.type === 'region_end') return 3;
+            if (token.type === 'ending') return token.value.length + 2;
+            return 4;
+        }
+
         while (i < input.length) {
             if (input[i] === ' ' || input[i] === '\t') {
                 i++;
                 continue;
-            }
-
-            // Track if we're at a section boundary
-            const isTextLabel = input[i] === '"';
-            const isSectionMarker = input[i] === '[' && i + 1 < input.length && /^[0-9]+$/.test(input[i + 1]);
-
-            // If text label or section marker, and not the first token, add separator
-            if ((isTextLabel || isSectionMarker) && tokens.length > 0) {
-                const lastToken = tokens[tokens.length - 1];
-                if (lastToken && lastToken.type !== 'separator_line') {
-                    tokens.push({ type: 'separator_line' });
-                }
             }
 
             // --- Regular tokenization ---
@@ -659,6 +661,7 @@
                 continue;
             }
 
+            // Text label: "Text"
             if (input[i] === '"') {
                 const j = input.indexOf('"', i + 1);
                 if (j !== -1) {
@@ -669,6 +672,7 @@
                 }
             }
 
+            // Separators
             if (input.substring(i, i + 3) === '||:') {
                 tokens.push({ type: 'separator', value: '||:', section: 'repeat1', region: [...activeRegions] });
                 i += 3;
@@ -699,6 +703,7 @@
                 continue;
             }
 
+            // Chord or section marker
             if (input[i] === '[') {
                 const j = input.indexOf(']', i);
                 if (j !== -1) {
@@ -737,7 +742,7 @@
             i++;
         }
 
-        // --- Build blocks ---
+        // --- Build blocks with separator after EVERY element ---
         const blocks = [];
         let currentChord = null;
         let currentSlash = '';
@@ -746,10 +751,16 @@
         let pendingSeparatorSection = 'default';
         let pendingSeparatorRegion = [];
 
+        // Function to add separator after an element
+        function addSeparatorAfter() {
+            blocks.push({ type: 'separator_line' });
+        }
+
         function flushChord() {
             if (currentChord !== null) {
-                const slash = currentSlash || '/ / / /';
+                const slash = currentSlash || '';
                 blocks.push({ type: 'chord-block', chord: currentChord, dash: slash, region: [...currentRegion] });
+                addSeparatorAfter(); // Separator AFTER chord-block
                 currentChord = null;
                 currentSlash = '';
                 currentRegion = [];
@@ -761,6 +772,7 @@
                 blocks.push({ type: 'separator', value: pendingSeparator, section: pendingSeparatorSection, region: [
                         ...pendingSeparatorRegion
                     ] });
+                addSeparatorAfter(); // Separator AFTER separator
                 pendingSeparator = null;
                 pendingSeparatorSection = 'default';
                 pendingSeparatorRegion = [];
@@ -783,6 +795,7 @@
                     flushSeparator();
                     flushChord();
                     blocks.push({ type: 'dash-block', dash: spaced, region: t.region || [] });
+                    addSeparatorAfter(); // Separator AFTER dash-block
                 }
             } else if (t.type === 'separator') {
                 flushChord();
@@ -797,26 +810,26 @@
                 flushSeparator();
                 flushChord();
                 blocks.push({ type: 'section', value: t.value, region: t.region || [] });
+                addSeparatorAfter(); // Separator AFTER section
             } else if (t.type === 'textlabel') {
                 flushSeparator();
                 flushChord();
                 blocks.push({ type: 'textlabel', value: t.value, region: t.region || [] });
+                addSeparatorAfter(); // Separator AFTER textlabel
             } else if (t.type === 'icon') {
                 flushSeparator();
                 flushChord();
                 blocks.push({ type: 'icon', letter: t.letter, region: t.region || [] });
+                addSeparatorAfter(); // Separator AFTER icon
             } else if (t.type === 'region_start') {
                 flushSeparator();
                 flushChord();
                 blocks.push({ type: 'region_start', value: t.value, numbers: t.numbers });
+                addSeparatorAfter(); // Separator AFTER region_start
             } else if (t.type === 'region_end') {
                 flushSeparator();
                 flushChord();
                 // Do nothing — hidden
-            } else if (t.type === 'separator_line') {
-                flushSeparator();
-                flushChord();
-                blocks.push({ type: 'separator_line' });
             }
         }
 
@@ -825,6 +838,33 @@
 
         // --- Render ---
         outputEl.innerHTML = '';
+
+        // Helper to generate separator text based on element length
+        function generateSeparatorForBlock(block) {
+            let length = 10; // default
+            if (block.type === 'chord-block') {
+                length = (block.chord || '').length + (block.dash || '').length + 2;
+                if (length < 3) length = 3;
+            } else if (block.type === 'dash-block') {
+                length = (block.dash || '').length + 2;
+                if (length < 3) length = 3;
+            } else if (block.type === 'textlabel') {
+                length = (block.value || '').length + 2;
+            } else if (block.type === 'section') {
+                length = (block.value || '').length + 3;
+            } else if (block.type === 'separator') {
+                length = (block.value || '').length + 2;
+            } else if (block.type === 'icon') {
+                length = 4;
+            } else if (block.type === 'region_start') {
+                length = (block.value || '').length + 2;
+            } else {
+                length = 6;
+            }
+            if (length < 2) length = 2;
+            if (length > 30) length = 30;
+            return '_'.repeat(length);
+        }
 
         for (let block of blocks) {
             const region = block.region || [];
@@ -835,25 +875,36 @@
                 div.className = 'chord-block';
                 const chordEl = document.createElement('span');
                 chordEl.className = 'chord';
-                chordEl.textContent = block.chord;
+                chordEl.textContent = block.chord || '';
                 chordEl.style.color = regionColor || DEFAULT_COLORS.chord;
                 const beatEl = document.createElement('span');
                 beatEl.className = 'beat';
-                beatEl.textContent = block.dash;
+                beatEl.textContent = block.dash || '';
                 beatEl.style.color = regionColor || DEFAULT_COLORS.beat;
                 div.appendChild(chordEl);
                 div.appendChild(beatEl);
                 outputEl.appendChild(div);
+                // Separator after element
+                const sepDiv = document.createElement('div');
+                sepDiv.className = 'separator-line';
+                sepDiv.textContent = generateSeparatorForBlock(block);
+                sepDiv.style.padding = '2px 0';
+                sepDiv.style.margin = '1px 0';
+                outputEl.appendChild(sepDiv);
 
             } else if (block.type === 'dash-block') {
-                const div = document.createElement('div');
-                div.className = 'chord-block';
-                const beatEl = document.createElement('span');
-                beatEl.className = 'beat';
-                beatEl.textContent = block.dash;
-                beatEl.style.color = regionColor || DEFAULT_COLORS.beat;
-                div.appendChild(beatEl);
+                const div = document.createElement('span');
+                div.className = 'beat';
+                div.textContent = block.dash || '';
+                div.style.color = regionColor || DEFAULT_COLORS.beat;
                 outputEl.appendChild(div);
+                // Separator after element
+                const sepDiv = document.createElement('div');
+                sepDiv.className = 'separator-line';
+                sepDiv.textContent = generateSeparatorForBlock(block);
+                sepDiv.style.padding = '2px 0';
+                sepDiv.style.margin = '1px 0';
+                outputEl.appendChild(sepDiv);
 
             } else if (block.type === 'separator') {
                 const div = document.createElement('span');
@@ -869,6 +920,13 @@
                 }
                 div.textContent = block.value;
                 outputEl.appendChild(div);
+                // Separator after element
+                const sepDiv = document.createElement('div');
+                sepDiv.className = 'separator-line';
+                sepDiv.textContent = generateSeparatorForBlock(block);
+                sepDiv.style.padding = '2px 0';
+                sepDiv.style.margin = '1px 0';
+                outputEl.appendChild(sepDiv);
 
             } else if (block.type === 'section') {
                 const div = document.createElement('span');
@@ -876,6 +934,13 @@
                 div.textContent = `[${block.value}]`;
                 div.style.color = regionColor || DEFAULT_COLORS.section;
                 outputEl.appendChild(div);
+                // Separator after element
+                const sepDiv = document.createElement('div');
+                sepDiv.className = 'separator-line';
+                sepDiv.textContent = generateSeparatorForBlock(block);
+                sepDiv.style.padding = '2px 0';
+                sepDiv.style.margin = '1px 0';
+                outputEl.appendChild(sepDiv);
 
             } else if (block.type === 'textlabel') {
                 const div = document.createElement('span');
@@ -886,6 +951,13 @@
                     div.style.border = `1px solid ${regionColor}`;
                 }
                 outputEl.appendChild(div);
+                // Separator after element
+                const sepDiv = document.createElement('div');
+                sepDiv.className = 'separator-line';
+                sepDiv.textContent = generateSeparatorForBlock(block);
+                sepDiv.style.padding = '2px 0';
+                sepDiv.style.margin = '1px 0';
+                outputEl.appendChild(sepDiv);
 
             } else if (block.type === 'icon') {
                 const div = document.createElement('span');
@@ -901,6 +973,13 @@
                 }
                 div.appendChild(img);
                 outputEl.appendChild(div);
+                // Separator after element
+                const sepDiv = document.createElement('div');
+                sepDiv.className = 'separator-line';
+                sepDiv.textContent = generateSeparatorForBlock(block);
+                sepDiv.style.padding = '2px 0';
+                sepDiv.style.margin = '1px 0';
+                outputEl.appendChild(sepDiv);
 
             } else if (block.type === 'region_start') {
                 const div = document.createElement('span');
@@ -912,23 +991,13 @@
                 div.style.padding = '0 6px';
                 div.style.borderRadius = '4px';
                 outputEl.appendChild(div);
-
-            } else if (block.type === 'separator_line') {
-                const div = document.createElement('div');
-                div.className = 'separator-line';
-    
-                // Cari text label terdekat (sebelum separator)
-                let textLength = 10; // default
-                for (let j = blocks.indexOf(block) - 1; j >= 0; j--) {
-                    if (blocks[j].type === 'textlabel') {
-                        textLength = blocks[j].value.length;
-                        break;
-                    }
-                }
-                const separatorCount = textLength + 2;
-                const separatorText = '_'.repeat(separatorCount);
-                div.textContent = separatorText;
-                outputEl.appendChild(div);
+                // Separator after element
+                const sepDiv = document.createElement('div');
+                sepDiv.className = 'separator-line';
+                sepDiv.textContent = generateSeparatorForBlock(block);
+                sepDiv.style.padding = '2px 0';
+                sepDiv.style.margin = '1px 0';
+                outputEl.appendChild(sepDiv);
             }
         }
 
@@ -1088,8 +1157,8 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ Horizontal render with wrap');
-    console.log('✅ Separator: 20 underscore');
+    console.log('✅ Separator after EVERY element');
+    console.log('✅ Length based on element length');
 </script>
 
 </body>
