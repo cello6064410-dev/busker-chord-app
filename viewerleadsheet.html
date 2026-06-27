@@ -337,22 +337,19 @@
         color: #ffcc00;
     }
 
-    /* SEPARATOR LINE — AUTOMATIC */
+    /* ===== SEPARATOR LINE — CSS BORDER ===== */
     .separator-line {
-    width: 100%;
-    text-align: center;
-    color: #4fc3f7;  /* ← Biru terang, nampak! */
-    font-size: 14px;
-    font-family: 'Courier New', monospace;
-    padding: 6px 0 4px 0;
-    letter-spacing: 2px;
-    border-bottom: 1px solid #4fc3f7;  /* ← Biru terang */
-    margin: 6px 0 4px 0;
+        width: 100%;
+        text-align: center;
+        padding: 8px 0 6px 0;
+        margin: 6px 0 6px 0;
+        border-bottom: 2px solid #4fc3f7;
+        opacity: 0.6;
     }
 
     .separator-spacer {
         width: 100%;
-        height: 4px;
+        height: 2px;
     }
 
     .floating-bar {
@@ -427,7 +424,7 @@
         .beat { font-size: 14px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
-        .separator-line { font-size: 12px; }
+        .separator-line { padding: 6px 0 4px 0; border-bottom-width: 1px; }
     }
 
     @media (min-width: 769px) {
@@ -435,7 +432,7 @@
         #output { min-height: 300px; padding: 20px; }
         .floating-bar { gap: 10px; padding: 10px 20px; }
         .floating-bar button { padding: 10px 18px; min-width: 50px; }
-        .separator-line { font-size: 14px; }
+        .separator-line { padding: 10px 0 8px 0; }
     }
 
     .fullscreen-mode .header,
@@ -465,7 +462,8 @@
         font-size: 18px !important;
     }
     .fullscreen-mode .separator-line {
-        font-size: 16px !important;
+        border-bottom-width: 2px !important;
+        padding: 12px 0 10px 0 !important;
     }
 </style>
 
@@ -625,7 +623,6 @@
 
             // If text label or section marker, and not the first token, add separator
             if ((isTextLabel || isSectionMarker) && tokens.length > 0) {
-                // Check if last token is not already a separator
                 const lastToken = tokens[tokens.length - 1];
                 if (lastToken && lastToken.type !== 'separator_line') {
                     tokens.push({ type: 'separator_line' });
@@ -929,7 +926,6 @@
             } else if (block.type === 'separator_line') {
                 const div = document.createElement('div');
                 div.className = 'separator-line';
-                div.textContent = '─'.repeat(40);
                 outputEl.appendChild(div);
 
             } else if (block.type === 'separator_spacer') {
@@ -953,7 +949,7 @@
 
     function applyFontSize(size) {
         outputEl.style.fontSize = size + 'px';
-        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-repeat1, .sep-repeat2, .sep-default, .ending-marker, .region-marker, .separator-line')
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-repeat1, .sep-repeat2, .sep-default, .ending-marker, .region-marker')
             .forEach(el => {
                 el.style.fontSize = size + 'px';
             });
@@ -1096,7 +1092,7 @@
 
     console.log('🎵 Leadsheet Viewer loaded!');
     console.log('✅ Only slash (/) supported — dash (-) automatically converted');
-    console.log('✅ Automatic separator between sections');
+    console.log('✅ Automatic separator between sections (CSS border)');
 </script>
 
 </body>
