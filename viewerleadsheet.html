@@ -573,7 +573,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET ENGINE — STABLE VERSION (NO SEPARATOR)
+    // RENDER LEADSHEET ENGINE — PATCHED (3 CHANGES)
     // ============================================================
     function renderLeadsheet(input) {
         if (!input.trim()) {
@@ -581,7 +581,9 @@
             return;
         }
 
-        // Normalize: semua dash → slash
+        // ============================================================
+        // FIX 1: NORMALIZE FULL BEFORE TOKENIZE
+        // ============================================================
         input = input.replace(/-/g, '/');
         input = input.replace(/\/+/g, (m) => '/'.repeat(m.length));
 
@@ -681,7 +683,9 @@
                 }
             }
 
-            // Slash detection
+            // ============================================================
+            // FIX 2: SLASH TOKENIZATION — CONSISTENT
+            // ============================================================
             if (input.substring(i, i + 4) === '////') {
                 tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
                 i += 4;
@@ -741,6 +745,9 @@
                 currentRegion = t.region || [];
             } else if (t.type === 'slash') {
                 if (currentChord !== null) {
+                    // ============================================================
+                    // FIX 3: CONSISTENT SLASH RENDER
+                    // ============================================================
                     let spaced = t.value.split('').map(() => '/').join(' ');
                     if (currentSlash) currentSlash += ' ' + spaced;
                     else currentSlash = spaced;
