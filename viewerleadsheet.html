@@ -171,9 +171,6 @@
         font-size: 0.8rem;
     }
 
-    /* ============================================================
-       OUTPUT — LINE-BASED RENDERING WITH WRAP (OPTION B)
-       ============================================================ */
     #output {
         flex: 1;
         background: #0a0a0a;
@@ -183,10 +180,12 @@
         border: 1px solid #1a1a2e;
         font-family: 'Courier New', monospace;
         display: flex;
-        flex-direction: column;
-        gap: 0px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 2px 4px;
         overflow-y: auto;
-        font-size: 16px;
+        line-height: 1.8;
+        align-content: flex-start;
     }
 
     #output .loading-text {
@@ -198,60 +197,20 @@
         padding: 40px 0;
     }
 
-    /* ----- MUSIC SYSTEM (kumpulan baris yang di-wrap) ----- */
-    .music-system {
-        display: flex;
-        flex-direction: column;
-        gap: 0px;
-        margin-bottom: 2px;
-    }
-
-    /* ----- MUSIC ROW (baris fizikal yang di-wrap) ----- */
-    .music-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0;
-        padding: 2px 2px 0px 2px;
-        min-height: 28px;
-        width: 100%;
-    }
-
-    .music-row > * {
-        margin-right: 6px;
-        flex-shrink: 0;
-    }
-
-    .music-row > *:last-child {
-        margin-right: 0;
-    }
-
-    /* ----- SEPARATOR ROW — untuk setiap baris fizikal ----- */
-    .separator-row {
-        width: 100%;
-        border-bottom: 2px solid #4fc3f7;
-        opacity: 0.25;
-        margin: 1px 0 3px 0;
-        padding: 0;
-        height: 4px;
-        transition: width 0.05s ease;
-    }
-
-    /* ----- INDIVIDUAL ELEMENTS ----- */
     .chord-block {
-        display: inline-flex;
-        align-items: center;
-        gap: 1px;
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
         vertical-align: middle;
-        flex-shrink: 0;
+        min-width: 20px;
     }
 
     .chord {
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
-        color: #ffcc00;
-        flex-shrink: 0;
+        transition: color 0.2s;
+        display: inline;
     }
 
     .beat {
@@ -259,111 +218,79 @@
         font-size: 16px;
         letter-spacing: 1px;
         white-space: nowrap;
-        color: #e0e0f0;
-        flex-shrink: 0;
+        transition: color 0.2s;
+        display: inline;
+        margin-left: 2px;
     }
 
     .section-marker {
         display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        min-width: 20px;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
-        color: #b197fc;
-        flex-shrink: 0;
+        transition: color 0.2s;
     }
 
     .text-label {
         display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
-        background: #1f1f3a;
+        background: #2a2a4e;
         padding: 0 6px;
         border-radius: 4px;
-        color: #f0f0ff;
-        flex-shrink: 0;
-    }
-
-    .sep-repeat1 {
-        display: inline-block;
-        font-weight: bold;
-        font-size: 16px;
-        font-family: 'Courier New', monospace;
-        color: #4fc3f7;
-        flex-shrink: 0;
-    }
-
-    .sep-repeat2 {
-        display: inline-block;
-        font-weight: bold;
-        font-size: 16px;
-        font-family: 'Courier New', monospace;
-        color: #69db7c;
-        flex-shrink: 0;
-    }
-
-    .sep-default {
-        display: inline-block;
-        font-weight: bold;
-        font-size: 16px;
-        font-family: 'Courier New', monospace;
-        color: #8888aa;
-        flex-shrink: 0;
+        transition: color 0.2s, background 0.2s;
     }
 
     .sep-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
         vertical-align: middle;
-        flex-shrink: 0;
-        font-weight: bold;
-        background: #1a1a3a;
-        padding: 0 6px;
-        border-radius: 6px;
-        border: 1px solid #3a3a6a;
-        min-width: 28px;
-        min-height: 28px;
+        min-width: 20px;
     }
 
     .sep-icon img {
         display: inline-block;
-        height: 22px;
+        height: 20px;
         width: auto;
         vertical-align: middle;
-        filter: drop-shadow(0 0 4px rgba(79, 195, 247, 0.3));
     }
 
-    .icon-line-header .sep-icon {
-        background: #2a2a5a;
-        border-color: #5a5a9a;
-        box-shadow: 0 0 12px rgba(79, 195, 247, 0.15);
-    }
-
-    .icon-line-header .sep-icon img {
-        filter: drop-shadow(0 0 6px rgba(79, 195, 247, 0.5));
+    .ending-marker {
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        font-weight: bold;
+        font-size: 16px;
+        font-family: 'Courier New', monospace;
+        transition: color 0.2s;
     }
 
     .region-marker {
         display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
         font-weight: bold;
         font-size: 16px;
         font-family: 'Courier New', monospace;
-        padding: 0 6px;
+        padding: 0 4px;
         border-radius: 4px;
-        background: #2a2a4e;
-        color: #ffcc00;
-        flex-shrink: 0;
+        transition: color 0.2s, background 0.2s;
     }
 
-    .placeholder {
-        color: #3f3f5a;
-        font-family: Arial, sans-serif;
-        font-size: 0.9rem;
-        width: 100%;
-        text-align: center;
-        padding: 30px 0;
-        letter-spacing: 0.5px;
+    .region-marker.region-start {
+        background: #2a2a4e;
+        color: #ffcc00;
     }
 
     .floating-bar {
@@ -433,25 +360,22 @@
         .header-btn { font-size: 0.8rem; padding: 4px 8px; min-height: 32px; }
         .info-bar #songTitle { font-size: 0.85rem; }
         .info-bar #keyDisplay { font-size: 0.75rem; padding: 1px 8px; }
-        #output { padding: 10px; font-size: 14px; }
+        #output { padding: 10px; font-size: 14px; gap: 1px 3px; }
         .chord { font-size: 14px; }
         .beat { font-size: 14px; }
         .text-label { font-size: 14px; }
         .section-marker { font-size: 14px; }
-        .sep-repeat1, .sep-repeat2, .sep-default { font-size: 14px; }
-        .music-row > * { margin-right: 4px; }
-        .separator-row { height: 3px; border-bottom-width: 2px; }
-        .sep-icon { min-width: 24px; min-height: 24px; padding: 0 4px; }
-        .sep-icon img { height: 18px; }
+        .sep-icon img { height: 16px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
     }
 
     @media (min-width: 769px) {
         .container { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
-        #output { min-height: 300px; padding: 20px; }
+        #output { min-height: 300px; padding: 20px; gap: 2px 6px; }
         .floating-bar { gap: 10px; padding: 10px 20px; }
         .floating-bar button { padding: 10px 18px; min-width: 50px; }
+        .sep-icon img { height: 20px; }
     }
 
     .fullscreen-mode .header,
@@ -487,7 +411,7 @@
         font-size: 18px !important;
     }
     .fullscreen-mode .sep-icon img {
-        height: 26px !important;
+        height: 24px !important;
     }
 </style>
 
@@ -560,12 +484,13 @@
 
     const DEFAULT_COLORS = {
         chord: '#ffcc00',
-        beat: '#e0e0f0',
-        separator: '#8888aa',
+        beat: '#ffffff',
+        separator: '#666',
         repeat1: '#4fc3f7',
         repeat2: '#69db7c',
         section: '#b197fc',
-        textlabel: '#f0f0ff'
+        textlabel: '#ffffff',
+        ending: '#ff6b6b'
     };
 
     // ============================================================
@@ -617,20 +542,31 @@
     }
 
     // ============================================================
-    // TOKENIZER
+    // RENDER LEADSHEET — ICON BAR LINE & REPEAT SIGNS
     // ============================================================
-    function tokenize(input) {
-        let text = input.replace(/-/g, '/');
-        text = text.replace(/\/+/g, (m) => '/'.repeat(m.length));
+    function renderLeadsheet(input) {
+        if (!input.trim()) {
+            outputEl.innerHTML = '<div class="loading-text">⚠️ Empty leadsheet</div>';
+            return;
+        }
 
+        // Normalize: semua dash → slash
+        input = input.replace(/-/g, '/');
+        input = input.replace(/\/+/g, (m) => '/'.repeat(m.length));
+
+        // --- Tokenize ---
         const tokens = [];
         let i = 0;
         let activeRegions = [];
 
-        while (i < text.length) {
-            if (text[i] === ' ' || text[i] === '\t') { i++; continue; }
+        while (i < input.length) {
+            if (input[i] === ' ' || input[i] === '\t') {
+                i++;
+                continue;
+            }
 
-            const regionStartMatch = text.substring(i).match(/^\(([0-9,]+)va\)/);
+            // --- Regular tokenization ---
+            const regionStartMatch = input.substring(i).match(/^\(([0-9,]+)va\)/);
             if (regionStartMatch) {
                 const numbers = regionStartMatch[1].split(',').map(Number);
                 const validNumbers = numbers.filter(n => n >= 1 && n <= 4);
@@ -644,14 +580,14 @@
                 }
             }
 
-            if (text.substring(i, i + 3) === '(.)') {
+            if (input.substring(i, i + 3) === '(.)') {
                 tokens.push({ type: 'region_end' });
                 activeRegions = [];
                 i += 3;
                 continue;
             }
 
-            const iconMatch = text.substring(i).match(/^\|([A-Za-z])\|/);
+            const iconMatch = input.substring(i).match(/^\|([A-Za-z])\|/);
             if (iconMatch) {
                 const letter = iconMatch[1].toUpperCase();
                 tokens.push({ type: 'icon', letter: letter, region: [...activeRegions] });
@@ -659,74 +595,88 @@
                 continue;
             }
 
-            if (text[i] === '"') {
-                const j = text.indexOf('"', i + 1);
+            // Text label: "Text"
+            if (input[i] === '"') {
+                const j = input.indexOf('"', i + 1);
                 if (j !== -1) {
-                    const val = text.substring(i + 1, j);
-                    tokens.push({ type: 'textlabel', value: val, region: [...activeRegions] });
+                    const text = input.substring(i + 1, j);
+                    tokens.push({ type: 'textlabel', value: text, region: [...activeRegions] });
                     i = j + 1;
                     continue;
                 }
             }
 
-            if (text.substring(i, i + 3) === '||:') {
-                tokens.push({ type: 'separator', value: '||:', section: 'repeat1', region: [...activeRegions] });
-                i += 3; continue;
-            }
-            if (text.substring(i, i + 3) === ':||') {
-                tokens.push({ type: 'separator', value: ':||', section: 'repeat1', region: [...activeRegions] });
-                i += 3; continue;
-            }
-            if (text.substring(i, i + 3) === ':.|') {
-                tokens.push({ type: 'separator', value: ':.|', section: 'repeat1', region: [...activeRegions] });
-                i += 3; continue;
-            }
-            if (text.substring(i, i + 2) === '||') {
-                tokens.push({ type: 'separator', value: '||', section: 'repeat2', region: [...activeRegions] });
-                i += 2; continue;
-            }
-            if (text[i] === '|') {
-                tokens.push({ type: 'separator', value: '|', section: 'default', region: [...activeRegions] });
-                i++; continue;
+            // Separators — all will be icons
+            if (input.substring(i, i + 3) === '||:') {
+                tokens.push({ type: 'separator', value: '||:', section: 'repeat_start', region: [...activeRegions] });
+                i += 3;
+                continue;
             }
 
-            if (text[i] === '[') {
-                const j = text.indexOf(']', i);
+            if (input.substring(i, i + 3) === ':||') {
+                tokens.push({ type: 'separator', value: ':||', section: 'repeat_end', region: [...activeRegions] });
+                i += 3;
+                continue;
+            }
+
+            if (input.substring(i, i + 3) === ':.|') {
+                tokens.push({ type: 'separator', value: ':.|', section: 'repeat_end', region: [...activeRegions] });
+                i += 3;
+                continue;
+            }
+
+            if (input.substring(i, i + 2) === '||') {
+                tokens.push({ type: 'separator', value: '||', section: 'double_bar', region: [...activeRegions] });
+                i += 2;
+                continue;
+            }
+
+            if (input[i] === '|') {
+                tokens.push({ type: 'separator', value: '|', section: 'bar', region: [...activeRegions] });
+                i++;
+                continue;
+            }
+
+            // Chord or section marker
+            if (input[i] === '[') {
+                const j = input.indexOf(']', i);
                 if (j !== -1) {
-                    const content = text.substring(i + 1, j);
+                    const content = input.substring(i + 1, j);
                     if (/^[0-9]+$/.test(content)) {
                         tokens.push({ type: 'section', value: content, region: [...activeRegions] });
+                        i = j + 1;
+                        continue;
                     } else {
                         tokens.push({ type: 'chord', value: content, region: [...activeRegions] });
+                        i = j + 1;
+                        continue;
                     }
-                    i = j + 1;
-                    continue;
                 }
             }
 
-            if (text.substring(i, i + 4) === '////') {
+            // Slash detection
+            if (input.substring(i, i + 4) === '////') {
                 tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
-                i += 4; continue;
+                i += 4;
+                continue;
             }
-            if (text.substring(i, i + 2) === '//') {
+
+            if (input.substring(i, i + 2) === '//') {
                 tokens.push({ type: 'slash', value: '//', region: [...activeRegions] });
-                i += 2; continue;
+                i += 2;
+                continue;
             }
-            if (text[i] === '/') {
+
+            if (input[i] === '/') {
                 tokens.push({ type: 'slash', value: '/', region: [...activeRegions] });
-                i++; continue;
+                i++;
+                continue;
             }
 
             i++;
         }
 
-        return tokens;
-    }
-
-    // ============================================================
-    // BUILD BLOCKS
-    // ============================================================
-    function buildBlocks(tokens) {
+        // --- Build blocks ---
         const blocks = [];
         let currentChord = null;
         let currentSlash = '';
@@ -747,7 +697,9 @@
 
         function flushSeparator() {
             if (pendingSeparator !== null) {
-                blocks.push({ type: 'separator', value: pendingSeparator, section: pendingSeparatorSection, region: [...pendingSeparatorRegion] });
+                blocks.push({ type: 'separator', value: pendingSeparator, section: pendingSeparatorSection, region: [
+                        ...pendingSeparatorRegion
+                    ] });
                 pendingSeparator = null;
                 pendingSeparatorSection = 'default';
                 pendingSeparatorRegion = [];
@@ -799,311 +751,134 @@
             } else if (t.type === 'region_end') {
                 flushSeparator();
                 flushChord();
+                // Do nothing — hidden
             }
         }
 
         flushSeparator();
         flushChord();
 
-        return blocks;
-    }
-
-    // ============================================================
-    // GROUP INTO SYSTEMS — ICON = LINE BREAKER
-    // ============================================================
-    function groupIntoSystems(blocks) {
-        const systems = [];
-        let currentSystem = [];
-
-        function isMajorSeparator(block) {
-            if (block.type !== 'separator') return false;
-            const v = block.value;
-            return v.includes('||:') || v.includes(':||') || v === '||' || v === ':.|';
-        }
-
-        function flushSystem() {
-            if (currentSystem.length > 0) {
-                systems.push([...currentSystem]);
-                currentSystem = [];
-            }
-        }
-
-        for (let i = 0; i < blocks.length; i++) {
-            const block = blocks[i];
-            const prev = currentSystem.length > 0 ? currentSystem[currentSystem.length - 1] : null;
-
-            // ICON = force new system
-            if (block.type === 'icon') {
-                flushSystem();
-                currentSystem.push(block);
-                continue;
-            }
-
-            // SPECIAL RULE: If previous is ICON → NEVER break on separator
-            const prevIsIcon = prev && prev.type === 'icon';
-
-            if (isMajorSeparator(block) && !prevIsIcon) {
-                currentSystem.push(block);
-                flushSystem();
-            } else {
-                currentSystem.push(block);
-            }
-        }
-
-        if (currentSystem.length > 0) {
-            systems.push([...currentSystem]);
-        }
-
-        return systems;
-    }
-
-    // ============================================================
-    // CREATE DOM ELEMENT DARI BLOCK
-    // ============================================================
-    function createElementFromBlock(block) {
-        const region = block.region || [];
-        const regionColor = region.length > 0 ? REGION_COLORS[region[0]] : null;
-
-        if (block.type === 'chord-block') {
-            const div = document.createElement('span');
-            div.className = 'chord-block';
-            const chordEl = document.createElement('span');
-            chordEl.className = 'chord';
-            chordEl.textContent = block.chord || '';
-            if (regionColor) chordEl.style.color = regionColor;
-            const beatEl = document.createElement('span');
-            beatEl.className = 'beat';
-            beatEl.textContent = block.dash || '';
-            if (regionColor) beatEl.style.color = regionColor;
-            div.appendChild(chordEl);
-            div.appendChild(beatEl);
-            return div;
-        }
-
-        if (block.type === 'dash-block') {
-            const span = document.createElement('span');
-            span.className = 'beat';
-            span.textContent = block.dash || '';
-            if (regionColor) span.style.color = regionColor;
-            return span;
-        }
-
-        if (block.type === 'separator') {
-            const span = document.createElement('span');
-            if (block.section === 'repeat1') {
-                span.className = 'sep-repeat1';
-                if (regionColor) span.style.color = regionColor;
-            } else if (block.section === 'repeat2') {
-                span.className = 'sep-repeat2';
-                if (regionColor) span.style.color = regionColor;
-            } else {
-                span.className = 'sep-default';
-                if (regionColor) span.style.color = regionColor;
-            }
-            span.textContent = block.value;
-            return span;
-        }
-
-        if (block.type === 'section') {
-            const span = document.createElement('span');
-            span.className = 'section-marker';
-            span.textContent = `[${block.value}]`;
-            if (regionColor) span.style.color = regionColor;
-            return span;
-        }
-
-        if (block.type === 'textlabel') {
-            const span = document.createElement('span');
-            span.className = 'text-label';
-            span.textContent = `"${block.value}"`;
-            if (regionColor) {
-                span.style.color = regionColor;
-                span.style.border = `1px solid ${regionColor}`;
-            }
-            return span;
-        }
-
-        if (block.type === 'icon') {
-            const div = document.createElement('span');
-            div.className = 'sep-icon';
-            const img = document.createElement('img');
-            img.src = `icons/${block.letter}100.png`;
-            img.alt = block.letter;
-            img.style.height = '22px';
-            img.style.width = 'auto';
-            img.style.verticalAlign = 'middle';
-            if (regionColor) img.style.filter = `drop-shadow(0 0 2px ${regionColor})`;
-            img.onerror = function() {
-                this.style.display = 'none';
-                div.textContent = block.letter;
-                div.style.fontWeight = 'bold';
-                div.style.fontSize = '18px';
-                div.style.color = '#4fc3f7';
-            };
-            div.appendChild(img);
-            return div;
-        }
-
-        if (block.type === 'region_start') {
-            const span = document.createElement('span');
-            span.className = 'region-marker';
-            const colors = block.numbers.map(n => REGION_COLORS[n]).join(' ');
-            span.textContent = block.value;
-            span.style.color = '#fff';
-            span.style.background = `linear-gradient(90deg, ${colors.split(' ').join(', ')})`;
-            span.style.padding = '0 6px';
-            span.style.borderRadius = '4px';
-            return span;
-        }
-
-        return null;
-    }
-
-    // ============================================================
-    // WRAP ELEMENTS INTO ROWS (based on container width)
-    // ============================================================
-    function wrapIntoRows(elements, containerWidth) {
-        const rows = [];
-        let currentRow = [];
-        let currentRowWidth = 0;
-
-        // Estimate width of an element (rough but works with monospace)
-        function getElementWidth(el) {
-            const text = el.textContent || '';
-            // Approximate width: each char ~ fontSize * 0.6, plus margin/padding
-            const charWidth = fontSize * 0.6;
-            let extra = 0;
-            if (el.classList.contains('sep-icon')) {
-                extra = 28 + 12; // icon size + padding
-            }
-            if (el.classList.contains('text-label')) {
-                extra = 12; // padding
-            }
-            return (text.length * charWidth) + extra + 6; // + margin-right
-        }
-
-        for (let el of elements) {
-            const elWidth = getElementWidth(el);
-            if (currentRow.length > 0 && (currentRowWidth + elWidth) > containerWidth) {
-                rows.push(currentRow);
-                currentRow = [];
-                currentRowWidth = 0;
-            }
-            currentRow.push(el);
-            currentRowWidth += elWidth;
-        }
-
-        if (currentRow.length > 0) {
-            rows.push(currentRow);
-        }
-
-        return rows;
-    }
-
-    // ============================================================
-    // RENDER LEADSHEET — OPTION B (separator setiap baris fizikal)
-    // ============================================================
-    function renderLeadsheet(input) {
-        if (!input || !input.trim()) {
-            outputEl.innerHTML = '<div class="loading-text">⚠️ Empty leadsheet</div>';
-            return;
-        }
-
-        const tokens = tokenize(input);
-        const blocks = buildBlocks(tokens);
-        const systems = groupIntoSystems(blocks);
-
-        if (systems.length === 0) {
-            outputEl.innerHTML = '<div class="loading-text">✅ Rendered — no visible elements</div>';
-            return;
-        }
-
+        // --- Render ---
         outputEl.innerHTML = '';
 
-        // Get container width for wrapping
-        const containerWidth = outputEl.clientWidth - 32; // padding
-
-        for (let system of systems) {
-            // Build elements for this system
-            const elements = [];
-            const isIconLine = system.length > 0 && system[0].type === 'icon';
-
-            for (let block of system) {
-                const el = createElementFromBlock(block);
-                if (el) elements.push(el);
+        // Helper: create icon element
+        function createIcon(src, alt, regionColor) {
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = alt;
+            img.style.height = '20px';
+            img.style.width = 'auto';
+            img.style.verticalAlign = 'middle';
+            if (regionColor) {
+                img.style.filter = `drop-shadow(0 0 2px ${regionColor})`;
             }
-
-            if (elements.length === 0) continue;
-
-            // Wrap into rows based on container width
-            const rows = wrapIntoRows(elements, containerWidth);
-
-            // Create system container
-            const systemDiv = document.createElement('div');
-            systemDiv.className = 'music-system';
-
-            // Add each row with its separator
-            for (let rowElements of rows) {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'music-row';
-
-                if (isIconLine && rowElements.length > 0) {
-                    rowDiv.classList.add('icon-line-header');
-                }
-
-                for (let el of rowElements) {
-                    rowDiv.appendChild(el);
-                }
-
-                systemDiv.appendChild(rowDiv);
-
-                // Separator AFTER each row
-                const sepRow = document.createElement('div');
-                sepRow.className = 'separator-row';
-                // Width akan di-set via updateSeparatorWidths
-                systemDiv.appendChild(sepRow);
-            }
-
-            outputEl.appendChild(systemDiv);
+            return img;
         }
 
-        // Apply font size
+        for (let block of blocks) {
+            const region = block.region || [];
+            const regionColor = region.length > 0 ? REGION_COLORS[region[0]] : null;
+
+            if (block.type === 'chord-block') {
+                const div = document.createElement('span');
+                div.className = 'chord-block';
+                const chordEl = document.createElement('span');
+                chordEl.className = 'chord';
+                chordEl.textContent = block.chord;
+                chordEl.style.color = regionColor || DEFAULT_COLORS.chord;
+                const beatEl = document.createElement('span');
+                beatEl.className = 'beat';
+                beatEl.textContent = block.dash;
+                beatEl.style.color = regionColor || DEFAULT_COLORS.beat;
+                div.appendChild(chordEl);
+                div.appendChild(beatEl);
+                outputEl.appendChild(div);
+
+            } else if (block.type === 'dash-block') {
+                const span = document.createElement('span');
+                span.className = 'beat';
+                span.textContent = block.dash;
+                span.style.color = regionColor || DEFAULT_COLORS.beat;
+                outputEl.appendChild(span);
+
+            } else if (block.type === 'separator') {
+                const div = document.createElement('span');
+                div.className = 'sep-icon';
+                div.style.display = 'inline-block';
+                div.style.verticalAlign = 'middle';
+                div.style.margin = '0 2px';
+
+                let iconFile = '';
+                if (block.section === 'bar') {
+                    iconFile = 'barline.png';
+                } else if (block.section === 'double_bar') {
+                    iconFile = 'doublebarline.png';
+                } else if (block.section === 'repeat_start') {
+                    iconFile = 'repeatstart.png';
+                } else if (block.section === 'repeat_end') {
+                    iconFile = 'repeatend.png';
+                } else {
+                    // fallback — treat as text
+                    const fallback = document.createElement('span');
+                    fallback.textContent = block.value;
+                    fallback.style.color = regionColor || DEFAULT_COLORS.separator;
+                    fallback.style.fontWeight = 'bold';
+                    div.appendChild(fallback);
+                    outputEl.appendChild(div);
+                    continue;
+                }
+
+                const img = createIcon(iconFile, block.value, regionColor);
+                div.appendChild(img);
+                outputEl.appendChild(div);
+
+            } else if (block.type === 'section') {
+                const div = document.createElement('span');
+                div.className = 'section-marker';
+                div.textContent = `[${block.value}]`;
+                div.style.color = regionColor || DEFAULT_COLORS.section;
+                outputEl.appendChild(div);
+
+            } else if (block.type === 'textlabel') {
+                const div = document.createElement('span');
+                div.className = 'text-label';
+                div.textContent = `"${block.value}"`;
+                div.style.color = regionColor || DEFAULT_COLORS.textlabel;
+                if (regionColor) {
+                    div.style.border = `1px solid ${regionColor}`;
+                }
+                outputEl.appendChild(div);
+
+            } else if (block.type === 'icon') {
+                const div = document.createElement('span');
+                div.className = 'sep-icon';
+                const img = document.createElement('img');
+                img.src = `icons/${block.letter}100.png`;
+                img.alt = block.letter;
+                img.style.height = '18px';
+                img.style.width = 'auto';
+                img.style.verticalAlign = 'middle';
+                if (regionColor) {
+                    img.style.filter = `drop-shadow(0 0 2px ${regionColor})`;
+                }
+                div.appendChild(img);
+                outputEl.appendChild(div);
+
+            } else if (block.type === 'region_start') {
+                const div = document.createElement('span');
+                div.className = 'region-marker region-start';
+                const colors = block.numbers.map(n => REGION_COLORS[n]).join(' ');
+                div.textContent = block.value;
+                div.style.color = '#fff';
+                div.style.background = `linear-gradient(90deg, ${colors.split(' ').join(', ')})`;
+                div.style.padding = '0 6px';
+                div.style.borderRadius = '4px';
+                outputEl.appendChild(div);
+            }
+        }
+
         applyFontSize(fontSize);
-
-        // Auto-align separator width
-        requestAnimationFrame(() => {
-            updateSeparatorWidths();
-        });
-
         outputEl.scrollTop = 0;
-    }
-
-    // ============================================================
-    // UPDATE SEPARATOR WIDTH — match content width
-    // ============================================================
-    function updateSeparatorWidths() {
-        const rows = outputEl.querySelectorAll('.music-row');
-        const separators = outputEl.querySelectorAll('.separator-row');
-
-        // Match each separator with its row (they are siblings in same system)
-        let sepIndex = 0;
-        const systems = outputEl.querySelectorAll('.music-system');
-
-        for (let system of systems) {
-            const rowList = system.querySelectorAll('.music-row');
-            const sepList = system.querySelectorAll('.separator-row');
-
-            for (let i = 0; i < Math.min(rowList.length, sepList.length); i++) {
-                const row = rowList[i];
-                const sep = sepList[i];
-                if (row && sep) {
-                    const contentWidth = row.scrollWidth;
-                    sep.style.width = Math.max(contentWidth, 20) + 'px';
-                    sep.style.marginLeft = '0px';
-                    sep.style.marginRight = 'auto';
-                }
-            }
-        }
     }
 
     // ============================================================
@@ -1112,26 +887,18 @@
     function changeFontSize(delta) {
         fontSize = Math.min(32, Math.max(10, fontSize + delta));
         applyFontSize(fontSize);
-        // Re-render with new font size
-        if (currentData) {
-            renderLeadsheet(currentData.content || '');
-        }
     }
 
     function applyFontSize(size) {
         outputEl.style.fontSize = size + 'px';
-        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-repeat1, .sep-repeat2, .sep-default, .region-marker')
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon img')
             .forEach(el => {
-                el.style.fontSize = size + 'px';
+                if (el.tagName === 'IMG') {
+                    el.style.height = (size * 1.25) + 'px';
+                } else {
+                    el.style.fontSize = size + 'px';
+                }
             });
-        document.querySelectorAll('.sep-icon img').forEach(el => {
-            el.style.height = (size * 1.4) + 'px';
-        });
-        document.querySelectorAll('.sep-icon').forEach(el => {
-            el.style.minWidth = (size * 1.6) + 'px';
-            el.style.minHeight = (size * 1.6) + 'px';
-        });
-        setTimeout(updateSeparatorWidths, 100);
     }
 
     // ============================================================
@@ -1266,20 +1033,11 @@
         }
     });
 
-    // Handle resize untuk update separator widths
-    let resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-            if (currentData) {
-                renderLeadsheet(currentData.content || '');
-            }
-        }, 200);
-    });
-
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ Option B: Wrap + separator setiap baris fizikal');
-    console.log('✅ Icon = system breaker, separator stays inline');
+    console.log('✅ Bar line: barline.png');
+    console.log('✅ Double bar line: doublebarline.png');
+    console.log('✅ Repeat start: repeatstart.png');
+    console.log('✅ Repeat end: repeatend.png');
 </script>
 
 </body>
