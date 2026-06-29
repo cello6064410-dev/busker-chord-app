@@ -125,7 +125,7 @@
   const IDLE_TIMEOUT = 30 * 60 * 1000;
 
   // ============================================
-  // CIRCLE OF FIFTHS - WITH SEMITONE MAPPING (FIXED)
+  // CIRCLE OF FIFTHS - WITH SEMITONE MAPPING
   // ============================================
   const circleOfFifths = [
     { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0, semitone: 11, keySig: '♭' },
@@ -157,8 +157,6 @@
   // ============================================
   const sharpScale = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
   const flatScale = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
-  
-  // Neutral scale for fallback
   const neutralScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
   // ============================================
@@ -177,7 +175,7 @@
   const enharmonicLabel = document.getElementById('enharmonicLabel');
 
   // ============================================
-  // FIXED: GET SEMITONE OFFSET
+  // HELPER: GET SEMITONE OFFSET
   // ============================================
   function getSemitoneOffset(currentIndex, originalIndex) {
     const current = circleOfFifths[currentIndex];
@@ -185,17 +183,46 @@
     
     let offset = current.semitone - original.semitone;
     
-    // Ensure correct direction based on circle movement
     const diff = currentIndex - originalIndex;
     if (diff > 0) {
-      // Moving forward in circle
       offset = ((offset % 12) + 12) % 12;
     } else if (diff < 0) {
-      // Moving backward in circle
       offset = -(((12 - offset) % 12) || 0);
     }
     
     return offset;
+  }
+
+  // ============================================
+  // HELPER: Normalize key name
+  // ============================================
+  function normalizeKeyName(key) {
+    if (!key) return 'C';
+    return key.replace(/b/g, '♭').replace(/#/g, '♯');
+  }
+
+  // ============================================
+  // HELPER: Find key data from any format
+  // ============================================
+  function findKeyData(keyName) {
+    if (!keyName) return circleOfFifths[7];
+    
+    const normalized = normalizeKeyName(keyName);
+    
+    let found = circleOfFifths.find(k => 
+      k.major === normalized || 
+      k.minor === normalized
+    );
+    
+    if (!found) {
+      const plain = keyName.replace(/[♭♯]/g, '');
+      found = circleOfFifths.find(k => 
+        k.major.replace(/[♭♯]/g, '') === plain ||
+        k.minor.replace(/[♭♯]/g, '') === plain
+      );
+    }
+    
+    return found || circleOfFifths[7];
   }
 
   // ============================================
@@ -216,23 +243,19 @@
       loginCount: firebase.firestore.FieldValue.increment(1)
     }, { merge: true }).catch(err => console.error('Error updating login:', err));
     
-    // Check URL for song ID
     const urlParams = new URLSearchParams(window.location.search);
     const songId = urlParams.get('id');
 
     if (songId) {
-      // Load specific song
       loadSongsWithCallback(function() {
         const song = songs.find(s => s.id === songId);
         if (song) {
           selectSong(songId);
         } else {
-          // If song not found, go to list
           window.location.href = "songslist.html";
         }
       });
     } else {
-      // No song selected, go to list
       window.location.href = "songslist.html";
     }
   });
@@ -257,7 +280,6 @@
           songs.push(song);
         });
         console.log(`✅ ${songs.length} songs loaded`);
-        // Load first song automatically
         loadFirstSong();
       })
       .catch((error) => {
@@ -305,47 +327,9 @@
   }
 
   // ============================================
-  // GET KEY DATA BY SIGNATURE
+  // SELECT SONG - FIXED: Use keyMajor from database
   // ============================================
-  function getKeyDataBySig(sig) {
-    return circleOfFifths.find(k => k.sig === sig) || circleOfFifths[7];
-  }
-  // ============================================
-  // HELPER: Find key data from any format
-  // ============================================
-  function normalizeKeyName(key) {
-      if (!key) return 'C';
-      return key
-          .replace(/b/g, '♭')
-          .replace(/#/g, '♯');
-  }
-
-  function findKeyData(keyName) {
-      if (!keyName) return circleOfFifths[7];
-      
-      const normalized = normalizeKeyName(keyName);
-      
-      // Try to find in circleOfFifths by major OR minor
-      let found = circleOfFifths.find(k => 
-          k.major === normalized || 
-          k.minor === normalized
-      );
-      
-      // If not found, try without symbols
-      if (!found) {
-          const plain = keyName.replace(/[♭♯]/g, '');
-          found = circleOfFifths.find(k => 
-              k.major.replace(/[♭♯]/g, '') === plain ||
-              k.minor.replace(/[♭♯]/g, '') === plain
-          );
-      }
-      
-      return found || circleOfFifths[7];
-  }
-  // ============================================
-  // SELECT SONG
-  // ============================================
-    function selectSong(songId) {
+  function selectSong(songId) {
     stopScroll();
     currentSongId = songId;
     const song = songs.find(s => s.id === songId);
@@ -382,66 +366,74 @@
   }
 
   // ============================================
-  // FIXED: TRANSPOSE SINGLE NOTE
+  // SLASH CHORD STYLING - ADDED
+  // ============================================
+  function applySlashChordStyling(html) {
+    const chordRows = html.match(/<div class="chord-row">.*?<\/div>/g);
+    if (!chordRows) return html;
+    
+    chordRows.forEach(row => {
+      const styledRow = row.replace(/([A-G][♯♭]?)(maj7|m7|m|dim|aug|sus[24]|add[0-9])?\/?([A-G][♯♭]?)?/g, (match, root, quality, bass) => {
+        if (bass) {
+          return `<span class="slash-chord">${root}${quality || ''}<span class="bass-note">/${bass}</span></span>`;
+        }
+        return match;
+      });
+      html = html.replace(row, styledRow);
+    });
+    
+    return html;
+  }
+
+  // ============================================
+  // TRANSPOSE SINGLE NOTE
   // ============================================
   function transposeSingleNote(noteWithQuality, scale, steps) {
-    // Extract root note (first 1-2 characters)
     const rootMatch = noteWithQuality.match(/^[A-G][♯♭]?/);
     if (!rootMatch) return noteWithQuality;
     
     const root = rootMatch[0];
     const quality = noteWithQuality.substring(root.length);
     
-    // Find root in scale
     let index = scale.indexOf(root);
     if (index === -1) {
-      // Try alternative spelling (♯ ↔ #, ♭ ↔ b)
       const altRoot = root.replace('♯', '#').replace('♭', 'b');
       index = scale.indexOf(altRoot);
     }
     
     if (index === -1) {
-      // Fallback: use neutral scale
       const neutralIndex = neutralScale.indexOf(root);
       if (neutralIndex === -1) return noteWithQuality;
-      
       const newIndex = (neutralIndex + steps) % 12;
       return neutralScale[newIndex] + quality;
     }
     
-    // Transpose
     const newIndex = (index + steps) % 12;
     return scale[newIndex] + quality;
   }
 
   // ============================================
-  // FIXED: TRANSPOSE LYRICS BY SEMITONE
+  // TRANSPOSE LYRICS BY SEMITONE
   // ============================================
   function transposeLyricsBySemitone(lyrics, semitoneOffset) {
-    // Normalize semitone offset to 0-11 for transposition
     const steps = ((semitoneOffset % 12) + 12) % 12;
     
-    // Determine which scale to use based on target key
     const targetKeyData = circleOfFifths[currentKeyIndex];
     const useSharp = targetKeyData.keySig === '♯';
     const scale = useSharp ? sharpScale : flatScale;
     
     return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
-      // Handle slash chords
       const parts = chord.split('/');
       const rootChord = parts[0];
       const bassNote = parts.length > 1 ? parts[1] : null;
       
-      // Transpose root
       let transposedRoot = transposeSingleNote(rootChord, scale, steps);
       
-      // Transpose bass if exists
       let transposedBass = null;
       if (bassNote) {
         transposedBass = transposeSingleNote(bassNote, scale, steps);
       }
       
-      // Combine
       if (transposedBass) {
         return `[${transposedRoot}/${transposedBass}]`;
       }
@@ -450,7 +442,7 @@
   }
 
   // ============================================
-  // FIXED: DISPLAY SONG
+  // DISPLAY SONG - FIXED: Use keyMajor from database
   // ============================================
   function displaySong(song) {
     let lyrics = song.lyrics || song.content || '';
@@ -478,6 +470,7 @@
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
+
   // ============================================
   // UPDATE KEY DISPLAY
   // ============================================
@@ -489,7 +482,7 @@
   }
 
   // ============================================
-  // FIXED: TRANSPOSE FUNCTIONS
+  // TRANSPOSE FUNCTIONS
   // ============================================
   function transposeUp() {
     let newIndex = currentKeyIndex + 1;
@@ -900,6 +893,8 @@
   });
 
   console.log('🎵 Song Viewer Pro loaded!');
+  console.log('✅ Key signature loads from keyMajor field in database');
+  console.log('✅ Slash chord styling added');
   console.log('✅ Transpose system FIXED with proper semitone mapping');
   console.log('Controls:');
   console.log('  ⬆  - Transpose Up');
