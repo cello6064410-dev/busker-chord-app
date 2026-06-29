@@ -318,6 +318,7 @@
         font-family: 'Courier New', monospace;
         transition: color 0.2s;
         display: inline;
+        color: #ffcc00;
     }
 
     .beat {
@@ -328,6 +329,7 @@
         transition: color 0.2s;
         display: inline;
         margin-left: 2px;
+        color: #ffffff;
     }
 
     .section-marker {
@@ -393,6 +395,91 @@
     .region-marker.region-start {
         background: #2a2a4e;
         color: #ffcc00;
+    }
+
+    /* ===== MARKER STYLES ===== */
+    .marker {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 0.9em;
+        font-family: Arial, sans-serif;
+        margin: 0 4px;
+        cursor: default;
+        user-select: none;
+        transition: all 0.2s ease;
+        border-width: 2px;
+        border-style: solid;
+    }
+
+    .marker:hover {
+        transform: scale(1.05);
+        filter: brightness(1.2);
+    }
+
+    .marker:active {
+        transform: scale(0.95);
+    }
+
+    /* Segno - Blue */
+    .segno-marker {
+        color: #4fc3f7;
+        background: rgba(79, 195, 247, 0.1);
+        border-color: #4fc3f7;
+    }
+
+    .segno-marker:hover {
+        background: rgba(79, 195, 247, 0.2);
+        box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+    }
+
+    /* Coda - Red */
+    .coda-marker {
+        color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.1);
+        border-color: #ff6b6b;
+    }
+
+    .coda-marker:hover {
+        background: rgba(255, 107, 107, 0.2);
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    }
+
+    /* To Coda - Yellow */
+    .tocoda-marker {
+        color: #ffd93d;
+        background: rgba(255, 217, 61, 0.1);
+        border-color: #ffd93d;
+    }
+
+    .tocoda-marker:hover {
+        background: rgba(255, 217, 61, 0.2);
+        box-shadow: 0 0 20px rgba(255, 217, 61, 0.3);
+    }
+
+    /* D.S. al Coda - Orange */
+    .ds-marker {
+        color: #ff9f43;
+        background: rgba(255, 159, 67, 0.1);
+        border-color: #ff9f43;
+    }
+
+    .ds-marker:hover {
+        background: rgba(255, 159, 67, 0.2);
+        box-shadow: 0 0 20px rgba(255, 159, 67, 0.3);
+    }
+
+    /* Fine - Green */
+    .fine-marker {
+        color: #69db7c;
+        background: rgba(105, 219, 124, 0.1);
+        border-color: #69db7c;
+    }
+
+    .fine-marker:hover {
+        background: rgba(105, 219, 124, 0.2);
+        box-shadow: 0 0 20px rgba(105, 219, 124, 0.3);
     }
 
     .floating-bar {
@@ -476,6 +563,7 @@
         .phrase { margin-right: 4px; padding: 0 2px; }
         .phrase .sep-icon { min-width: 16px; min-height: 16px; }
         .phrase .sep-icon img { height: 12px; }
+        .marker { font-size: 0.75em; padding: 1px 6px; }
     }
 
     @media (min-width: 769px) {
@@ -526,6 +614,9 @@
         border-bottom-width: 3px !important;
     }
     .fullscreen-mode .phrase {
+        font-size: 18px !important;
+    }
+    .fullscreen-mode .marker {
         font-size: 18px !important;
     }
     
@@ -831,7 +922,7 @@
     });
 
     // ============================================================
-    // LOAD LEADSHEET (FIXED)
+    // LOAD LEADSHEET
     // ============================================================
     function loadLeadsheet(id) {
         currentId = id;
@@ -843,7 +934,6 @@
                     currentData = doc.data();
                     originalContent = currentData.content || '';
                     
-                    // ===== FIX: Get key from database =====
                     const dbKey = currentData.key || 'C';
                     const keyData = findKeyData(dbKey);
                     
@@ -945,9 +1035,6 @@
         applyTranspose(newIndex);
     }
 
-    // ============================================================
-    // APPLY TRANSPOSE (UPDATED)
-    // ============================================================
     function applyTranspose(newIndex) {
         currentKeyIndex = newIndex;
         const keyData = circleOfFifths[currentKeyIndex];
@@ -969,9 +1056,6 @@
         renderKeyGrid();
     }
 
-    // ============================================================
-    // UPDATE KEY DISPLAY (UPDATED)
-    // ============================================================
     function updateKeyDisplay() {
         const keyData = circleOfFifths[currentKeyIndex];
         const sigDisplay = keyData.sig.replace('#', '♯').replace('b', '♭');
@@ -1018,7 +1102,7 @@
     }
 
     // ============================================================
-    // TOKENIZE - DETECT :||(Xva) PATTERN
+    // TOKENIZE - COMPLETE WITH CODA & SEGNO
     // ============================================================
     function tokenize(input) {
         const tokens = [];
@@ -1031,7 +1115,102 @@
                 continue;
             }
 
-            // Detect :||(Xva)...|| pattern as ONE PHRASE
+            // ===== DETECT SEGNO =====
+            // Match: Segno, Segno(1), Segno(1)(2)
+            const segnoMatch = input.substring(i).match(/^Segno(?:\(([0-9]+)\))*/i);
+            if (segnoMatch) {
+                const numbers = [];
+                let temp = segnoMatch[0];
+                let numMatch;
+                while ((numMatch = temp.match(/\(([0-9]+)\)/)) !== null) {
+                    numbers.push(parseInt(numMatch[1]));
+                    temp = temp.replace(numMatch[0], '');
+                }
+                
+                let displayValue = 'Segno';
+                if (numbers.length > 0) {
+                    displayValue += '(' + numbers.join(')(') + ')';
+                }
+                
+                tokens.push({ 
+                    type: 'segno', 
+                    value: displayValue,
+                    numbers: numbers,
+                    region: [...activeRegions]
+                });
+                i += segnoMatch[0].length;
+                continue;
+            }
+
+            // ===== DETECT CODA =====
+            // Match: Coda, Coda (1), Coda (1)(2)
+            const codaMatch = input.substring(i).match(/^Coda\s*(?:\(([0-9]+)\))*/i);
+            if (codaMatch) {
+                const numbers = [];
+                let temp = codaMatch[0];
+                let numMatch;
+                while ((numMatch = temp.match(/\(([0-9]+)\)/)) !== null) {
+                    numbers.push(parseInt(numMatch[1]));
+                    temp = temp.replace(numMatch[0], '');
+                }
+                
+                let displayValue = 'Coda';
+                if (numbers.length > 0) {
+                    displayValue += ' (' + numbers.join(')(') + ')';
+                }
+                
+                tokens.push({ 
+                    type: 'coda', 
+                    value: displayValue,
+                    numbers: numbers,
+                    region: [...activeRegions]
+                });
+                i += codaMatch[0].length;
+                continue;
+            }
+
+            // ===== DETECT To Coda =====
+            // Match: To Coda, ToCoda(1)(2)
+            const toCodaMatch = input.substring(i).match(/^ToCoda(?:\(([0-9]+)\))*|^To Coda/i);
+            if (toCodaMatch) {
+                const numbers = [];
+                let temp = toCodaMatch[0];
+                let numMatch;
+                while ((numMatch = temp.match(/\(([0-9]+)\)/)) !== null) {
+                    numbers.push(parseInt(numMatch[1]));
+                    temp = temp.replace(numMatch[0], '');
+                }
+                
+                let displayValue = 'To Coda';
+                if (numbers.length > 0) {
+                    displayValue += '(' + numbers.join(')(') + ')';
+                }
+                
+                tokens.push({ 
+                    type: 'tocoda', 
+                    value: displayValue,
+                    numbers: numbers,
+                    region: [...activeRegions]
+                });
+                i += toCodaMatch[0].length;
+                continue;
+            }
+
+            // ===== DETECT D.S. al Coda =====
+            if (input.substring(i, i + 11) === 'D.S. al Coda') {
+                tokens.push({ type: 'ds', value: 'D.S. al Coda', region: [...activeRegions] });
+                i += 11;
+                continue;
+            }
+
+            // ===== DETECT Fine =====
+            if (input.substring(i, i + 4) === 'Fine') {
+                tokens.push({ type: 'fine', value: 'Fine', region: [...activeRegions] });
+                i += 4;
+                continue;
+            }
+
+            // ===== DETECT :||(Xva)...|| PATTERN =====
             const endingMatch = input.substring(i).match(/^(:||\(([0-9,]+)va\)[^|]*\|\|)/);
             if (endingMatch) {
                 const fullMatch = endingMatch[1];
@@ -1056,6 +1235,7 @@
                 }
             }
 
+            // ===== DETECT REGION START =====
             const regionStartMatch = input.substring(i).match(/^\(([0-9,]+)va\)/);
             if (regionStartMatch) {
                 const numbersStr = regionStartMatch[1];
@@ -1202,6 +1382,70 @@
         }
 
         for (let t of tokens) {
+            // ===== Handle Segno =====
+            if (t.type === 'segno') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ 
+                    type: 'segno', 
+                    value: t.value,
+                    numbers: t.numbers || [],
+                    region: t.region || []
+                });
+                continue;
+            }
+
+            // ===== Handle Coda =====
+            if (t.type === 'coda') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ 
+                    type: 'coda', 
+                    value: t.value,
+                    numbers: t.numbers || [],
+                    region: t.region || []
+                });
+                continue;
+            }
+
+            // ===== Handle To Coda =====
+            if (t.type === 'tocoda') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ 
+                    type: 'tocoda', 
+                    value: t.value,
+                    numbers: t.numbers || [],
+                    region: t.region || []
+                });
+                continue;
+            }
+
+            // ===== Handle D.S. =====
+            if (t.type === 'ds') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ 
+                    type: 'ds', 
+                    value: t.value,
+                    region: t.region || []
+                });
+                continue;
+            }
+
+            // ===== Handle Fine =====
+            if (t.type === 'fine') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ 
+                    type: 'fine', 
+                    value: t.value,
+                    region: t.region || []
+                });
+                continue;
+            }
+
+            // ===== Handle Phrase =====
             if (t.type === 'phrase') {
                 flushSeparator();
                 flushChord();
@@ -1340,6 +1584,67 @@
         const rColor = region.length > 0 ? REGION_COLORS[region[0]] : null;
         const finalColor = rColor || regionColor;
 
+        // ===== SEGNO =====
+        if (block.type === 'segno') {
+            const div = document.createElement('span');
+            div.className = 'marker segno-marker';
+            const numbers = block.numbers || [];
+            let label = '🔵 Segno';
+            if (numbers.length > 0) {
+                label += '(' + numbers.join(')(') + ')';
+            }
+            div.textContent = label;
+            div.title = 'Segno - Return here';
+            return div;
+        }
+
+        // ===== CODA =====
+        if (block.type === 'coda') {
+            const div = document.createElement('span');
+            div.className = 'marker coda-marker';
+            const numbers = block.numbers || [];
+            let label = '🔴 Coda';
+            if (numbers.length > 0) {
+                label += ' (' + numbers.join(')(') + ')';
+            }
+            div.textContent = label;
+            div.title = 'Coda - Jump here';
+            return div;
+        }
+
+        // ===== TO CODA =====
+        if (block.type === 'tocoda') {
+            const div = document.createElement('span');
+            div.className = 'marker tocoda-marker';
+            const numbers = block.numbers || [];
+            let label = '🟡 To Coda';
+            if (numbers.length > 0) {
+                label += '(' + numbers.join(')(') + ')';
+            }
+            div.textContent = label;
+            div.title = 'To Coda - Jump to Coda';
+            return div;
+        }
+
+        // ===== D.S. al Coda =====
+        if (block.type === 'ds') {
+            const div = document.createElement('span');
+            div.className = 'marker ds-marker';
+            div.textContent = '🟠 D.S. al Coda';
+            div.title = 'Dal Segno al Coda';
+            return div;
+        }
+
+        // ===== Fine =====
+        if (block.type === 'fine') {
+            const div = document.createElement('span');
+            div.className = 'marker fine-marker';
+            div.textContent = '🟢 Fine';
+            div.title = 'Fine - End here';
+            return div;
+        }
+
+        // ===== PHRASE =====
         if (block.type === 'phrase') {
             const phraseDiv = document.createElement('span');
             phraseDiv.className = 'phrase ending-phrase';
@@ -1376,7 +1681,7 @@
                         const chordEl = document.createElement('span');
                         chordEl.className = 'chord';
                         chordEl.textContent = chordText;
-                        chordEl.style.color = finalColor || DEFAULT_COLORS.chord;
+                        chordEl.style.color = '#ffcc00';
                         span.appendChild(chordEl);
                         phraseDiv.appendChild(span);
                         i = j + 1;
@@ -1411,7 +1716,7 @@
                     const span = document.createElement('span');
                     span.className = 'beat';
                     span.textContent = '/';
-                    span.style.color = finalColor || DEFAULT_COLORS.beat;
+                    span.style.color = '#ffffff';
                     phraseDiv.appendChild(span);
                     i++;
                     continue;
@@ -1426,7 +1731,7 @@
                     const span = document.createElement('span');
                     span.className = 'beat';
                     span.textContent = text;
-                    span.style.color = finalColor || DEFAULT_COLORS.beat;
+                    span.style.color = '#ffffff';
                     phraseDiv.appendChild(span);
                 }
             }
@@ -1440,11 +1745,11 @@
             const chordEl = document.createElement('span');
             chordEl.className = 'chord';
             chordEl.textContent = block.chord || '';
-            chordEl.style.color = finalColor || DEFAULT_COLORS.chord;
+            chordEl.style.color = '#ffcc00';
             const beatEl = document.createElement('span');
             beatEl.className = 'beat';
             beatEl.textContent = block.dash || '';
-            beatEl.style.color = finalColor || DEFAULT_COLORS.beat;
+            beatEl.style.color = '#ffffff';
             div.appendChild(chordEl);
             div.appendChild(beatEl);
             return div;
@@ -1454,7 +1759,7 @@
             const span = document.createElement('span');
             span.className = 'beat';
             span.textContent = block.dash || '';
-            span.style.color = finalColor || DEFAULT_COLORS.beat;
+            span.style.color = '#ffffff';
             return span;
         }
 
@@ -1570,13 +1875,16 @@
             if (el.classList.contains('phrase')) {
                 extra = 8;
             }
+            if (el.classList.contains('marker')) {
+                extra = 16;
+            }
             return (text.length * charWidth) + extra + 6;
         }
 
         for (let el of elements) {
             const elWidth = getElementWidth(el);
             
-            if (el.classList && el.classList.contains('phrase')) {
+            if (el.classList && (el.classList.contains('phrase') || el.classList.contains('marker'))) {
                 const groupWidth = el.scrollWidth || elWidth;
                 if (currentRow.length > 0 && (currentRowWidth + groupWidth) > containerWidth) {
                     rows.push(currentRow);
@@ -1716,11 +2024,11 @@
 
     function applyFontSize(size) {
         outputEl.style.fontSize = size + 'px';
-        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon img, .phrase')
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon img, .phrase, .marker')
             .forEach(el => {
                 if (el.tagName === 'IMG') {
                     el.style.height = (size * 1.25) + 'px';
-                } else if (el.classList && el.classList.contains('phrase')) {
+                } else if (el.classList && (el.classList.contains('phrase') || el.classList.contains('marker'))) {
                     el.style.fontSize = size + 'px';
                 } else {
                     el.style.fontSize = size + 'px';
@@ -1895,11 +2203,13 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ PHRASE FIX - :||(2va)...|| is now a single token');
-    console.log('✅ KEY FIX - Key loads from database (Ab/Fm)');
-    console.log('✅ KEY FIX - Key updates on transpose');
-    console.log('✅ Transpose feature with proper semitone mapping');
-    console.log('✅ Slash chord support');
+    console.log('✅ CODA & SEGNO markers added - ALL formats supported');
+    console.log('  Segno, Segno(1), Segno(1)(2)');
+    console.log('  Coda, Coda (1), Coda (1)(2)');
+    console.log('  To Coda, ToCoda(1)(2)');
+    console.log('  D.S. al Coda, Fine');
+    console.log('✅ 2VA phrase fix');
+    console.log('✅ Key signature from database');
     console.log('Keyboard shortcuts:');
     console.log('  Space - Toggle scroll');
     console.log('  ] or } - Transpose up');
