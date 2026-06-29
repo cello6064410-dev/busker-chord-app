@@ -1102,7 +1102,7 @@
     }
 
     // ============================================================
-    // TOKENIZE - COMPLETE WITH CODA & SEGNO
+    // TOKENIZE - FIXED: D.S. al Coda CASE INSENSITIVE
     // ============================================================
     function tokenize(input) {
         const tokens = [];
@@ -1116,7 +1116,6 @@
             }
 
             // ===== DETECT SEGNO =====
-            // Match: Segno, Segno(1), Segno(1)(2)
             const segnoMatch = input.substring(i).match(/^Segno(?:\(([0-9]+)\))*/i);
             if (segnoMatch) {
                 const numbers = [];
@@ -1143,7 +1142,6 @@
             }
 
             // ===== DETECT CODA =====
-            // Match: Coda, Coda (1), Coda (1)(2)
             const codaMatch = input.substring(i).match(/^Coda\s*(?:\(([0-9]+)\))*/i);
             if (codaMatch) {
                 const numbers = [];
@@ -1170,7 +1168,6 @@
             }
 
             // ===== DETECT To Coda =====
-            // Match: To Coda, ToCoda(1)(2)
             const toCodaMatch = input.substring(i).match(/^ToCoda(?:\(([0-9]+)\))*|^To Coda/i);
             if (toCodaMatch) {
                 const numbers = [];
@@ -1196,17 +1193,19 @@
                 continue;
             }
 
-            // ===== DETECT D.S. al Coda =====
-            if (input.substring(i, i + 11) === 'D.S. al Coda') {
+            // ===== FIX: D.S. al Coda (CASE INSENSITIVE) =====
+            const dsMatch = input.substring(i).match(/^D\.?S\.?\s+al\s+Coda/i);
+            if (dsMatch) {
                 tokens.push({ type: 'ds', value: 'D.S. al Coda', region: [...activeRegions] });
-                i += 11;
+                i += dsMatch[0].length;
                 continue;
             }
 
             // ===== DETECT Fine =====
-            if (input.substring(i, i + 4) === 'Fine') {
+            const fineMatch = input.substring(i).match(/^Fine/i);
+            if (fineMatch) {
                 tokens.push({ type: 'fine', value: 'Fine', region: [...activeRegions] });
-                i += 4;
+                i += fineMatch[0].length;
                 continue;
             }
 
@@ -1382,7 +1381,7 @@
         }
 
         for (let t of tokens) {
-            // ===== Handle Segno =====
+            // ===== Segno =====
             if (t.type === 'segno') {
                 flushSeparator();
                 flushChord();
@@ -1395,7 +1394,7 @@
                 continue;
             }
 
-            // ===== Handle Coda =====
+            // ===== Coda =====
             if (t.type === 'coda') {
                 flushSeparator();
                 flushChord();
@@ -1408,7 +1407,7 @@
                 continue;
             }
 
-            // ===== Handle To Coda =====
+            // ===== To Coda =====
             if (t.type === 'tocoda') {
                 flushSeparator();
                 flushChord();
@@ -1421,7 +1420,7 @@
                 continue;
             }
 
-            // ===== Handle D.S. =====
+            // ===== D.S. =====
             if (t.type === 'ds') {
                 flushSeparator();
                 flushChord();
@@ -1433,7 +1432,7 @@
                 continue;
             }
 
-            // ===== Handle Fine =====
+            // ===== Fine =====
             if (t.type === 'fine') {
                 flushSeparator();
                 flushChord();
@@ -1445,7 +1444,7 @@
                 continue;
             }
 
-            // ===== Handle Phrase =====
+            // ===== Phrase =====
             if (t.type === 'phrase') {
                 flushSeparator();
                 flushChord();
@@ -2203,7 +2202,8 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ CODA & SEGNO markers added - ALL formats supported');
+    console.log('✅ CODA & SEGNO markers - ALL formats supported');
+    console.log('✅ D.S. al Coda - CASE INSENSITIVE');
     console.log('  Segno, Segno(1), Segno(1)(2)');
     console.log('  Coda, Coda (1), Coda (1)(2)');
     console.log('  To Coda, ToCoda(1)(2)');
