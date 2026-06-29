@@ -29,7 +29,7 @@
   .section-title { color: #aaa; font-size: 0.8rem; font-family: Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
   .form-group { margin-bottom: 16px; }
   .form-group label { display: block; font-size: 0.9rem; color: #aaa; font-family: Arial, sans-serif; margin-bottom: 6px; }
-  .form-input, .form-select { width: 100%; padding: 12px 14px; background: #0f0f0f; border: 1px solid #2a2a4e; border-radius: 8px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s; }
+  .form-input, .form-select { width: 100%; padding: 12px 14px; background: #0f0f0f; border: 1px solid #2a2a4e; border-radius: 8px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s; font-family: 'Courier New', monospace; }
   .form-input:focus, .form-select:focus { border-color: #ffcc00; }
   .form-select option { background: #1a1a2e; color: #fff; }
   .form-textarea { width: 100%; min-height: 250px; padding: 14px; background: #0f0f0f; border: 1px solid #2a2a4e; border-radius: 8px; color: #fff; font-size: 15px; font-family: 'Courier New', monospace; resize: vertical; outline: none; line-height: 1.6; }
@@ -44,13 +44,71 @@
   .btn-secondary:hover { background: #3a3a6e; }
   .btn-danger { background: #6e2a2a; color: #fff; border: 1px solid #ff4444; display: none; }
   .btn-danger.active { display: inline-block; }
+  .btn-edit { background: #4a2a7e; color: #fff; border: 1px solid #8a4abe; }
+  .btn-edit:hover { background: #5a3a8e; }
   .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
   .btn-group .btn { flex: 0 1 auto; }
   .status-message { padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; font-family: Arial, sans-serif; margin-top: 12px; display: none; }
   .status-message.success { display: block; background: rgba(0,200,83,0.2); color: #00e676; border: 1px solid #00c853; }
   .status-message.error { display: block; background: rgba(255,68,68,0.2); color: #ff4444; border: 1px solid #ff4444; }
   .status-message.info { display: block; background: rgba(79,195,247,0.2); color: #4fc3f7; border: 1px solid #4fc3f7; }
-  @media (max-width: 600px) { body { padding: 10px; } .section { padding: 14px; } .header h1 { font-size: 1.3rem; } .form-textarea { min-height: 180px; font-size: 14px; } .btn { padding: 10px 20px; font-size: 0.9rem; } }
+
+  /* ===== GUIDE BOX ===== */
+  .guide-box {
+    background: #2a2a4e;
+    border: 1px solid #3a3a6e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #ccc;
+  }
+  .guide-box .guide-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+  .guide-box .guide-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .guide-box .guide-item code {
+    color: #ffcc00;
+    background: #1a1a2e;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .guide-box .guide-item .desc {
+    color: #999;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+  }
+  .guide-box .guide-divider {
+    color: #444;
+    padding: 0 4px;
+  }
+  .guide-box .example {
+    color: #4fc3f7;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    margin-top: 4px;
+    border-top: 1px solid #3a3a6e;
+    padding-top: 6px;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .section { padding: 14px; }
+    .header h1 { font-size: 1.3rem; }
+    .form-textarea { min-height: 180px; font-size: 14px; }
+    .btn { padding: 10px 20px; font-size: 0.9rem; }
+    .guide-box { font-size: 12px; padding: 10px 12px; }
+    .guide-box .guide-item code { font-size: 12px; }
+  }
 </style>
 
 <div class="container">
@@ -63,38 +121,82 @@
   </div>
 
   <div class="section">
+    <!-- GUIDE BOX -->
+    <div class="section-title">📋 Format Guide</div>
+    <div class="guide-box">
+      <div class="guide-row">
+        <span class="guide-item"><code>[C]</code> <span class="desc">Chord</span></span>
+        <span class="guide-divider">|</span>
+        <span class="guide-item"><code>[Am]</code> <span class="desc">Minor Chord</span></span>
+        <span class="guide-divider">|</span>
+        <span class="guide-item"><code>[G/B]</code> <span class="desc">Slash Chord</span></span>
+      </div>
+      <div class="guide-row">
+        <span class="guide-item"><code>----</code> <span class="desc">Hold beat</span></span>
+        <span class="guide-divider">|</span>
+        <span class="guide-item"><code>////</code> <span class="desc">4 beats</span></span>
+        <span class="guide-divider">|</span>
+        <span class="guide-item"><code>|</code> <span class="desc">Bar line</span></span>
+      </div>
+      <div class="example">
+        💡 Example: <code style="color:#4fc3f7;">[C]Ra[G]hmat bah[Am]gia, Tu[F]han kurni[G]akan</code>
+        <br />
+        <span style="color:#666; font-size:12px;">→ Place chords inside [ ] before the syllable</span>
+      </div>
+    </div>
+
     <input type="hidden" id="songId" />
+
+    <!-- TITLE -->
     <div class="form-group">
       <label for="title">Song Title</label>
       <input id="title" class="form-input" placeholder="Enter song title..." />
     </div>
+
+    <!-- KEY SIGNATURE with Relative Minor -->
     <div class="form-group">
       <label for="keyMajor">Key Signature</label>
       <select id="keyMajor" class="form-select">
-        <option value="C">C</option><option value="G">G</option><option value="D">D</option>
-        <option value="A">A</option><option value="E">E</option><option value="B">B</option>
-        <option value="F#">F♯</option><option value="C#">C♯</option>
-        <option value="F">F</option><option value="Bb">B♭</option><option value="Eb">E♭</option>
-        <option value="Ab">A♭</option><option value="Db">D♭</option><option value="Gb">G♭</option>
+        <option value="C">C / Am</option>
+        <option value="G">G / Em</option>
+        <option value="D">D / Bm</option>
+        <option value="A">A / F♯m</option>
+        <option value="E">E / C♯m</option>
+        <option value="B">B / G♯m</option>
+        <option value="F#">F♯ / D♯m</option>
+        <option value="C#">C♯ / A♯m</option>
+        <option value="F">F / Dm</option>
+        <option value="Bb">B♭ / Gm</option>
+        <option value="Eb">E♭ / Cm</option>
+        <option value="Ab">A♭ / Fm</option>
+        <option value="Db">D♭ / B♭m</option>
+        <option value="Gb">G♭ / E♭m</option>
       </select>
     </div>
+
+    <!-- LYRICS -->
     <div class="form-group">
       <label for="input">Lyrics with Chords</label>
-      <textarea id="input" class="form-textarea" placeholder="Example: [C]Hello [G]world"></textarea>
-      <small style="color: #666; font-size: 0.8rem; font-family: Arial, sans-serif;">Use [Chord] format. Example: [C]Hello [G]world</small>
+      <textarea id="input" class="form-textarea" placeholder="[C]Hello [G]world"></textarea>
     </div>
 
+    <!-- BUTTONS -->
     <div class="btn-group">
       <button onclick="saveSong()" class="btn btn-primary" id="saveBtn">💾 Save</button>
+      <button onclick="openEditList()" class="btn btn-edit">📝 Edit Song</button>
       <button onclick="deleteSong()" class="btn btn-danger" id="deleteBtn">🗑️ Delete</button>
       <button onclick="clearForm()" class="btn btn-secondary">🔄 Clear</button>
       <button onclick="goBack()" class="btn btn-secondary">⬅ Back</button>
     </div>
+
     <div id="statusMessage" class="status-message"></div>
   </div>
 </div>
 
 <script>
+  // ============================================================
+  // FIREBASE CONFIG
+  // ============================================================
   const firebaseConfig = {
     apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
     authDomain: "busker-chord-app.firebaseapp.com",
@@ -104,6 +206,9 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
+  // ============================================================
+  // DOM REFS
+  // ============================================================
   const titleInput = document.getElementById('title');
   const keyMajorSelect = document.getElementById('keyMajor');
   const lyricsInput = document.getElementById('input');
@@ -113,56 +218,162 @@
   const deleteBtn = document.getElementById('deleteBtn');
   const modeLabel = document.getElementById('modeLabel');
   let currentId = null;
+  let isEditMode = false;
 
+  // ============================================================
+  // AUTH CHECK
+  // ============================================================
   auth.onAuthStateChanged(function(user) {
-    if (!user) { window.location.href = "login.html"; return; }
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
-    if (editId) loadSongForEdit(editId);
+    if (editId) {
+      loadSongForEdit(editId);
+    }
   });
 
+  // ============================================================
+  // LOAD SONG FOR EDIT
+  // ============================================================
   function loadSongForEdit(id) {
     currentId = id;
     songIdInput.value = id;
-    statusMsg.textContent = '⏳ Loading...';
-    statusMsg.className = 'status-message info';
-    db.collection('songs').doc(id).get().then(doc => {
-      if (doc.exists) {
-        const data = doc.data();
-        titleInput.value = data.title || '';
-        lyricsInput.value = data.lyrics || '';
-        keyMajorSelect.value = data.keyMajor || 'C';
-        saveBtn.textContent = '✏️ Update';
-        modeLabel.textContent = `Editing: ${data.title || 'Untitled'}`;
-        deleteBtn.classList.add('active');
-        statusMsg.textContent = '✅ Loaded for editing';
-        statusMsg.className = 'status-message success';
-      } else { statusMsg.textContent = '❌ Not found'; statusMsg.className = 'status-message error'; clearForm(); }
-    }).catch(err => { statusMsg.textContent = '❌ Error: ' + err.message; statusMsg.className = 'status-message error'; });
+    isEditMode = true;
+    showStatus('⏳ Loading...', 'info');
+
+    db.collection('songs').doc(id).get()
+      .then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          titleInput.value = data.title || '';
+          lyricsInput.value = data.lyrics || '';
+          
+          // Set key with proper mapping
+          const keyMap = {
+            'C': 'C', 'G': 'G', 'D': 'D', 'A': 'A', 'E': 'E', 'B': 'B',
+            'F#': 'F#', 'C#': 'C#', 'F': 'F', 'Bb': 'Bb', 'Eb': 'Eb',
+            'Ab': 'Ab', 'Db': 'Db', 'Gb': 'Gb'
+          };
+          const savedKey = data.keyMajor || 'C';
+          keyMajorSelect.value = keyMap[savedKey] || savedKey;
+          
+          saveBtn.textContent = '✏️ Update';
+          modeLabel.textContent = `Editing: ${data.title || 'Untitled'}`;
+          deleteBtn.classList.add('active');
+          showStatus('✅ Loaded for editing', 'success');
+        } else {
+          showStatus('❌ Song not found', 'error');
+          clearForm();
+        }
+      })
+      .catch(err => {
+        showStatus('❌ Error: ' + err.message, 'error');
+      });
   }
 
+  // ============================================================
+  // SAVE SONG
+  // ============================================================
   function saveSong() {
     const title = titleInput.value.trim();
     const lyrics = lyricsInput.value.trim();
     const keyMajor = keyMajorSelect.value;
-    if (!title || !lyrics) { showStatus('⚠️ Please enter title and lyrics', 'error'); return; }
-    const data = { title, lyrics, keyMajor, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+
+    if (!title || !lyrics) {
+      showStatus('⚠️ Please enter title and lyrics', 'error');
+      return;
+    }
+
+    const data = {
+      title: title,
+      lyrics: lyrics,
+      keyMajor: keyMajor,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
     let promise, action;
-    if (currentId) { promise = db.collection('songs').doc(currentId).update(data); action = 'updated'; }
-    else { data.createdAt = firebase.firestore.FieldValue.serverTimestamp(); promise = db.collection('songs').add(data); action = 'saved'; }
+
+    if (currentId) {
+      promise = db.collection('songs').doc(currentId).update(data);
+      action = 'updated';
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      promise = db.collection('songs').add(data);
+      action = 'saved';
+    }
+
     showStatus('⏳ Saving...', 'info');
-    promise.then(() => { showStatus(`✅ Song ${action}!`, 'success'); if (!currentId) clearForm(); })
-      .catch(err => showStatus('❌ Error: ' + err.message, 'error'));
+
+    promise
+      .then(() => {
+        showStatus(`✅ Song ${action}!`, 'success');
+        if (!currentId) clearForm();
+        isEditMode = false;
+      })
+      .catch(err => {
+        showStatus('❌ Error: ' + err.message, 'error');
+      });
   }
 
+  // ============================================================
+  // DELETE SONG
+  // ============================================================
   function deleteSong() {
-    if (!currentId) { showStatus('⚠️ No song to delete', 'error'); return; }
+    if (!currentId) {
+      showStatus('⚠️ No song to delete', 'error');
+      return;
+    }
     if (!confirm('Delete permanently?')) return;
+
     showStatus('⏳ Deleting...', 'info');
-    db.collection('songs').doc(currentId).delete().then(() => { showStatus('✅ Deleted!', 'success'); clearForm(); })
-      .catch(err => showStatus('❌ Delete failed: ' + err.message, 'error'));
+    db.collection('songs').doc(currentId).delete()
+      .then(() => {
+        showStatus('✅ Deleted!', 'success');
+        clearForm();
+      })
+      .catch(err => {
+        showStatus('❌ Delete failed: ' + err.message, 'error');
+      });
   }
 
+  // ============================================================
+  // ===== EDIT SONG - Open songslist.html and auto-load =====
+  // ============================================================
+  function openEditList() {
+    // Store current URL to return after selection
+    const returnUrl = window.location.href;
+    sessionStorage.setItem('returnToCreate', returnUrl);
+    
+    // Open songslist.html in a new window or same window
+    // Option A: Open in same window (user will come back)
+    window.location.href = "songslist.html?mode=select&return=create";
+  }
+
+  // ============================================================
+  // ===== AUTO-LOAD AFTER SELECTION =====
+  // ============================================================
+  // Check if returning from songslist.html with selected ID
+  function checkForSelectedSong() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedId = urlParams.get('selected');
+    
+    if (selectedId) {
+      // Clean URL to avoid reload issues
+      const newUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, newUrl);
+      
+      // Load the selected song
+      loadSongForEdit(selectedId);
+      showStatus('✅ Song loaded from list', 'success');
+    }
+  }
+
+  // ============================================================
+  // CLEAR FORM
+  // ============================================================
   function clearForm() {
     currentId = null;
     songIdInput.value = '';
@@ -172,6 +383,7 @@
     saveBtn.textContent = '💾 Save';
     modeLabel.textContent = 'Create a new song';
     deleteBtn.classList.remove('active');
+    isEditMode = false;
     showStatus('', '');
     if (window.history && window.history.replaceState) {
       const url = window.location.href.split('?')[0];
@@ -180,20 +392,49 @@
     titleInput.focus();
   }
 
+  // ============================================================
+  // STATUS MESSAGE
+  // ============================================================
   function showStatus(msg, type) {
     statusMsg.textContent = msg;
     statusMsg.className = 'status-message';
     if (msg && type) statusMsg.classList.add(type);
   }
 
-  function goBack() { window.location.href = "songslist.html"; }
-  function goHome() { window.location.href = "index.html"; }
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+  function goBack() {
+    window.location.href = "songslist.html";
+  }
 
+  function goHome() {
+    window.location.href = "index.html";
+  }
+
+  // ============================================================
+  // INIT
+  // ============================================================
   document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
-    if (editId && auth.currentUser) loadSongForEdit(editId);
+    const selectedId = urlParams.get('selected');
+    
+    if (selectedId) {
+      // Auto-load from selection
+      const newUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, newUrl);
+      loadSongForEdit(selectedId);
+      showStatus('✅ Song loaded from list', 'success');
+    } else if (editId && auth.currentUser) {
+      loadSongForEdit(editId);
+    }
   });
+
+  console.log('🎵 Create Song loaded!');
+  console.log('📝 Edit button → opens songslist.html');
+  console.log('🔄 Auto-load selected song on return');
 </script>
+
 </body>
 </html>
