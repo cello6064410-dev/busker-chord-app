@@ -30,7 +30,7 @@
       color: #ffcc00;
       margin-bottom: 0 !important;
       padding-bottom: 0 !important;
-      line-height: 1.2 !important;
+      line-height: 1.0 !important;
     }
 
     .lyric-row {
@@ -39,11 +39,11 @@
       color: #ffffff;
       margin-top: 0 !important;
       padding-top: 0 !important;
-      line-height: 1.2 !important;
+      line-height: 1.0 !important;
     }
 
     #output {
-      line-height: 1.2 !important;
+      line-height: 1.0 !important;
     }
 
     /* Slash chord styling */
@@ -739,9 +739,9 @@
       
       // ===== FIX: Close spacing - no margins, line-height 1.2 =====
       if (chordMap.length > 0) {
-        result.push(`<div class="chord-row" style="margin-bottom:0; padding-bottom:0; line-height:1.2;">${chordLine}</div>`);
+        result.push(`<div class="chord-row" style="margin-bottom:0; padding-bottom:0; line-height:1.0;">${chordLine}</div>`);
       }
-      result.push(`<div class="lyric-row" style="margin-top:0; padding-top:0; line-height:1.2;">${lyricLine}</div>`);
+      result.push(`<div class="lyric-row" style="margin-top:0; padding-top:0; line-height:1.0;">${lyricLine}</div>`);
     }
     return result.join('\n');
   }
@@ -758,7 +758,7 @@
     outputEl.style.fontSize = size + 'px';
     document.querySelectorAll('.chord-row, .lyric-row').forEach(el => {
       el.style.fontSize = size + 'px';
-      el.style.lineHeight = '1.2';
+      el.style.lineHeight = '1.0';
     });
   }
 
