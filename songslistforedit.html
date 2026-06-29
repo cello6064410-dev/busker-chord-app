@@ -116,7 +116,7 @@
 
     function selectSong(songId) {
         sessionStorage.setItem('returnToCreate', window.location.href);
-        window.location.href = "createsong.html?selected=" + songId;
+        window.location.href = "create.html?selected=" + songId;
     }
 
     function escapeHtml(text) {
@@ -126,7 +126,7 @@
     }
 
     function goBack() {
-        window.location.href = "createsong.html";
+        window.location.href = "create.html";
     }
 </script>
 
