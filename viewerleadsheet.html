@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Leadsheet Viewer</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<style>
+    /* ===== ALL YOUR EXISTING STYLES HERE ===== */
+    /* (Keep all your styles exactly as they are) */
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #0f0f0f;
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding-bottom: 80px;
+    }
+
+    .header {
+        flex-shrink: 0;
+        text-align: center;
+        padding: 5px 0;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #2a2a4e;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 5px;
+    }
+
+    .header-top h2 {
+        font-size: 1.1rem;
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+        margin: 0;
+    }
+
+    .header-top .btn-group {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .header-btn {
+        background: #2a2a4e;
+        border: none;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-height: 36px;
+        font-family: Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: background 0.2s;
+    }
+
+    .header-btn:hover {
+        background: #3a3a6e;
+    }
+
+    .header-btn.logout {
+        background: #4a2a2a;
+    }
+
+    .header-btn.logout:hover {
+        background: #5a3a3a;
+    }
+
+    .info-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 4px 0 8px 0;
+    }
+
+    .info-bar #songTitle {
+        font-size: 1rem;
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+        margin: 0;
+    }
+
+    .info-bar #keyDisplay {
+        color: #00ffcc;
+        font-size: 0.85rem;
+        font-family: Arial, sans-serif;
+        background: #1a1a2e;
+        padding: 2px 12px;
+        border-radius: 12px;
+        border: 1px solid #2a2a4e;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .info-bar #keyDisplay:hover {
+        background: #2a2a4e;
+    }
+
+    .info-bar .transpose-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: #1a1a2e;
+        padding: 2px 8px;
+        border-radius: 16px;
+        border: 1px solid #2a2a4e;
+    }
+
+    .info-bar .transpose-group button {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 2px 6px;
+        font-weight: bold;
+        min-height: 28px;
+        min-width: 28px;
+        font-family: 'Courier New', monospace;
+        transition: color 0.2s, transform 0.1s;
+    }
+
+    .info-bar .transpose-group button:active {
+        transform: scale(0.85);
+    }
+
+    .info-bar .transpose-group button.sharp {
+        color: #ffcc00;
+    }
+
+    .info-bar .transpose-group button.sharp:hover {
+        color: #ffd633;
+    }
+
+    .info-bar .transpose-group button.flat {
+        color: #4fc3f7;
+    }
+
+    .info-bar .transpose-group button.flat:hover {
+        color: #6dd5fa;
+    }
+
+    .info-bar .transpose-group .divider {
+        color: #444;
+        font-size: 0.8rem;
+    }
+
+    /* ============================================================
+       OUTPUT — LINE-BASED RENDERING WITH WRAP (OPTION B)
+       ============================================================ */
+    #output {
+        flex: 1;
+        background: #0a0a0a;
+        border-radius: 10px;
+        padding: 16px;
+        min-height: 200px;
+        border: 1px solid #1a1a2e;
+        font-family: 'Courier New', monospace;
+        overflow-y: auto;
+        line-height: 1.8;
+        align-content: flex-start;
+    }
+
+    #output .loading-text {
+        color: #666;
+        font-family: Arial, sans-serif;
+        font-size: 0.9rem;
+        width: 100%;
+        text-align: center;
+        padding: 40px 0;
+    }
+
+    /* ----- MUSIC SYSTEM (kumpulan baris yang di-wrap) ----- */
+    .music-system {
+        display: flex;
+        flex-direction: column;
+        gap: 0px;
+        margin-bottom: 2px;
+    }
+
+    /* ----- MUSIC ROW (baris fizikal yang di-wrap) ----- */
+    .music-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0;
+        padding: 2px 2px 0px 2px;
+        min-height: 28px;
+        width: 100%;
+    }
+
+    .music-row > * {
+        margin-right: 6px;
+        flex-shrink: 0;
+    }
+
+    .music-row > *:last-child {
+        margin-right: 0;
+    }
+
+    /* ----- SEPARATOR ROW — untuk setiap baris fizikal ----- */
+    .separator-row {
+        width: 100%;
+        border-bottom: 2px solid #4fc3f7;
+        opacity: 0.25;
+        margin: 1px 0 3px 0;
+        padding: 0;
+        height: 4px;
+        transition: width 0.05s ease;
+    }
+
+    /* ----- INDIVIDUAL ELEMENTS ----- */
+    .chord-block {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        min-width: 20px;
+        line-height: 1.2;
+    }
+
+    .chord {
+        font-weight: bold;
+        font-size: 16px;
+        font-family: 'Courier New', monospace;
+        transition: color 0.2s;
+        display: inline;
+    }
+
+    .beat {
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        letter-spacing: 1px;
+        white-space: nowrap;
+        transition: color 0.2s;
+        display: inline;
+        margin-left: 2px;
+    }
+
+    .section-marker {
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        min-width: 20px;
+        font-weight: bold;
+        font-size: 16px;
+        font-family: 'Courier New', monospace;
+        transition: color 0.2s;
+    }
+
+    .text-label {
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        font-weight: bold;
+        font-size: 16px;
+        font-family: 'Courier New', monospace;
+        background: #2a2a4e;
+        padding: 0 6px;
+        border-radius: 4px;
+        transition: color 0.2s, background 0.2s;
+    }
+
+    .sep-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        min-width: 28px;
+        min-height: 28px;
+        padding: 0 4px;
+        flex-shrink: 0;
+    }
+
+    .sep-icon img {
+        height: 20px;
+        width: auto;
+        vertical-align: middle;
+        display: block;
+    }
+
+    .ending-marker {
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        font-weight: bold;
+        font-size: 16px;
+        font-family: 'Courier New', monospace;
+        transition: color 0.2s;
+    }
+
+    .region-marker {
+        display: inline-block;
+        text-align: center;
+        margin: 0 2px;
+        vertical-align: middle;
+        font-weight: bold;
+        font-size: 16px;
+        font-family: 'Courier New', monospace;
+        padding: 0 4px;
+        border-radius: 4px;
+        transition: color 0.2s, background 0.2s;
+    }
+
+    .region-marker.region-start {
+        background: #2a2a4e;
+        color: #ffcc00;
+    }
+
+    .floating-bar {
+        position: fixed;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        background: rgba(15, 15, 15, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 8px 12px;
+        border-radius: 14px;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+        border: 1px solid #2a2a2a;
+        flex-wrap: nowrap;
+    }
+
+    .floating-bar button {
+        font-size: 1rem;
+        padding: 8px 12px;
+        min-width: 44px;
+        min-height: 44px;
+        background: #1a1a2e;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        transition: background 0.2s, transform 0.1s;
+    }
+
+    .floating-bar button:active {
+        background: #2a2a4e;
+        transform: scale(0.92);
+    }
+
+    .floating-bar button:hover {
+        background: #2a2a4e;
+    }
+
+    .floating-bar button.play-btn {
+        background: #2a5a2e;
+    }
+
+    .floating-bar button.play-btn:hover {
+        background: #3a6a3e;
+    }
+
+    .floating-bar button.stop-btn {
+        background: #4a2a2a;
+    }
+
+    .floating-bar button.stop-btn:hover {
+        background: #5a3a3a;
+    }
+
+    @media (max-width: 600px) {
+        body { padding: 6px; }
+        .container { padding-bottom: 75px; }
+        .header-top h2 { font-size: 0.95rem; }
+        .header-btn { font-size: 0.8rem; padding: 4px 8px; min-height: 32px; }
+        .info-bar #songTitle { font-size: 0.85rem; }
+        .info-bar #keyDisplay { font-size: 0.75rem; padding: 1px 8px; }
+        #output { padding: 10px; font-size: 14px; gap: 1px 3px; }
+        .chord { font-size: 14px; }
+        .beat { font-size: 14px; }
+        .text-label { font-size: 14px; }
+        .section-marker { font-size: 14px; }
+        .sep-repeat1, .sep-repeat2, .sep-default { font-size: 14px; }
+        .music-row > * { margin-right: 4px; }
+        .separator-row { height: 3px; border-bottom-width: 2px; }
+        .sep-icon { min-width: 24px; min-height: 24px; padding: 0 4px; }
+        .sep-icon img { height: 16px; }
+        .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
+        .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
+    }
+
+    @media (min-width: 769px) {
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+        #output { min-height: 300px; padding: 20px; gap: 2px 6px; }
+        .floating-bar { gap: 10px; padding: 10px 20px; }
+        .floating-bar button { padding: 10px 18px; min-width: 50px; }
+        .sep-icon img { height: 20px; }
+    }
+
+    .fullscreen-mode .header,
+    .fullscreen-mode .info-bar,
+    .fullscreen-mode .floating-bar {
+        display: none !important;
+    }
+
+    .fullscreen-mode .container {
+        padding: 0 !important;
+        height: 100vh !important;
+    }
+
+    .fullscreen-mode #output {
+        border-radius: 0 !important;
+        border: none !important;
+        min-height: 100vh !important;
+        padding: 20px 15px !important;
+        font-size: 18px !important;
+        background: #0f0f0f !important;
+    }
+
+    .fullscreen-mode .chord {
+        font-size: 18px !important;
+    }
+    .fullscreen-mode .beat {
+        font-size: 18px !important;
+    }
+    .fullscreen-mode .text-label {
+        font-size: 18px !important;
+    }
+    .fullscreen-mode .section-marker {
+        font-size: 18px !important;
+    }
+    .fullscreen-mode .sep-icon img {
+        height: 24px !important;
+    }
+    .fullscreen-mode .separator-row {
+        height: 6px !important;
+        border-bottom-width: 3px !important;
+    }
+    
+    /* Key display popup */
+    .key-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1a1a2e;
+        border: 2px solid #2a2a4e;
+        border-radius: 16px;
+        padding: 24px;
+        z-index: 99999;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+        display: none;
+    }
+    
+    .key-popup.show {
+        display: block;
+    }
+    
+    .key-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #2a2a4e;
+    }
+    
+    .key-popup-header h2 {
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .key-popup-close {
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 4px 8px;
+        transition: color 0.2s;
+    }
+    
+    .key-popup-close:hover {
+        color: #fff;
+    }
+    
+    .key-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    
+    .key-item {
+        padding: 8px 12px;
+        background: #0f0f0f;
+        border: 1px solid #2a2a4e;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        color: #aaa;
+    }
+    
+    .key-item:hover {
+        background: #2a2a4e;
+        border-color: #4a4a6e;
+        color: #fff;
+    }
+    
+    .key-item.active {
+        background: #2a4a2e;
+        border-color: #4fc3f7;
+        color: #ffcc00;
+        font-weight: bold;
+    }
+    
+    .key-item .key-sig {
+        color: #666;
+        font-size: 0.7rem;
+        display: block;
+        margin-top: 2px;
+    }
+    
+    .key-item.active .key-sig {
+        color: #4fc3f7;
+    }
+    
+    .key-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 99998;
+        display: none;
+    }
+    
+    .key-popup-overlay.show {
+        display: block;
+    }
+</style>
+
+<div class="container">
+
+    <div class="header">
+        <div class="header-top">
+            <h2>🎵 Leadsheet Viewer</h2>
+            <div class="btn-group">
+                <button onclick="openList()" class="header-btn" title="Leadsheet List">📋 List</button>
+                <button onclick="goHome()" class="header-btn" title="Go Home">🏠</button>
+                <button onclick="logoutUser()" class="header-btn logout" title="Logout">🚪</button>
+            </div>
+        </div>
+        <div class="info-bar">
+            <span id="songTitle">No Leadsheet Loaded</span>
+            <span id="keyDisplay" onclick="openKeyPopup()" title="Click to change key">Key: C</span>
+            <div class="transpose-group">
+                <button onclick="transposeUp()" class="sharp" title="Transpose Up (↑)">♯+</button>
+                <span class="divider">|</span>
+                <button onclick="transposeDown()" class="flat" title="Transpose Down (↓)">♭−</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="output">
+        <div class="loading-text">⏳ Loading leadsheet...</div>
+    </div>
+
+    <div class="floating-bar">
+        <button onclick="changeFontSize(2)" title="Increase Font">A+</button>
+        <button onclick="changeFontSize(-2)" title="Decrease Font">A−</button>
+        <button onclick="toggleScroll()" class="play-btn" id="playBtn" title="Start Auto-Scroll">▶</button>
+        <button onclick="stopScroll()" class="stop-btn" id="stopBtn" title="Stop Auto-Scroll">⏹</button>
+        <button onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+    </div>
+
+</div>
+
+<!-- Key Selection Popup -->
+<div class="key-popup-overlay" id="keyOverlay" onclick="closeKeyPopup()"></div>
+<div class="key-popup" id="keyPopup">
+    <div class="key-popup-header">
+        <h2>🎵 Select Key</h2>
+        <button class="key-popup-close" onclick="closeKeyPopup()">✕</button>
+    </div>
+    <div class="key-grid" id="keyGrid">
+        <!-- Keys will be rendered here -->
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // FIREBASE CONFIG
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+        authDomain: "busker-chord-app.firebaseapp.com",
+        projectId: "busker-chord-app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ============================================================
+    // CIRCLE OF FIFTHS WITH SEMITONE MAPPING
+    // ============================================================
+    const circleOfFifths = [
+        { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0, semitone: 11, keySig: '♭' },
+        { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1, semitone: 6, keySig: '♭' },
+        { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2, semitone: 1, keySig: '♭' },
+        { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3, semitone: 8, keySig: '♭' },
+        { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4, semitone: 3, keySig: '♭' },
+        { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5, semitone: 10, keySig: '♭' },
+        { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6, semitone: 5, keySig: '♭' },
+        { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7, semitone: 0, keySig: '' },
+        { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8, semitone: 7, keySig: '♯' },
+        { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9, semitone: 2, keySig: '♯' },
+        { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10, semitone: 9, keySig: '♯' },
+        { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11, semitone: 4, keySig: '♯' },
+        { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12, semitone: 11, keySig: '♯' },
+        { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13, semitone: 6, keySig: '♯' },
+        { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14, semitone: 1, keySig: '♯' }
+    ];
+
+    const sharpScale = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+    const flatScale = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+    const neutralScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    // ============================================================
+    // GLOBALS
+    // ============================================================
+    let currentData = null;
+    let currentId = null;
+    let currentKeyIndex = 7; // Default C
+    let currentKey = 'C';
+    let originalKey = 'C';
+    let fontSize = 16;
+    let scrollInterval = null;
+    let isScrolling = false;
+    let scrollSpeed = 0.4;
+    let originalContent = ''; // Store original content for transposition
+
+    const REGION_COLORS = {
+        1: '#ff6b6b',
+        2: '#69db7c',
+        3: '#4fc3f7',
+        4: '#ffd93d'
+    };
+
+    const DEFAULT_COLORS = {
+        chord: '#ffcc00',
+        beat: '#ffffff',
+        separator: '#666',
+        repeat1: '#4fc3f7',
+        repeat2: '#69db7c',
+        section: '#b197fc',
+        textlabel: '#ffffff',
+        ending: '#ff6b6b'
+    };
+
+    const ICON_MAP = {
+        '|': 'barline.png',
+        '||': 'doublebarline.png',
+        '||:': 'repeatstart.png',
+        ':||': 'repeatend.png',
+        ':.|': 'repeatend.png'
+    };
+
+    // ============================================================
+    // DOM REFS
+    // ============================================================
+    const outputEl = document.getElementById('output');
+    const songTitleEl = document.getElementById('songTitle');
+    const keyDisplayEl = document.getElementById('keyDisplay');
+    const playBtn = document.getElementById('playBtn');
+    const keyPopup = document.getElementById('keyPopup');
+    const keyOverlay = document.getElementById('keyOverlay');
+    const keyGrid = document.getElementById('keyGrid');
+
+    // ============================================================
+    // AUTH CHECK
+    // ============================================================
+    auth.onAuthStateChanged(function(user) {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        if (id) {
+            loadLeadsheet(id);
+        } else {
+            window.location.href = "leadsheetslist.html";
+        }
+    });
+
+    // ============================================================
+    // LOAD LEADSHEET
+    // ============================================================
+    function loadLeadsheet(id) {
+        currentId = id;
+        outputEl.innerHTML = '<div class="loading-text">⏳ Loading leadsheet...</div>';
+
+        db.collection('leadsheets').doc(id).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    currentData = doc.data();
+                    originalContent = currentData.content || '';
+                    currentKey = currentData.key || 'C';
+                    originalKey = currentKey;
+                    
+                    // Find key index
+                    const keyData = circleOfFifths.find(k => k.major === currentKey);
+                    if (keyData) {
+                        currentKeyIndex = keyData.index;
+                    }
+                    
+                    songTitleEl.textContent = currentData.title || 'Untitled';
+                    updateKeyDisplay();
+                    renderLeadsheet(originalContent);
+                } else {
+                    outputEl.innerHTML = '<div class="loading-text">❌ Leadsheet not found</div>';
+                }
+            })
+            .catch((err) => {
+                outputEl.innerHTML = `<div class="loading-text">❌ Error: ${err.message}</div>`;
+            });
+    }
+
+    // ============================================================
+    // TRANSPOSE FUNCTIONS
+    // ============================================================
+    function getSemitoneOffset(currentIndex, originalIndex) {
+        const current = circleOfFifths[currentIndex];
+        const original = circleOfFifths[originalIndex];
+        
+        let offset = current.semitone - original.semitone;
+        
+        const diff = currentIndex - originalIndex;
+        if (diff > 0) {
+            offset = ((offset % 12) + 12) % 12;
+        } else if (diff < 0) {
+            offset = -(((12 - offset) % 12) || 0);
+        }
+        
+        return offset;
+    }
+
+    function transposeSingleNote(noteWithQuality, scale, steps) {
+        const rootMatch = noteWithQuality.match(/^[A-G][♯♭]?/);
+        if (!rootMatch) return noteWithQuality;
+        
+        const root = rootMatch[0];
+        const quality = noteWithQuality.substring(root.length);
+        
+        let index = scale.indexOf(root);
+        if (index === -1) {
+            const altRoot = root.replace('♯', '#').replace('♭', 'b');
+            index = scale.indexOf(altRoot);
+        }
+        
+        if (index === -1) {
+            const neutralIndex = neutralScale.indexOf(root);
+            if (neutralIndex === -1) return noteWithQuality;
+            const newIndex = (neutralIndex + steps) % 12;
+            return neutralScale[newIndex] + quality;
+        }
+        
+        const newIndex = (index + steps) % 12;
+        return scale[newIndex] + quality;
+    }
+
+    function transposeContent(content, semitoneOffset) {
+        const steps = ((semitoneOffset % 12) + 12) % 12;
+        
+        const targetKeyData = circleOfFifths[currentKeyIndex];
+        const useSharp = targetKeyData.keySig === '♯';
+        const scale = useSharp ? sharpScale : flatScale;
+        
+        // Transpose chords inside brackets [chord]
+        return content.replace(/\[([^\]]+)\]/g, (match, chord) => {
+            const parts = chord.split('/');
+            const rootChord = parts[0];
+            const bassNote = parts.length > 1 ? parts[1] : null;
+            
+            let transposedRoot = transposeSingleNote(rootChord, scale, steps);
+            
+            let transposedBass = null;
+            if (bassNote) {
+                transposedBass = transposeSingleNote(bassNote, scale, steps);
+            }
+            
+            if (transposedBass) {
+                return `[${transposedRoot}/${transposedBass}]`;
+            }
+            return `[${transposedRoot}]`;
+        });
+    }
+
+    function transposeUp() {
+        let newIndex = currentKeyIndex + 1;
+        if (newIndex >= circleOfFifths.length) newIndex = circleOfFifths.length - 1;
+        applyTranspose(newIndex);
+    }
+
+    function transposeDown() {
+        let newIndex = currentKeyIndex - 1;
+        if (newIndex < 0) newIndex = 0;
+        applyTranspose(newIndex);
+    }
+
+    function applyTranspose(newIndex) {
+        currentKeyIndex = newIndex;
+        const keyData = circleOfFifths[currentKeyIndex];
+        currentKey = keyData.major;
+        
+        updateKeyDisplay();
+        
+        // Find original key index
+        const originalKeyData = circleOfFifths.find(k => k.major === originalKey);
+        const originalIndex = originalKeyData ? originalKeyData.index : 7;
+        
+        const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
+        
+        if (semitoneOffset !== 0) {
+            const transposed = transposeContent(originalContent, semitoneOffset);
+            renderLeadsheet(transposed);
+        } else {
+            renderLeadsheet(originalContent);
+        }
+        
+        // Update key popup
+        renderKeyGrid();
+    }
+
+    function updateKeyDisplay() {
+        const keyData = circleOfFifths[currentKeyIndex];
+        const sigDisplay = keyData.sig.replace('#', '♯').replace('b', '♭');
+        keyDisplayEl.textContent = `Key: ${keyData.major} / ${keyData.minor}`;
+    }
+
+    // ============================================================
+    // KEY POPUP
+    // ============================================================
+    function openKeyPopup() {
+        keyPopup.classList.add('show');
+        keyOverlay.classList.add('show');
+        renderKeyGrid();
+    }
+
+    function closeKeyPopup() {
+        keyPopup.classList.remove('show');
+        keyOverlay.classList.remove('show');
+    }
+
+    function renderKeyGrid() {
+        keyGrid.innerHTML = '';
+        
+        circleOfFifths.forEach((key) => {
+            const div = document.createElement('div');
+            div.className = 'key-item';
+            if (key.index === currentKeyIndex) {
+                div.classList.add('active');
+            }
+            
+            const sigDisplay = key.sig.replace('#', '♯').replace('b', '♭');
+            div.innerHTML = `
+                ${key.major} / ${key.minor}
+                <span class="key-sig">${sigDisplay}</span>
+            `;
+            
+            div.onclick = () => {
+                applyTranspose(key.index);
+                closeKeyPopup();
+            };
+            
+            keyGrid.appendChild(div);
+        });
+    }
+
+    // ============================================================
+    // TOKENIZE
+    // ============================================================
+    function tokenize(input) {
+        const tokens = [];
+        let i = 0;
+        let activeRegions = [];
+
+        while (i < input.length) {
+            if (input[i] === ' ' || input[i] === '\t') {
+                i++;
+                continue;
+            }
+
+            const regionStartMatch = input.substring(i).match(/^\(([0-9,]+)va\)/);
+            if (regionStartMatch) {
+                const numbers = regionStartMatch[1].split(',').map(Number);
+                const validNumbers = numbers.filter(n => n >= 1 && n <= 4);
+                if (validNumbers.length > 0) {
+                    for (let n of validNumbers) {
+                        if (!activeRegions.includes(n)) activeRegions.push(n);
+                    }
+                    tokens.push({ type: 'region_start', value: regionStartMatch[0], numbers: validNumbers });
+                    i += regionStartMatch[0].length;
+                    continue;
+                }
+            }
+
+            if (input.substring(i, i + 3) === '(.)') {
+                tokens.push({ type: 'region_end' });
+                activeRegions = [];
+                i += 3;
+                continue;
+            }
+
+            const iconMatch = input.substring(i).match(/^\|([A-Za-z])\|/);
+            if (iconMatch) {
+                const letter = iconMatch[1].toUpperCase();
+                tokens.push({ type: 'icon', letter: letter, region: [...activeRegions] });
+                i += iconMatch[0].length;
+                continue;
+            }
+
+            if (input[i] === '"') {
+                const j = input.indexOf('"', i + 1);
+                if (j !== -1) {
+                    const text = input.substring(i + 1, j);
+                    tokens.push({ type: 'textlabel', value: text, region: [...activeRegions] });
+                    i = j + 1;
+                    continue;
+                }
+            }
+
+            if (input.substring(i, i + 3) === '||:') {
+                tokens.push({ type: 'separator', value: '||:', section: 'repeat_start', region: [...activeRegions] });
+                i += 3;
+                continue;
+            }
+
+            if (input.substring(i, i + 3) === ':||') {
+                tokens.push({ type: 'separator', value: ':||', section: 'repeat_end', region: [...activeRegions] });
+                i += 3;
+                continue;
+            }
+
+            if (input.substring(i, i + 3) === ':.|') {
+                tokens.push({ type: 'separator', value: ':.|', section: 'repeat_end', region: [...activeRegions] });
+                i += 3;
+                continue;
+            }
+
+            if (input.substring(i, i + 2) === '||') {
+                tokens.push({ type: 'separator', value: '||', section: 'double_bar', region: [...activeRegions] });
+                i += 2;
+                continue;
+            }
+
+            if (input[i] === '|') {
+                tokens.push({ type: 'separator', value: '|', section: 'bar', region: [...activeRegions] });
+                i++;
+                continue;
+            }
+
+            if (input[i] === '[') {
+                const j = input.indexOf(']', i);
+                if (j !== -1) {
+                    const content = input.substring(i + 1, j);
+                    if (/^[0-9]+$/.test(content)) {
+                        tokens.push({ type: 'section', value: content, region: [...activeRegions] });
+                        i = j + 1;
+                        continue;
+                    } else {
+                        tokens.push({ type: 'chord', value: content, region: [...activeRegions] });
+                        i = j + 1;
+                        continue;
+                    }
+                }
+            }
+
+            if (input.substring(i, i + 4) === '////') {
+                tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
+                i += 4;
+                continue;
+            }
+
+            if (input.substring(i, i + 2) === '//') {
+                tokens.push({ type: 'slash', value: '//', region: [...activeRegions] });
+                i += 2;
+                continue;
+            }
+
+            if (input[i] === '/') {
+                tokens.push({ type: 'slash', value: '/', region: [...activeRegions] });
+                i++;
+                continue;
+            }
+
+            i++;
+        }
+
+        return tokens;
+    }
+
+    // ============================================================
+    // BUILD BLOCKS
+    // ============================================================
+    function buildBlocks(tokens) {
+        const blocks = [];
+        let currentChord = null;
+        let currentSlash = '';
+        let currentRegion = [];
+        let pendingSeparator = null;
+        let pendingSeparatorSection = 'default';
+        let pendingSeparatorRegion = [];
+
+        function flushChord() {
+            if (currentChord !== null) {
+                const slash = currentSlash || '';
+                blocks.push({ type: 'chord-block', chord: currentChord, dash: slash, region: [...currentRegion] });
+                currentChord = null;
+                currentSlash = '';
+                currentRegion = [];
+            }
+        }
+
+        function flushSeparator() {
+            if (pendingSeparator !== null) {
+                blocks.push({ type: 'separator', value: pendingSeparator, section: pendingSeparatorSection, region: [
+                        ...pendingSeparatorRegion
+                    ] });
+                pendingSeparator = null;
+                pendingSeparatorSection = 'default';
+                pendingSeparatorRegion = [];
+            }
+        }
+
+        for (let t of tokens) {
+            if (t.type === 'chord') {
+                flushSeparator();
+                flushChord();
+                currentChord = t.value;
+                currentRegion = t.region || [];
+            } else if (t.type === 'slash') {
+                if (currentChord !== null) {
+                    let spaced = t.value.split('').map(() => '/').join(' ');
+                    if (currentSlash) currentSlash += ' ' + spaced;
+                    else currentSlash = spaced;
+                } else {
+                    let spaced = t.value.split('').map(() => '/').join(' ');
+                    flushSeparator();
+                    flushChord();
+                    blocks.push({ type: 'dash-block', dash: spaced, region: t.region || [] });
+                }
+            } else if (t.type === 'separator') {
+                flushChord();
+                if (pendingSeparator !== null) {
+                    pendingSeparator += t.value;
+                } else {
+                    pendingSeparator = t.value;
+                    pendingSeparatorSection = t.section || 'default';
+                    pendingSeparatorRegion = t.region || [];
+                }
+            } else if (t.type === 'section') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ type: 'section', value: t.value, region: t.region || [] });
+            } else if (t.type === 'textlabel') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ type: 'textlabel', value: t.value, region: t.region || [] });
+            } else if (t.type === 'icon') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ type: 'icon', letter: t.letter, region: t.region || [] });
+            } else if (t.type === 'region_start') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ type: 'region_start', value: t.value, numbers: t.numbers });
+            } else if (t.type === 'region_end') {
+                flushSeparator();
+                flushChord();
+            }
+        }
+
+        flushSeparator();
+        flushChord();
+
+        return blocks;
+    }
+
+    // ============================================================
+    // GROUP INTO SYSTEMS
+    // ============================================================
+    function groupIntoSystems(blocks) {
+        const systems = [];
+        let currentSystem = [];
+
+        function isMajorSeparator(block) {
+            if (block.type !== 'separator') return false;
+            const v = block.value;
+            return v.includes('||:') || v.includes(':||') || v === '||' || v === ':.|';
+        }
+
+        function flushSystem() {
+            if (currentSystem.length > 0) {
+                systems.push([...currentSystem]);
+                currentSystem = [];
+            }
+        }
+
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+            const prev = currentSystem.length > 0 ? currentSystem[currentSystem.length - 1] : null;
+
+            if (block.type === 'icon') {
+                flushSystem();
+                currentSystem.push(block);
+                continue;
+            }
+
+            const prevIsIcon = prev && prev.type === 'icon';
+
+            if (isMajorSeparator(block) && !prevIsIcon) {
+                currentSystem.push(block);
+                flushSystem();
+            } else {
+                currentSystem.push(block);
+            }
+        }
+
+        if (currentSystem.length > 0) {
+            systems.push([...currentSystem]);
+        }
+
+        return systems;
+    }
+
+    // ============================================================
+    // CREATE ELEMENT FROM BLOCK
+    // ============================================================
+    function createElementFromBlock(block, regionColor) {
+        const region = block.region || [];
+        const rColor = region.length > 0 ? REGION_COLORS[region[0]] : null;
+        const finalColor = rColor || regionColor;
+
+        if (block.type === 'chord-block') {
+            const div = document.createElement('span');
+            div.className = 'chord-block';
+            const chordEl = document.createElement('span');
+            chordEl.className = 'chord';
+            chordEl.textContent = block.chord || '';
+            chordEl.style.color = finalColor || DEFAULT_COLORS.chord;
+            const beatEl = document.createElement('span');
+            beatEl.className = 'beat';
+            beatEl.textContent = block.dash || '';
+            beatEl.style.color = finalColor || DEFAULT_COLORS.beat;
+            div.appendChild(chordEl);
+            div.appendChild(beatEl);
+            return div;
+        }
+
+        if (block.type === 'dash-block') {
+            const span = document.createElement('span');
+            span.className = 'beat';
+            span.textContent = block.dash || '';
+            span.style.color = finalColor || DEFAULT_COLORS.beat;
+            return span;
+        }
+
+        if (block.type === 'separator') {
+            const div = document.createElement('span');
+            div.className = 'sep-icon';
+
+            const iconFile = ICON_MAP[block.value];
+            if (iconFile) {
+                const img = document.createElement('img');
+                img.src = `icons/${iconFile}`;
+                img.alt = block.value;
+                img.style.height = '20px';
+                img.style.width = 'auto';
+                img.style.verticalAlign = 'middle';
+                if (finalColor) {
+                    img.style.filter = `drop-shadow(0 0 2px ${finalColor})`;
+                }
+                img.onerror = function() {
+                    const emojiMap = {
+                        '|': '│',
+                        '||': '‖',
+                        '||:': '║:',
+                        ':||': ':║',
+                        ':.|': ':║'
+                    };
+                    this.outerHTML = `<span style="color:${finalColor || '#4fc3f7'}; font-weight:bold; font-size:18px; font-family:Arial,sans-serif;">${emojiMap[block.value] || '|'}</span>`;
+                };
+                div.appendChild(img);
+            } else {
+                const span = document.createElement('span');
+                span.textContent = block.value;
+                span.style.color = finalColor || DEFAULT_COLORS.separator;
+                span.style.fontWeight = 'bold';
+                span.style.fontSize = '16px';
+                div.appendChild(span);
+            }
+
+            return div;
+        }
+
+        if (block.type === 'section') {
+            const div = document.createElement('span');
+            div.className = 'section-marker';
+            div.textContent = `[${block.value}]`;
+            div.style.color = finalColor || DEFAULT_COLORS.section;
+            return div;
+        }
+
+        if (block.type === 'textlabel') {
+            const div = document.createElement('span');
+            div.className = 'text-label';
+            div.textContent = `"${block.value}"`;
+            div.style.color = finalColor || DEFAULT_COLORS.textlabel;
+            if (finalColor) {
+                div.style.border = `1px solid ${finalColor}`;
+            }
+            return div;
+        }
+
+        if (block.type === 'icon') {
+            const div = document.createElement('span');
+            div.className = 'sep-icon';
+            const img = document.createElement('img');
+            img.src = `icons/${block.letter}100.png`;
+            img.alt = block.letter;
+            img.style.height = '18px';
+            img.style.width = 'auto';
+            img.style.verticalAlign = 'middle';
+            if (finalColor) {
+                img.style.filter = `drop-shadow(0 0 2px ${finalColor})`;
+            }
+            div.appendChild(img);
+            return div;
+        }
+
+        if (block.type === 'region_start') {
+            const div = document.createElement('span');
+            div.className = 'region-marker region-start';
+            const colors = block.numbers.map(n => REGION_COLORS[n]).join(' ');
+            div.textContent = block.value;
+            div.style.color = '#fff';
+            div.style.background = `linear-gradient(90deg, ${colors.split(' ').join(', ')})`;
+            div.style.padding = '0 6px';
+            div.style.borderRadius = '4px';
+            return div;
+        }
+
+        return null;
+    }
+
+    // ============================================================
+    // WRAP ELEMENTS INTO ROWS
+    // ============================================================
+    function wrapIntoRows(elements, containerWidth) {
+        const rows = [];
+        let currentRow = [];
+        let currentRowWidth = 0;
+
+        function getElementWidth(el) {
+            const text = el.textContent || '';
+            const charWidth = fontSize * 0.6;
+            let extra = 0;
+            if (el.classList.contains('sep-icon')) {
+                extra = 28 + 12;
+            }
+            if (el.classList.contains('text-label')) {
+                extra = 12;
+            }
+            if (el.classList.contains('chord-block')) {
+                extra = 6;
+            }
+            return (text.length * charWidth) + extra + 6;
+        }
+
+        for (let el of elements) {
+            const elWidth = getElementWidth(el);
+            if (currentRow.length > 0 && (currentRowWidth + elWidth) > containerWidth) {
+                rows.push(currentRow);
+                currentRow = [];
+                currentRowWidth = 0;
+            }
+            currentRow.push(el);
+            currentRowWidth += elWidth;
+        }
+
+        if (currentRow.length > 0) {
+            rows.push(currentRow);
+        }
+
+        return rows;
+    }
+
+    // ============================================================
+    // RENDER LEADSHEET
+    // ============================================================
+    function renderLeadsheet(input) {
+        if (!input || !input.trim()) {
+            outputEl.innerHTML = '<div class="loading-text">⚠️ Empty leadsheet</div>';
+            return;
+        }
+
+        input = input.replace(/-/g, '/');
+        input = input.replace(/\/+/g, (m) => '/'.repeat(m.length));
+
+        const tokens = tokenize(input);
+        const blocks = buildBlocks(tokens);
+        const systems = groupIntoSystems(blocks);
+
+        if (systems.length === 0) {
+            outputEl.innerHTML = '<div class="loading-text">✅ Rendered — no visible elements</div>';
+            return;
+        }
+
+        outputEl.innerHTML = '';
+
+        const containerWidth = outputEl.clientWidth - 32;
+
+        for (let system of systems) {
+            const elements = [];
+            const isIconLine = system.length > 0 && system[0].type === 'icon';
+
+            for (let block of system) {
+                const el = createElementFromBlock(block);
+                if (el) elements.push(el);
+            }
+
+            if (elements.length === 0) continue;
+
+            const rows = wrapIntoRows(elements, containerWidth);
+
+            const systemDiv = document.createElement('div');
+            systemDiv.className = 'music-system';
+
+            for (let rowElements of rows) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'music-row';
+
+                if (isIconLine && rowElements.length > 0) {
+                    rowDiv.classList.add('icon-line-header');
+                }
+
+                for (let el of rowElements) {
+                    rowDiv.appendChild(el);
+                }
+
+                systemDiv.appendChild(rowDiv);
+
+                const sepRow = document.createElement('div');
+                sepRow.className = 'separator-row';
+                systemDiv.appendChild(sepRow);
+            }
+
+            outputEl.appendChild(systemDiv);
+        }
+
+        applyFontSize(fontSize);
+        outputEl.scrollTop = 0;
+
+        setTimeout(updateSeparatorWidths, 50);
+    }
+
+    // ============================================================
+    // UPDATE SEPARATOR WIDTH
+    // ============================================================
+    function updateSeparatorWidths() {
+        const systems = outputEl.querySelectorAll('.music-system');
+
+        for (let system of systems) {
+            const rowList = system.querySelectorAll('.music-row');
+            const sepList = system.querySelectorAll('.separator-row');
+
+            for (let i = 0; i < Math.min(rowList.length, sepList.length); i++) {
+                const row = rowList[i];
+                const sep = sepList[i];
+                if (row && sep) {
+                    const contentWidth = row.scrollWidth;
+                    sep.style.width = Math.max(contentWidth, 20) + 'px';
+                    sep.style.marginLeft = '0px';
+                    sep.style.marginRight = 'auto';
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // FONT SIZE
+    // ============================================================
+    function changeFontSize(delta) {
+        fontSize = Math.min(32, Math.max(10, fontSize + delta));
+        applyFontSize(fontSize);
+        if (currentData) {
+            const keyData = circleOfFifths.find(k => k.major === originalKey);
+            const originalIndex = keyData ? keyData.index : 7;
+            const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
+            if (semitoneOffset !== 0) {
+                const transposed = transposeContent(originalContent, semitoneOffset);
+                renderLeadsheet(transposed);
+            } else {
+                renderLeadsheet(originalContent);
+            }
+        }
+    }
+
+    function applyFontSize(size) {
+        outputEl.style.fontSize = size + 'px';
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon img')
+            .forEach(el => {
+                if (el.tagName === 'IMG') {
+                    el.style.height = (size * 1.25) + 'px';
+                } else {
+                    el.style.fontSize = size + 'px';
+                }
+            });
+        document.querySelectorAll('.sep-icon').forEach(el => {
+            el.style.minWidth = (size * 1.6) + 'px';
+            el.style.minHeight = (size * 1.6) + 'px';
+        });
+        setTimeout(updateSeparatorWidths, 100);
+    }
+
+    // ============================================================
+    // AUTO-SCROLL
+    // ============================================================
+    function startScroll() {
+        if (isScrolling) return;
+        if (!outputEl.innerHTML || outputEl.innerHTML.includes('No leadsheet')) return;
+        if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) return;
+        isScrolling = true;
+        playBtn.textContent = '▶️';
+        playBtn.style.background = '#2a5a2e';
+        outputEl.classList.add('scrolling');
+        scrollInterval = setInterval(() => {
+            if (outputEl.scrollTop + outputEl.clientHeight >= outputEl.scrollHeight - 5) {
+                stopScroll();
+                return;
+            }
+            outputEl.scrollTop += scrollSpeed;
+        }, 50);
+    }
+
+    function stopScroll() {
+        if (scrollInterval) {
+            clearInterval(scrollInterval);
+            scrollInterval = null;
+        }
+        isScrolling = false;
+        playBtn.textContent = '▶';
+        playBtn.style.background = '#1a1a2e';
+        outputEl.classList.remove('scrolling');
+    }
+
+    function toggleScroll() {
+        if (isScrolling) stopScroll();
+        else startScroll();
+    }
+
+    // ============================================================
+    // FULLSCREEN
+    // ============================================================
+    function toggleFullscreen() {
+        const container = document.querySelector('.container');
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+            container.classList.add('fullscreen-mode');
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            container.classList.remove('fullscreen-mode');
+        }
+    }
+
+    document.addEventListener('fullscreenchange', function() {
+        const container = document.querySelector('.container');
+        if (!document.fullscreenElement) {
+            container.classList.remove('fullscreen-mode');
+        }
+    });
+
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
+    function openList() {
+        window.location.href = "leadsheetslist.html";
+    }
+
+    function goHome() {
+        window.location.href = "index.html";
+    }
+
+    function logoutUser() {
+        stopScroll();
+        auth.signOut().then(() => {
+            window.location.href = "login.html";
+        }).catch(() => {
+            window.location.href = "login.html";
+        });
+    }
+
+    // ============================================================
+    // KEYBOARD SHORTCUTS
+    // ============================================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === ' ' || e.key === 'Space') {
+            e.preventDefault();
+            toggleScroll();
+        }
+        if (e.key === 'ArrowUp' && isScrolling) {
+            e.preventDefault();
+            scrollSpeed = Math.min(scrollSpeed + 0.3, 3);
+        }
+        if (e.key === 'ArrowDown' && isScrolling) {
+            e.preventDefault();
+            scrollSpeed = Math.max(scrollSpeed - 0.3, 0.3);
+        }
+        if (e.key === 'Escape') {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            if (keyPopup.classList.contains('show')) {
+                closeKeyPopup();
+            }
+        }
+        // Keyboard shortcuts for transpose
+        if (e.key === ']' || e.key === '}') {
+            e.preventDefault();
+            transposeUp();
+        }
+        if (e.key === '[' || e.key === '{') {
+            e.preventDefault();
+            transposeDown();
+        }
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        if (id && auth.currentUser) {
+            loadLeadsheet(id);
+        }
+        renderKeyGrid();
+    });
+
+    // ============================================================
+    // RESIZE HANDLER
+    // ============================================================
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            if (currentData) {
+                const keyData = circleOfFifths.find(k => k.major === originalKey);
+                const originalIndex = keyData ? keyData.index : 7;
+                const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
+                if (semitoneOffset !== 0) {
+                    const transposed = transposeContent(originalContent, semitoneOffset);
+                    renderLeadsheet(transposed);
+                } else {
+                    renderLeadsheet(originalContent);
+                }
+            }
+        }, 200);
+    });
+
+    // ============================================================
+    // CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', function() {
+        if (scrollInterval) {
+            clearInterval(scrollInterval);
+            scrollInterval = null;
+        }
+    });
+
+    console.log('🎵 Leadsheet Viewer loaded!');
+    console.log('✅ Transpose feature ADDED with proper semitone mapping');
+    console.log('✅ Slash chord support');
+    console.log('✅ Key selector popup');
+    console.log('Keyboard shortcuts:');
+    console.log('  Space - Toggle scroll');
+    console.log('  ] or } - Transpose up');
+    console.log('  [ or { - Transpose down');
+    console.log('  Escape - Close popup / Exit fullscreen');
+</script>
+
+</body>
+</html>
