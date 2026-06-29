@@ -213,7 +213,6 @@
         width: 100%;
     }
 
-    /* ===== OPTIMIZED MUSIC ROW ===== */
     .music-row {
         display: flex;
         flex-wrap: wrap;
@@ -359,7 +358,6 @@
         transition: color 0.2s, background 0.2s;
     }
 
-    /* ===== OPTIMIZED SEPARATOR ICON ===== */
     .sep-icon {
         display: inline-flex;
         align-items: center;
@@ -378,7 +376,6 @@
         line-height: 1.4;
     }
 
-    /* Colors */
     .sep-icon.single-bar { color: #4fc3f7; }
     .sep-icon.double-bar { color: #ffd93d; }
     .sep-icon.repeat-bar { color: #69db7c; }
@@ -401,6 +398,14 @@
     .region-marker.region-start {
         background: #2a2a4e;
         color: #ffcc00;
+    }
+
+    /* ===== BLANK LINE ===== */
+    .blank-line {
+        height: 24px;
+        width: 100%;
+        display: block;
+        clear: both;
     }
 
     /* ===== MARKER STYLES ===== */
@@ -429,7 +434,6 @@
         transform: scale(0.95);
     }
 
-    /* Segno Group - Blue */
     .segno-marker {
         color: #4fc3f7;
         background: rgba(79, 195, 247, 0.1);
@@ -441,7 +445,6 @@
         box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
     }
 
-    /* D.S. al Coda - Blue (same as Segno) */
     .ds-marker {
         color: #4fc3f7;
         background: rgba(79, 195, 247, 0.1);
@@ -453,7 +456,6 @@
         box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
     }
 
-    /* Coda Group - Red */
     .coda-marker {
         color: #ff6b6b;
         background: rgba(255, 107, 107, 0.1);
@@ -465,7 +467,6 @@
         box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
     }
 
-    /* To Coda - Red (same as Coda) */
     .tocoda-marker {
         color: #ff6b6b;
         background: rgba(255, 107, 107, 0.1);
@@ -477,7 +478,6 @@
         box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
     }
 
-    /* Fine - Green */
     .fine-marker {
         color: #69db7c;
         background: rgba(105, 219, 124, 0.1);
@@ -570,6 +570,7 @@
         .phrase { margin-right: 2px; padding: 0 2px; }
         .phrase .sep-icon { min-width: 8px; min-height: 16px; font-size: 14px; }
         .marker { font-size: 0.7em; padding: 1px 4px; }
+        .blank-line { height: 16px; }
     }
 
     @media (min-width: 769px) {
@@ -624,6 +625,9 @@
     }
     .fullscreen-mode .marker {
         font-size: 18px !important;
+    }
+    .fullscreen-mode .blank-line {
+        height: 30px !important;
     }
     
     .key-popup {
@@ -857,7 +861,6 @@
         ending: '#ff6b6b'
     };
 
-    // ===== ICON MAP - TEXT SYMBOLS =====
     const ICON_MAP = {
         '|': '|',
         '||': '||',
@@ -1109,7 +1112,7 @@
     }
 
     // ============================================================
-    // TOKENIZE
+    // TOKENIZE - WITH BLANK LINE (,) SUPPORT
     // ============================================================
     function tokenize(input) {
         const tokens = [];
@@ -1122,7 +1125,7 @@
                 continue;
             }
 
-            // ===== DETECT SEGNO =====
+            // ===== SEGNO =====
             const segnoMatch = input.substring(i).match(/^Segno(?:\(([0-9]+)\))*/i);
             if (segnoMatch) {
                 const numbers = [];
@@ -1148,7 +1151,7 @@
                 continue;
             }
 
-            // ===== DETECT CODA =====
+            // ===== CODA =====
             const codaMatch = input.substring(i).match(/^Coda\s*(?:\(([0-9]+)\))*/i);
             if (codaMatch) {
                 const numbers = [];
@@ -1174,7 +1177,7 @@
                 continue;
             }
 
-            // ===== DETECT To Coda =====
+            // ===== TO CODA =====
             const toCodaMatch = input.substring(i).match(/^ToCoda(?:\(([0-9]+)\))*|^To Coda/i);
             if (toCodaMatch) {
                 const numbers = [];
@@ -1200,7 +1203,7 @@
                 continue;
             }
 
-            // ===== D.S. al Coda (CASE INSENSITIVE) =====
+            // ===== D.S. al Coda =====
             const dsMatch = input.substring(i).match(/^D\.?S\.?\s+al\s+Coda/i);
             if (dsMatch) {
                 tokens.push({ type: 'ds', value: 'D.S. al Coda', region: [...activeRegions] });
@@ -1208,7 +1211,7 @@
                 continue;
             }
 
-            // ===== DETECT Fine =====
+            // ===== FINE =====
             const fineMatch = input.substring(i).match(/^Fine/i);
             if (fineMatch) {
                 tokens.push({ type: 'fine', value: 'Fine', region: [...activeRegions] });
@@ -1216,7 +1219,7 @@
                 continue;
             }
 
-            // ===== DETECT :||(Xva)...|| PATTERN =====
+            // ===== :||(Xva)...|| =====
             const endingMatch = input.substring(i).match(/^(:||\(([0-9,]+)va\)[^|]*\|\|)/);
             if (endingMatch) {
                 const fullMatch = endingMatch[1];
@@ -1241,7 +1244,7 @@
                 }
             }
 
-            // ===== DETECT REGION START =====
+            // ===== REGION START (1va) =====
             const regionStartMatch = input.substring(i).match(/^\(([0-9,]+)va\)/);
             if (regionStartMatch) {
                 const numbersStr = regionStartMatch[1];
@@ -1259,6 +1262,7 @@
                 }
             }
 
+            // ===== REGION END (.) =====
             if (input.substring(i, i + 3) === '(.)') {
                 tokens.push({ type: 'region_end' });
                 activeRegions = [];
@@ -1266,6 +1270,16 @@
                 continue;
             }
 
+            // ===== ===== ===== ===== ===== ===== ===== ===== =====
+            // ===== BLANK LINE (,) =====
+            // ===== LETAK DI SINI! =====
+            if (input.substring(i, i + 3) === '(,)') {
+                tokens.push({ type: 'blank' });
+                i += 3;
+                continue;
+            }
+
+            // ===== ICON |A| =====
             const iconMatch = input.substring(i).match(/^\|([A-Za-z])\|/);
             if (iconMatch) {
                 const letter = iconMatch[1].toUpperCase();
@@ -1274,6 +1288,7 @@
                 continue;
             }
 
+            // ===== TEXT LABEL "..." =====
             if (input[i] === '"') {
                 const j = input.indexOf('"', i + 1);
                 if (j !== -1) {
@@ -1284,6 +1299,7 @@
                 }
             }
 
+            // ===== SEPARATORS =====
             if (input.substring(i, i + 3) === '||:') {
                 tokens.push({ type: 'separator', value: '||:', section: 'repeat_start', region: [...activeRegions] });
                 i += 3;
@@ -1314,6 +1330,7 @@
                 continue;
             }
 
+            // ===== CHORD [C] =====
             if (input[i] === '[') {
                 const j = input.indexOf(']', i);
                 if (j !== -1) {
@@ -1330,6 +1347,7 @@
                 }
             }
 
+            // ===== SLASHES =====
             if (input.substring(i, i + 4) === '////') {
                 tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
                 i += 4;
@@ -1388,6 +1406,15 @@
         }
 
         for (let t of tokens) {
+            // ===== BLANK LINE =====
+            if (t.type === 'blank') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ type: 'blank' });
+                continue;
+            }
+
+            // ===== SEGNO =====
             if (t.type === 'segno') {
                 flushSeparator();
                 flushChord();
@@ -1400,6 +1427,7 @@
                 continue;
             }
 
+            // ===== CODA =====
             if (t.type === 'coda') {
                 flushSeparator();
                 flushChord();
@@ -1412,6 +1440,7 @@
                 continue;
             }
 
+            // ===== TO CODA =====
             if (t.type === 'tocoda') {
                 flushSeparator();
                 flushChord();
@@ -1424,6 +1453,7 @@
                 continue;
             }
 
+            // ===== D.S. =====
             if (t.type === 'ds') {
                 flushSeparator();
                 flushChord();
@@ -1435,6 +1465,7 @@
                 continue;
             }
 
+            // ===== FINE =====
             if (t.type === 'fine') {
                 flushSeparator();
                 flushChord();
@@ -1446,6 +1477,7 @@
                 continue;
             }
 
+            // ===== PHRASE =====
             if (t.type === 'phrase') {
                 flushSeparator();
                 flushChord();
@@ -1532,6 +1564,10 @@
             return block.type === 'phrase';
         }
 
+        function isBlank(block) {
+            return block.type === 'blank';
+        }
+
         function flushSystem() {
             if (currentSystem.length > 0) {
                 systems.push([...currentSystem]);
@@ -1541,7 +1577,13 @@
 
         for (let i = 0; i < blocks.length; i++) {
             const block = blocks[i];
-            const prev = currentSystem.length > 0 ? currentSystem[currentSystem.length - 1] : null;
+
+            // ===== BLANK LINE - flush and add blank =====
+            if (isBlank(block)) {
+                flushSystem();
+                systems.push([block]);
+                continue;
+            }
 
             if (isPhrase(block)) {
                 currentSystem.push(block);
@@ -1559,6 +1601,7 @@
                 continue;
             }
 
+            const prev = currentSystem.length > 0 ? currentSystem[currentSystem.length - 1] : null;
             const prevIsIcon = prev && prev.type === 'icon';
 
             if (isMajorSeparator(block) && !prevIsIcon) {
@@ -1583,6 +1626,13 @@
         const region = block.region || [];
         const rColor = region.length > 0 ? REGION_COLORS[region[0]] : null;
         const finalColor = rColor || regionColor;
+
+        // ===== BLANK LINE =====
+        if (block.type === 'blank') {
+            const div = document.createElement('div');
+            div.className = 'blank-line';
+            return div;
+        }
 
         // ===== SEGNO (Blue) =====
         if (block.type === 'segno') {
@@ -1689,7 +1739,6 @@
                     }
                 }
                 
-                // ===== SEPARATOR IN PHRASE =====
                 const sepMatch = content.substring(i).match(/^(||:||:|||:.|||)/);
                 if (sepMatch) {
                     const sepValue = sepMatch[1];
@@ -1706,7 +1755,6 @@
                     span.style.display = 'inline-flex';
                     span.style.alignItems = 'center';
                     
-                    // Colors
                     if (sepValue === '|') {
                         span.style.color = '#4fc3f7';
                     } else if (sepValue === '||') {
@@ -1786,14 +1834,13 @@
             span.style.display = 'inline-flex';
             span.style.alignItems = 'center';
             
-            // Colors
             const value = block.value;
             if (value === '|') {
-                span.style.color = '#4fc3f7';    // Single bar - Blue
+                span.style.color = '#4fc3f7';
             } else if (value === '||') {
-                span.style.color = '#ffd93d';    // Double bar - Yellow
+                span.style.color = '#ffd93d';
             } else {
-                span.style.color = '#69db7c';    // Repeat start/end - Green
+                span.style.color = '#69db7c';
             }
             
             return span;
@@ -1850,7 +1897,7 @@
     }
 
     // ============================================================
-    // WRAP ELEMENTS INTO ROWS - OPTIMIZED
+    // WRAP ELEMENTS INTO ROWS
     // ============================================================
     function wrapIntoRows(elements, containerWidth) {
         const rows = [];
@@ -1876,10 +1923,24 @@
             if (el.classList.contains('marker')) {
                 extra = 12;
             }
+            if (el.classList.contains('blank-line')) {
+                return containerWidth;
+            }
             return (text.length * charWidth) + extra + 2;
         }
 
         for (let el of elements) {
+            // ===== BLANK LINE =====
+            if (el.classList && el.classList.contains('blank-line')) {
+                if (currentRow.length > 0) {
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentRowWidth = 0;
+                }
+                rows.push([el]);
+                continue;
+            }
+
             const elWidth = getElementWidth(el);
             
             if (el.classList && (el.classList.contains('phrase') || el.classList.contains('marker'))) {
@@ -1937,6 +1998,14 @@
         for (let system of systems) {
             const elements = [];
             const isIconLine = system.length > 0 && system[0].type === 'icon';
+            const isBlank = system.length === 1 && system[0].type === 'blank';
+
+            if (isBlank) {
+                // Blank line - render directly
+                const el = createElementFromBlock(system[0]);
+                if (el) outputEl.appendChild(el);
+                continue;
+            }
 
             for (let block of system) {
                 const el = createElementFromBlock(block);
@@ -2041,6 +2110,10 @@
         
         document.querySelectorAll('.marker').forEach(el => {
             el.style.fontSize = (size * 0.85) + 'px';
+        });
+
+        document.querySelectorAll('.blank-line').forEach(el => {
+            el.style.height = (size * 1.5) + 'px';
         });
         
         setTimeout(updateSeparatorWidths, 100);
@@ -2201,7 +2274,8 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ OPTIMIZED WRAPPING - Minimal margins, compact layout');
+    console.log('✅ BLANK LINE SUPPORT - Use (,) for blank line');
+    console.log('✅ Optimized wrapping');
     console.log('✅ Barline colors: | blue, || yellow, ||:/:|| green');
     console.log('✅ Segno Group (Blue), Coda Group (Red), Fine (Green)');
 </script>
