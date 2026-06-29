@@ -739,6 +739,77 @@
     .key-popup-overlay.show {
         display: block;
     }
+    /* ===== MARKER HIGHLIGHT ===== */
+    .marker-highlight {
+        animation: markerPulse 0.8s ease 3;
+        box-shadow: 0 0 30px rgba(79, 195, 247, 0.8) !important;
+        transform: scale(1.1);
+        z-index: 1000;
+        position: relative;
+    }
+
+    @keyframes markerPulse {
+        0% { transform: scale(1); box-shadow: 0 0 0px rgba(79, 195, 247, 0); }
+        50% { transform: scale(1.15); box-shadow: 0 0 40px rgba(79, 195, 247, 0.9); }
+        100% { transform: scale(1); box-shadow: 0 0 0px rgba(79, 195, 247, 0); }
+    }
+
+    .marker-highlight-segno {
+        animation: markerPulseBlue 0.8s ease 3;
+        box-shadow: 0 0 30px rgba(79, 195, 247, 0.8) !important;
+        transform: scale(1.1);
+        z-index: 1000;
+        position: relative;
+    }
+
+    @keyframes markerPulseBlue {
+        0% { transform: scale(1); box-shadow: 0 0 0px rgba(79, 195, 247, 0); }
+        50% { transform: scale(1.15); box-shadow: 0 0 40px rgba(79, 195, 247, 0.9); }
+        100% { transform: scale(1); box-shadow: 0 0 0px rgba(79, 195, 247, 0); }
+    }
+
+    .marker-highlight-coda {
+        animation: markerPulseRed 0.8s ease 3;
+        box-shadow: 0 0 30px rgba(255, 107, 107, 0.8) !important;
+        transform: scale(1.1);
+        z-index: 1000;
+        position: relative;
+    }
+
+    @keyframes markerPulseRed {
+        0% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 107, 107, 0); }
+        50% { transform: scale(1.15); box-shadow: 0 0 40px rgba(255, 107, 107, 0.9); }
+        100% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 107, 107, 0); }
+    }
+
+    .marker-highlight-fine {
+        animation: markerPulseGreen 0.8s ease 3;
+        box-shadow: 0 0 30px rgba(105, 219, 124, 0.8) !important;
+        transform: scale(1.1);
+        z-index: 1000;
+        position: relative;
+    }
+
+    @keyframes markerPulseGreen {
+        0% { transform: scale(1); box-shadow: 0 0 0px rgba(105, 219, 124, 0); }
+        50% { transform: scale(1.15); box-shadow: 0 0 40px rgba(105, 219, 124, 0.9); }
+        100% { transform: scale(1); box-shadow: 0 0 0px rgba(105, 219, 124, 0); }
+    }
+
+    .marker-highlight-target {
+        animation: markerTargetPulse 0.8s ease 3;
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.9) !important;
+        transform: scale(1.15);
+        z-index: 1001;
+        position: relative;
+        border-color: #ffd700 !important;
+    }
+
+    @keyframes markerTargetPulse {
+        0% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 215, 0, 0); }
+        50% { transform: scale(1.2); box-shadow: 0 0 50px rgba(255, 215, 0, 1); }
+        100% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 215, 0, 0); }
+    }
 </style>
 
 <div class="container">
@@ -2045,7 +2116,290 @@
         outputEl.scrollTop = 0;
 
         setTimeout(updateSeparatorWidths, 50);
+            attachMarkerEvents();
     }
+    // ============================================================
+    // MARKER NAVIGATION - INTERACTIVE CLICK
+    // ============================================================
+
+    // Helper: Extract number from marker text
+    function extractMarkerNumber(text) {
+        const match = text.match(/\((\d+)\)/);
+        return match ? parseInt(match[1]) : null;
+    }
+
+    // Helper: Check if marker has number
+    function hasMarkerNumber(text) {
+        return /\(\d+\)/.test(text);
+    }
+
+    // Helper: Remove highlight from all markers
+    function clearAllHighlights() {
+        document.querySelectorAll('.marker-highlight, .marker-highlight-segno, .marker-highlight-coda, .marker-highlight-fine, .marker-highlight-target').forEach(el => {
+            el.classList.remove('marker-highlight', 'marker-highlight-segno', 'marker-highlight-coda', 'marker-highlight-fine', 'marker-highlight-target');
+        });
+    }
+
+    // Helper: Scroll to element with smooth behavior
+    function scrollToMarker(element, highlightClass) {
+        if (!element) return false;
+        
+        // Clear previous highlights
+        clearAllHighlights();
+        
+        // Highlight the clicked element
+        if (highlightClass) {
+            element.classList.add(highlightClass);
+        }
+        
+        // Scroll to element
+        element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'center'
+        });
+        
+        return true;
+    }
+
+    // Find all markers of a specific type
+    function findMarkersByType(type) {
+        const allMarkers = document.querySelectorAll('.marker');
+        const results = [];
+        
+        allMarkers.forEach(el => {
+            const text = el.textContent;
+            if (type === 'segno' && text.includes('Segno')) {
+                results.push(el);
+            } else if (type === 'coda' && text.includes('Coda') && !text.includes('To Coda')) {
+                results.push(el);
+            } else if (type === 'tocoda' && text.includes('To Coda')) {
+                results.push(el);
+            } else if (type === 'ds' && text.includes('D.S. al Coda')) {
+                results.push(el);
+            } else if (type === 'fine' && text.includes('Fine')) {
+                results.push(el);
+            }
+        });
+        
+        return results;
+    }
+
+    // Find Segno without number (plain Segno)
+    function findPlainSegno() {
+        const markers = document.querySelectorAll('.segno-marker');
+        for (let el of markers) {
+            const text = el.textContent;
+            if (!hasMarkerNumber(text)) {
+                return el;
+            }
+        }
+        return null;
+    }
+
+    // Find Coda without number (plain Coda)
+    function findPlainCoda() {
+        const markers = document.querySelectorAll('.coda-marker');
+        for (let el of markers) {
+            const text = el.textContent;
+            if (!hasMarkerNumber(text)) {
+                return el;
+            }
+        }
+        return null;
+    }
+
+    // Find Segno with specific number
+    function findSegnoByNumber(number, excludeElement) {
+        const markers = document.querySelectorAll('.segno-marker');
+        for (let el of markers) {
+            if (el === excludeElement) continue;
+            const text = el.textContent;
+            const num = extractMarkerNumber(text);
+            if (num === number) {
+                return el;
+            }
+        }
+        return null;
+    }
+
+    // Find Coda with specific number
+    function findCodaByNumber(number, excludeElement) {
+        const markers = document.querySelectorAll('.coda-marker');
+        for (let el of markers) {
+            if (el === excludeElement) continue;
+            const text = el.textContent;
+            const num = extractMarkerNumber(text);
+            if (num === number) {
+                return el;
+            }
+        }
+        return null;
+    }
+
+    // Find first Segno (fallback)
+    function findFirstSegno() {
+        const markers = document.querySelectorAll('.segno-marker');
+        return markers.length > 0 ? markers[0] : null;
+    }
+
+    // Find first Coda (fallback)
+    function findFirstCoda() {
+        const markers = document.querySelectorAll('.coda-marker');
+        return markers.length > 0 ? markers[0] : null;
+    }
+
+    // Main navigation handler
+    function handleMarkerClick(event) {
+        const element = event.currentTarget;
+        const text = element.textContent;
+        
+        // ===== CASE 1: D.S. al Coda → Find Segno =====
+        if (text.includes('D.S. al Coda')) {
+            // Highlight clicked element
+            clearAllHighlights();
+            element.classList.add('marker-highlight');
+            
+            // Find plain Segno first
+            let target = findPlainSegno();
+            
+            // If no plain Segno, find Segno(1) or any Segno
+            if (!target) {
+                target = findFirstSegno();
+            }
+            
+            if (target) {
+                scrollToMarker(target, 'marker-highlight-target');
+                showToast('🎯 Jumping to Segno');
+            } else {
+                showToast('⚠️ No Segno found');
+            }
+            return;
+        }
+        
+        // ===== CASE 2: To Coda → Find Coda =====
+        if (text.includes('To Coda')) {
+            clearAllHighlights();
+            element.classList.add('marker-highlight');
+            
+            // Find plain Coda first
+            let target = findPlainCoda();
+            
+            // If no plain Coda, find Coda(1) or any Coda
+            if (!target) {
+                target = findFirstCoda();
+            }
+            
+            if (target) {
+                scrollToMarker(target, 'marker-highlight-target');
+                showToast('🎯 Jumping to Coda');
+            } else {
+                showToast('⚠️ No Coda found');
+            }
+            return;
+        }
+        
+        // ===== CASE 3: Segno(*) → Find Segno(*) with same number =====
+        if (text.includes('Segno') && hasMarkerNumber(text)) {
+            const number = extractMarkerNumber(text);
+            if (number !== null) {
+                clearAllHighlights();
+                element.classList.add('marker-highlight-segno');
+                
+                const target = findSegnoByNumber(number, element);
+                if (target) {
+                    scrollToMarker(target, 'marker-highlight-target');
+                    showToast(`🎯 Jumping to Segno(${number})`);
+                } else {
+                    showToast(`⚠️ No other Segno(${number}) found`);
+                }
+            }
+            return;
+        }
+        
+        // ===== CASE 4: Coda(*) → Find Coda(*) with same number =====
+        if (text.includes('Coda') && !text.includes('To Coda') && hasMarkerNumber(text)) {
+            const number = extractMarkerNumber(text);
+            if (number !== null) {
+                clearAllHighlights();
+                element.classList.add('marker-highlight-coda');
+                
+                const target = findCodaByNumber(number, element);
+                if (target) {
+                    scrollToMarker(target, 'marker-highlight-target');
+                    showToast(`🎯 Jumping to Coda(${number})`);
+                } else {
+                    showToast(`⚠️ No other Coda(${number}) found`);
+                }
+            }
+            return;
+        }
+        
+        // ===== CASE 5: Fine → Just highlight =====
+        if (text.includes('Fine')) {
+            clearAllHighlights();
+            element.classList.add('marker-highlight-fine');
+            showToast('🏁 Fine - End here');
+            return;
+        }
+    }
+
+    // Toast notification
+    function showToast(message) {
+        // Remove existing toast
+        const existing = document.getElementById('markerToast');
+        if (existing) existing.remove();
+        
+        const toast = document.createElement('div');
+        toast.id = 'markerToast';
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 15, 15, 0.95);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 1rem;
+            z-index: 99999;
+            border: 1px solid #2a2a4e;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.8);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            min-width: 200px;
+            text-align: center;
+        `;
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => { toast.style.opacity = '1'; }, 10);
+        
+        // Animate out after 2 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+
+    // Attach click events to all markers
+    function attachMarkerEvents() {
+        const markers = document.querySelectorAll('.marker');
+        markers.forEach(el => {
+            // Remove existing listener to avoid duplicates
+            el.removeEventListener('click', handleMarkerClick);
+            el.addEventListener('click', handleMarkerClick);
+            // Add cursor pointer
+            el.style.cursor = 'pointer';
+        });
+    }
+
+    // Override renderLeadsheet to attach events after rendering
+    // Find the renderLeadsheet function and add this at the end:
+    // attachMarkerEvents();
 
     // ============================================================
     // UPDATE SEPARATOR WIDTH
