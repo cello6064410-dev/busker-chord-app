@@ -409,13 +409,20 @@
   // CONVERT CHORD SYMBOLS
   // ============================================
   function convertChordSymbols(text) {
-    text = text.replace(/<br>/g, '<<BR>>');
-    text = text.replace(/m7b5/g, 'ø');
-    text = text.replace(/dim/g, '°');
-    text = text.replace(/#/g, '♯');
-    text = text.replace(/b/g, '♭');
-    text = text.replace(/<<BR>>/g, '<br>');
-    return text;
+      text = text.replace(/<br>/g, '<<BR>>');
+      text = text.replace(/m7b5/g, 'ø');
+      text = text.replace(/dim/g, '°');
+      
+      // ===== FIX: Only convert # and b inside [chord] =====
+      text = text.replace(/\[([^\]]*)\]/g, function(match, chord) {
+          let converted = chord
+              .replace(/#/g, '♯')
+              .replace(/b/g, '♭');
+          return '[' + converted + ']';
+      });
+      
+      text = text.replace(/<<BR>>/g, '<br>');
+      return text;
   }
 
   // ============================================
