@@ -345,11 +345,11 @@
   function openEditList() {
     // Store current URL to return after selection
     const returnUrl = window.location.href;
-    sessionStorage.setItem('returnToCreate', returnUrl);
+    sessionStorage.setItem('returnToCreate', window.location.href);
     
     // Open songslist.html in a new window or same window
     // Option A: Open in same window (user will come back)
-    window.location.href = "songslist.html?mode=select&return=create";
+    window.location.href = "songslistforedit.html?mode=select&return=create";
   }
 
   // ============================================================
