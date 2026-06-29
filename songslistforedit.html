@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>Songs List - Select to Edit</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #0f0f0f;
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+        width: 100%;
+    }
+
+    .header {
+        text-align: center;
+        padding: 20px 0;
+        border-bottom: 2px solid #2a2a4e;
+        margin-bottom: 20px;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-top .subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        font-family: Arial, sans-serif;
+        margin-top: 4px;
+    }
+
+    .home-btn {
+        background: #2a2a4e;
+        border: none;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        min-height: 40px;
+        min-width: 40px;
+    }
+
+    .home-btn:hover {
+        background: #3a3a6e;
+    }
+
+    .search-box {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .search-box input {
+        flex: 1;
+        padding: 12px 14px;
+        background: #0f0f0f;
+        border: 1px solid #2a2a4e;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 1rem;
+        font-family: 'Courier New', monospace;
+        outline: none;
+        transition: border-color 0.3s;
+        min-width: 150px;
+    }
+
+    .search-box input:focus {
+        border-color: #ffcc00;
+    }
+
+    .search-box .btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        transition: all 0.2s;
+        min-height: 44px;
+        background: #2a2a4e;
+        color: #fff;
+    }
+
+    .search-box .btn:hover {
+        background: #3a3a6e;
+    }
+
+    .search-box .btn-primary {
+        background: #ffcc00;
+        color: #0f0f0f;
+    }
+
+    .search-box .btn-primary:hover {
+        background: #ffd633;
+    }
+
+    .song-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .song-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1a1a2e;
+        padding: 14px 18px;
+        border-radius: 10px;
+        border: 1px solid #2a2a4e;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .song-item:hover {
+        background: #2a2a4e;
+        border-color: #4a4a6e;
+        transform: translateX(4px);
+    }
+
+    .song-item:active {
+        transform: scale(0.98);
+    }
+
+    .song-item .info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+    }
+
+    .song-item .info .title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+    }
+
+    .song-item .info .meta {
+        font-size: 0.8rem;
+        color: #666;
+        font-family: Arial, sans-serif;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .song-item .info .meta .key {
+        color: #4fc3f7;
+    }
+
+    .song-item .info .meta .date {
+        color: #888;
+    }
+
+    .song-item .select-btn {
+        background: #2a4a6e;
+        border: none;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: Arial, sans-serif;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        min-height: 36px;
+        margin-left: 12px;
+    }
+
+    .song-item .select-btn:hover {
+        background: #3a5a7e;
+        transform: scale(1.05);
+    }
+
+    .song-item .select-btn:active {
+        transform: scale(0.95);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+        font-family: Arial, sans-serif;
+        font-size: 1.1rem;
+    }
+
+    .empty-state .icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 16px;
+    }
+
+    .loading-text {
+        color: #666;
+        font-family: Arial, sans-serif;
+        font-size: 0.9rem;
+        text-align: center;
+        padding: 40px 0;
+    }
+
+    .status-message {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: Arial, sans-serif;
+        margin-top: 12px;
+        display: none;
+    }
+
+    .status-message.success {
+        display: block;
+        background: rgba(0, 200, 83, 0.2);
+        color: #00e676;
+        border: 1px solid #00c853;
+    }
+
+    .status-message.error {
+        display: block;
+        background: rgba(255, 68, 68, 0.2);
+        color: #ff4444;
+        border: 1px solid #ff4444;
+    }
+
+    .status-message.info {
+        display: block;
+        background: rgba(79, 195, 247, 0.2);
+        color: #4fc3f7;
+        border: 1px solid #4fc3f7;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 10px;
+        }
+        .header h1 {
+            font-size: 1.3rem;
+        }
+        .song-item {
+            padding: 12px 14px;
+            flex-wrap: wrap;
+        }
+        .song-item .info .title {
+            font-size: 0.95rem;
+        }
+        .song-item .select-btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            min-height: 30px;
+            margin-left: 0;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .song-item {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .search-box input {
+            min-width: 100px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-top">
+            <div>
+                <h1>📋 Select Song to Edit</h1>
+                <div class="subtitle">Click a song to load it into the editor</div>
+            </div>
+            <button onclick="goHome()" class="home-btn" title="Go Home">🏠</button>
+        </div>
+    </div>
+
+    <!-- SEARCH & FILTER -->
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Search songs..." oninput="filterSongs()" />
+        <button onclick="refreshList()" class="btn">🔄 Refresh</button>
+        <button onclick="goBack()" class="btn">⬅ Back</button>
+    </div>
+
+    <!-- SONG LIST -->
+    <div id="songList" class="song-list">
+        <div class="loading-text">⏳ Loading songs...</div>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+</div>
+
+<script>
+    // ============================================================
+    // FIREBASE CONFIG
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAACiSmGKOByLt2IaymEYbRqSxhvzl9ZN4",
+        authDomain: "busker-chord-app.firebaseapp.com",
+        projectId: "busker-chord-app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ============================================================
+    // DOM REFS
+    // ============================================================
+    const songListEl = document.getElementById('songList');
+    const searchInput = document.getElementById('searchInput');
+    const statusMsg = document.getElementById('statusMessage');
+
+    let allSongs = [];
+    let isLoading = false;
+    let returnUrl = 'createsong.html';
+
+    // ============================================================
+    // KEY MAPPING
+    // ============================================================
+    const keyDisplayMap = {
+        'C': 'C / Am',
+        'G': 'G / Em',
+        'D': 'D / Bm',
+        'A': 'A / F♯m',
+        'E': 'E / C♯m',
+        'B': 'B / G♯m',
+        'F#': 'F♯ / D♯m',
+        'C#': 'C♯ / A♯m',
+        'F': 'F / Dm',
+        'Bb': 'B♭ / Gm',
+        'Eb': 'E♭ / Cm',
+        'Ab': 'A♭ / Fm',
+        'Db': 'D♭ / B♭m',
+        'Gb': 'G♭ / E♭m'
+    };
+
+    // ============================================================
+    // AUTH CHECK
+    // ============================================================
+    auth.onAuthStateChanged(function(user) {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+        loadSongs();
+    });
+
+    // ============================================================
+    // LOAD SONGS
+    // ============================================================
+    function loadSongs() {
+        if (isLoading) return;
+        isLoading = true;
+        songListEl.innerHTML = '<div class="loading-text">⏳ Loading songs...</div>';
+
+        db.collection('songs')
+            .orderBy('title')
+            .get()
+            .then((snapshot) => {
+                allSongs = [];
+                if (snapshot.empty) {
+                    songListEl.innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">📭</span>
+                            No songs found.<br />
+                            <span style="font-size: 0.9rem; color: #888;">Go to Create Song to add one.</span>
+                        </div>
+                    `;
+                    isLoading = false;
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    allSongs.push({
+                        id: doc.id,
+                        title: data.title || 'Untitled',
+                        keyMajor: data.keyMajor || 'C',
+                        lyrics: data.lyrics || '',
+                        updatedAt: data.updatedAt ? data.updatedAt.toDate() : null,
+                        createdAt: data.createdAt ? data.createdAt.toDate() : null
+                    });
+                });
+
+                renderSongs(allSongs);
+                isLoading = false;
+            })
+            .catch((error) => {
+                songListEl.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">❌</span>
+                        Error loading songs: ${error.message}
+                    </div>
+                `;
+                isLoading = false;
+                showStatus('❌ Error loading songs: ' + error.message, 'error');
+            });
+    }
+
+    // ============================================================
+    // RENDER SONGS
+    // ============================================================
+    function renderSongs(songs) {
+        if (songs.length === 0) {
+            songListEl.innerHTML = `
+                <div class="empty-state">
+                    <span class="icon">🔍</span>
+                    No songs match your search.
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        songs.forEach((song) => {
+            const keyDisplay = keyDisplayMap[song.keyMajor] || song.keyMajor;
+            const dateStr = song.updatedAt
+                ? song.updatedAt.toLocaleDateString()
+                : song.createdAt
+                    ? song.createdAt.toLocaleDateString()
+                    : 'Unknown';
+
+            html += `
+                <div class="song-item" onclick="selectSong('${song.id}')" data-id="${song.id}">
+                    <div class="info">
+                        <div class="title">${escapeHtml(song.title)}</div>
+                        <div class="meta">
+                            <span class="key">🎵 ${keyDisplay}</span>
+                            <span class="date">📅 ${dateStr}</span>
+                            <span style="color:#666;">${song.lyrics.length} chars</span>
+                        </div>
+                    </div>
+                    <button class="select-btn" onclick="event.stopPropagation(); selectSong('${song.id}')">✏️ Select</button>
+                </div>
+            `;
+        });
+
+        songListEl.innerHTML = html;
+    }
+
+    // ============================================================
+    // ESCAPE HTML
+    // ============================================================
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ============================================================
+    // FILTER SONGS
+    // ============================================================
+    function filterSongs() {
+        const query = searchInput.value.toLowerCase().trim();
+        if (!query) {
+            renderSongs(allSongs);
+            return;
+        }
+
+        const filtered = allSongs.filter((song) => {
+            return song.title.toLowerCase().includes(query) ||
+                   song.keyMajor.toLowerCase().includes(query);
+        });
+
+        renderSongs(filtered);
+    }
+
+    // ============================================================
+    // ===== SELECT SONG - AUTO LOAD IN CREATE PAGE =====
+    // ============================================================
+    function selectSong(songId) {
+        showStatus('⏳ Loading song...', 'info');
+
+        // Find the song to show feedback
+        const song = allSongs.find(s => s.id === songId);
+
+        // Redirect back to createsong.html with selected ID
+        const returnUrl = sessionStorage.getItem('returnToCreate') || 'createsong.html';
+        window.location.href = `${returnUrl}?selected=${songId}`;
+    }
+
+    // ============================================================
+    // REFRESH LIST
+    // ============================================================
+    function refreshList() {
+        searchInput.value = '';
+        loadSongs();
+        showStatus('🔄 Refreshed!', 'success');
+    }
+
+    // ============================================================
+    // STATUS MESSAGE
+    // ============================================================
+    function showStatus(msg, type) {
+        statusMsg.textContent = msg;
+        statusMsg.className = 'status-message';
+        if (msg && type) statusMsg.classList.add(type);
+        setTimeout(() => {
+            statusMsg.className = 'status-message';
+        }, 3000);
+    }
+
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
+    function goBack() {
+        window.location.href = "createsong.html";
+    }
+
+    function goHome() {
+        window.location.href = "index.html";
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if we have a return URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnParam = urlParams.get('return');
+        if (returnParam) {
+            returnUrl = returnParam + '.html';
+        }
+
+        // Load songs
+        if (auth.currentUser) {
+            loadSongs();
+        }
+    });
+
+    console.log('📋 Songs List for Edit loaded!');
+    console.log('🎯 Click any song to auto-load in Create Song page');
+</script>
+
+</body>
+</html>
