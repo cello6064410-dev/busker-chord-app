@@ -217,8 +217,8 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 0;
-        padding: 2px 2px 0px 2px;
-        min-height: 28px;
+        padding: 4px 2px 0px 2px;
+        min-height: 38px;
         width: 100%;
     }
 
@@ -266,10 +266,7 @@
     .phrase .sep-icon {
         min-width: 20px;
         min-height: 20px;
-    }
-
-    .phrase .sep-icon img {
-        height: 16px;
+        font-size: 18px;
     }
 
     .phrase .chord-block {
@@ -358,23 +355,32 @@
         transition: color 0.2s, background 0.2s;
     }
 
+    /* ===== SEPARATOR ICON - TALLER BARLINES ===== */
     .sep-icon {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin: 0 2px;
+        margin: 0 0px;
         vertical-align: middle;
-        min-width: 28px;
-        min-height: 28px;
-        padding: 0 4px;
+        min-width: 24px;
+        min-height: 36px;
+        padding: 0 3px;
         flex-shrink: 0;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 24px;
+        letter-spacing: 0px;
+        line-height: 1.6;
     }
 
-    .sep-icon img {
-        height: 20px;
-        width: auto;
-        vertical-align: middle;
-        display: block;
+    /* Single bar - Blue */
+    .sep-icon.single-bar {
+        color: #4fc3f7;
+    }
+
+    /* Double bar, repeat start, repeat end - Yellow */
+    .sep-icon.double-bar {
+        color: #ffd93d;
     }
 
     .region-marker {
@@ -422,7 +428,7 @@
         transform: scale(0.95);
     }
 
-    /* Segno - Blue */
+    /* ===== SEGNO GROUP - BLUE ===== */
     .segno-marker {
         color: #4fc3f7;
         background: rgba(79, 195, 247, 0.1);
@@ -434,7 +440,19 @@
         box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
     }
 
-    /* Coda - Red */
+    /* D.S. al Coda - Same as Segno (Blue) */
+    .ds-marker {
+        color: #4fc3f7;
+        background: rgba(79, 195, 247, 0.1);
+        border-color: #4fc3f7;
+    }
+
+    .ds-marker:hover {
+        background: rgba(79, 195, 247, 0.2);
+        box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+    }
+
+    /* ===== CODA GROUP - RED ===== */
     .coda-marker {
         color: #ff6b6b;
         background: rgba(255, 107, 107, 0.1);
@@ -446,31 +464,19 @@
         box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
     }
 
-    /* To Coda - Yellow */
+    /* To Coda - Same as Coda (Red) */
     .tocoda-marker {
-        color: #ffd93d;
-        background: rgba(255, 217, 61, 0.1);
-        border-color: #ffd93d;
+        color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.1);
+        border-color: #ff6b6b;
     }
 
     .tocoda-marker:hover {
-        background: rgba(255, 217, 61, 0.2);
-        box-shadow: 0 0 20px rgba(255, 217, 61, 0.3);
+        background: rgba(255, 107, 107, 0.2);
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
     }
 
-    /* D.S. al Coda - Orange */
-    .ds-marker {
-        color: #ff9f43;
-        background: rgba(255, 159, 67, 0.1);
-        border-color: #ff9f43;
-    }
-
-    .ds-marker:hover {
-        background: rgba(255, 159, 67, 0.2);
-        box-shadow: 0 0 20px rgba(255, 159, 67, 0.3);
-    }
-
-    /* Fine - Green */
+    /* ===== FINE - GREEN ===== */
     .fine-marker {
         color: #69db7c;
         background: rgba(105, 219, 124, 0.1);
@@ -555,14 +561,13 @@
         .text-label { font-size: 14px; }
         .section-marker { font-size: 14px; }
         .music-row > * { margin-right: 4px; }
+        .music-row { min-height: 30px; padding: 3px 2px 0px 2px; }
         .separator-row { height: 3px; border-bottom-width: 2px; }
-        .sep-icon { min-width: 24px; min-height: 24px; padding: 0 4px; }
-        .sep-icon img { height: 16px; }
+        .sep-icon { font-size: 20px; min-height: 30px; min-width: 20px; padding: 0 2px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
         .phrase { margin-right: 4px; padding: 0 2px; }
-        .phrase .sep-icon { min-width: 16px; min-height: 16px; }
-        .phrase .sep-icon img { height: 12px; }
+        .phrase .sep-icon { min-width: 16px; min-height: 16px; font-size: 16px; }
         .marker { font-size: 0.75em; padding: 1px 6px; }
     }
 
@@ -571,7 +576,6 @@
         #output { min-height: 300px; padding: 20px; gap: 2px 6px; }
         .floating-bar { gap: 10px; padding: 10px 20px; }
         .floating-bar button { padding: 10px 18px; min-width: 50px; }
-        .sep-icon img { height: 20px; }
     }
 
     .fullscreen-mode .header,
@@ -606,8 +610,9 @@
     .fullscreen-mode .section-marker {
         font-size: 18px !important;
     }
-    .fullscreen-mode .sep-icon img {
-        height: 24px !important;
+    .fullscreen-mode .sep-icon {
+        font-size: 28px !important;
+        min-height: 40px !important;
     }
     .fullscreen-mode .separator-row {
         height: 6px !important;
@@ -851,12 +856,13 @@
         ending: '#ff6b6b'
     };
 
+    // ===== ICON MAP - TEXT SYMBOLS (NO IMAGES) =====
     const ICON_MAP = {
-        '|': 'barline.png',
-        '||': 'doublebarline.png',
-        '||:': 'repeatstart.png',
-        ':||': 'repeatend.png',
-        ':.|': 'repeatend.png'
+        '|': '|',
+        '||': '||',
+        '||:': '||:',
+        ':||': ':||',
+        ':.|': ':||'
     };
 
     // ============================================================
@@ -1583,7 +1589,7 @@
         const rColor = region.length > 0 ? REGION_COLORS[region[0]] : null;
         const finalColor = rColor || regionColor;
 
-        // ===== SEGNO =====
+        // ===== SEGNO (Blue) =====
         if (block.type === 'segno') {
             const div = document.createElement('span');
             div.className = 'marker segno-marker';
@@ -1597,7 +1603,7 @@
             return div;
         }
 
-        // ===== CODA =====
+        // ===== CODA (Red) =====
         if (block.type === 'coda') {
             const div = document.createElement('span');
             div.className = 'marker coda-marker';
@@ -1611,12 +1617,12 @@
             return div;
         }
 
-        // ===== TO CODA =====
+        // ===== TO CODA (Red - Same as Coda) =====
         if (block.type === 'tocoda') {
             const div = document.createElement('span');
             div.className = 'marker tocoda-marker';
             const numbers = block.numbers || [];
-            let label = '🟡 To Coda';
+            let label = '🔴 To Coda';
             if (numbers.length > 0) {
                 label += '(' + numbers.join(')(') + ')';
             }
@@ -1625,16 +1631,16 @@
             return div;
         }
 
-        // ===== D.S. al Coda =====
+        // ===== D.S. al Coda (Blue - Same as Segno) =====
         if (block.type === 'ds') {
             const div = document.createElement('span');
             div.className = 'marker ds-marker';
-            div.textContent = '🟠 D.S. al Coda';
+            div.textContent = '🔵 D.S. al Coda';
             div.title = 'Dal Segno al Coda';
             return div;
         }
 
-        // ===== Fine =====
+        // ===== Fine (Green) =====
         if (block.type === 'fine') {
             const div = document.createElement('span');
             div.className = 'marker fine-marker';
@@ -1688,27 +1694,33 @@
                     }
                 }
                 
+                // ===== SEPARATOR IN PHRASE =====
                 const sepMatch = content.substring(i).match(/^(||:||:|||:.|||)/);
                 if (sepMatch) {
                     const sepValue = sepMatch[1];
-                    const iconFile = ICON_MAP[sepValue];
-                    if (iconFile) {
-                        const span = document.createElement('span');
-                        span.className = 'sep-icon';
-                        const img = document.createElement('img');
-                        img.src = `icons/${iconFile}`;
-                        img.alt = sepValue;
-                        img.style.height = '18px';
-                        img.style.width = 'auto';
-                        img.style.verticalAlign = 'middle';
-                        if (finalColor) {
-                            img.style.filter = `drop-shadow(0 0 2px ${finalColor})`;
-                        }
-                        span.appendChild(img);
-                        phraseDiv.appendChild(span);
-                        i += sepValue.length;
-                        continue;
+                    const textValue = ICON_MAP[sepValue] || sepValue;
+                    const span = document.createElement('span');
+                    span.className = 'sep-icon';
+                    span.textContent = textValue;
+                    span.style.fontWeight = 'bold';
+                    span.style.fontSize = '20px';
+                    span.style.fontFamily = 'Courier New, monospace';
+                    span.style.letterSpacing = '0px';
+                    span.style.lineHeight = '1.6';
+                    span.style.minHeight = '30px';
+                    span.style.display = 'inline-flex';
+                    span.style.alignItems = 'center';
+                    
+                    // Colors: single bar = blue, double/repeat = yellow
+                    if (sepValue === '|') {
+                        span.style.color = '#4fc3f7';
+                    } else {
+                        span.style.color = '#ffd93d';
                     }
+                    
+                    phraseDiv.appendChild(span);
+                    i += sepValue.length;
+                    continue;
                 }
                 
                 if (content[i] === '/') {
@@ -1762,42 +1774,30 @@
             return span;
         }
 
+        // ===== SEPARATOR - TEXT SYMBOLS WITH COLORS =====
         if (block.type === 'separator') {
-            const div = document.createElement('span');
-            div.className = 'sep-icon';
-
-            const iconFile = ICON_MAP[block.value];
-            if (iconFile) {
-                const img = document.createElement('img');
-                img.src = `icons/${iconFile}`;
-                img.alt = block.value;
-                img.style.height = '20px';
-                img.style.width = 'auto';
-                img.style.verticalAlign = 'middle';
-                if (finalColor) {
-                    img.style.filter = `drop-shadow(0 0 2px ${finalColor})`;
-                }
-                img.onerror = function() {
-                    const emojiMap = {
-                        '|': '│',
-                        '||': '‖',
-                        '||:': '║:',
-                        ':||': ':║',
-                        ':.|': ':║'
-                    };
-                    this.outerHTML = `<span style="color:${finalColor || '#4fc3f7'}; font-weight:bold; font-size:18px; font-family:Arial,sans-serif;">${emojiMap[block.value] || '|'}</span>`;
-                };
-                div.appendChild(img);
+            const span = document.createElement('span');
+            span.className = 'sep-icon';
+            const textValue = ICON_MAP[block.value] || block.value;
+            span.textContent = textValue;
+            span.style.fontWeight = 'bold';
+            span.style.fontSize = '24px';
+            span.style.fontFamily = 'Courier New, monospace';
+            span.style.letterSpacing = '0px';
+            span.style.lineHeight = '1.6';
+            span.style.minHeight = '36px';
+            span.style.display = 'inline-flex';
+            span.style.alignItems = 'center';
+            
+            // Different colors: single bar = blue, double/repeat = yellow
+            const value = block.value;
+            if (value === '|') {
+                span.style.color = '#4fc3f7';    // Single bar - Blue
             } else {
-                const span = document.createElement('span');
-                span.textContent = block.value;
-                span.style.color = finalColor || DEFAULT_COLORS.separator;
-                span.style.fontWeight = 'bold';
-                span.style.fontSize = '16px';
-                div.appendChild(span);
+                span.style.color = '#ffd93d';    // Double bar, repeat start, repeat end - Yellow
             }
-
-            return div;
+            
+            return span;
         }
 
         if (block.type === 'section') {
@@ -2023,10 +2023,11 @@
 
     function applyFontSize(size) {
         outputEl.style.fontSize = size + 'px';
-        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon img, .phrase, .marker')
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon, .phrase, .marker')
             .forEach(el => {
-                if (el.tagName === 'IMG') {
-                    el.style.height = (size * 1.25) + 'px';
+                if (el.classList && el.classList.contains('sep-icon')) {
+                    el.style.fontSize = (size * 1.5) + 'px';
+                    el.style.minHeight = (size * 2.2) + 'px';
                 } else if (el.classList && (el.classList.contains('phrase') || el.classList.contains('marker'))) {
                     el.style.fontSize = size + 'px';
                 } else {
@@ -2034,15 +2035,13 @@
                 }
             });
         document.querySelectorAll('.sep-icon').forEach(el => {
-            el.style.minWidth = (size * 1.6) + 'px';
-            el.style.minHeight = (size * 1.6) + 'px';
+            el.style.minWidth = (size * 1.5) + 'px';
+            el.style.minHeight = (size * 2.2) + 'px';
         });
         document.querySelectorAll('.phrase .sep-icon').forEach(el => {
             el.style.minWidth = (size * 1.2) + 'px';
-            el.style.minHeight = (size * 1.2) + 'px';
-        });
-        document.querySelectorAll('.phrase .sep-icon img').forEach(el => {
-            el.style.height = (size * 1.1) + 'px';
+            el.style.minHeight = (size * 1.8) + 'px';
+            el.style.fontSize = (size * 1.3) + 'px';
         });
         setTimeout(updateSeparatorWidths, 100);
     }
@@ -2202,14 +2201,14 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ CODA & SEGNO markers - ALL formats supported');
-    console.log('✅ D.S. al Coda - CASE INSENSITIVE');
-    console.log('  Segno, Segno(1), Segno(1)(2)');
-    console.log('  Coda, Coda (1), Coda (1)(2)');
-    console.log('  To Coda, ToCoda(1)(2)');
-    console.log('  D.S. al Coda, Fine');
-    console.log('✅ 2VA phrase fix');
-    console.log('✅ Key signature from database');
+    console.log('✅ FINAL VERSION - All features complete');
+    console.log('  - Barline text symbols: |, ||, ||:, :||');
+    console.log('  - Colors: | = blue, ||/||:/:|| = yellow');
+    console.log('  - Segno Group (Blue): Segno, Segno(1), Segno(2), D.S. al Coda');
+    console.log('  - Coda Group (Red): Coda, Coda (1), Coda (2), To Coda');
+    console.log('  - Fine = Green');
+    console.log('  - Taller barlines');
+    console.log('  - D.S. al Coda case insensitive');
     console.log('Keyboard shortcuts:');
     console.log('  Space - Toggle scroll');
     console.log('  ] or } - Transpose up');
