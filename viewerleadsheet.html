@@ -611,7 +611,75 @@
     .key-popup-overlay.show {
         display: block;
     }
-</style>
+    /* ===== FIX: Group :|| and (2va) together ===== */
+    .music-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0;
+        padding: 2px 2px 0px 2px;
+        min-height: 28px;
+        width: 100%;
+    }
+
+    /* Force all items to not shrink */
+    .music-row > * {
+        flex-shrink: 0 !important;
+    }
+
+    /* Special: :|| and (2va) should be treated as one unit */
+    .sep-icon + .region-marker {
+        display: inline-block !important;
+        margin-left: -4px !important;  /* Remove gap between :|| and (2va) */
+        flex-shrink: 0 !important;
+    }
+
+    /* Region markers stay inline */
+    .region-marker {
+        display: inline-block !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* All separators stay inline */
+    .sep-icon {
+        flex-shrink: 0 !important;
+        display: inline-flex !important;
+    }
+
+    /* Chord blocks stay inline */
+    .chord-block {
+        flex-shrink: 0 !important;
+        display: inline-flex !important;
+    }
+
+    /* Beat (slash) elements stay inline */
+    .beat {
+        flex-shrink: 0 !important;
+        display: inline !important;
+        white-space: nowrap !important;
+    }
+    /* ULTIMATE FIX - Force entire row to not wrap */
+    .music-row {
+        display: flex;
+        flex-wrap: nowrap !important;  /* CHANGE from wrap to nowrap */
+        overflow-x: auto;  /* Add scroll if too wide */
+        align-items: center;
+        gap: 0;
+        padding: 2px 2px 0px 2px;
+        min-height: 28px;
+        width: 100%;
+    }
+
+    /* All children stay inline */
+    .music-row > * {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+    /* FORCE NO WRAP - FIX 2VA */
+    .music-row { flex-wrap: nowrap !important; overflow-x: auto !important; }
+    .music-row > * { flex-shrink: 0 !important; white-space: nowrap !important; }
+    </style>
 
 <div class="container">
 
