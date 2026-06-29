@@ -19,7 +19,7 @@
 <body>
 
 <style>
-    /* ===== ALL YOUR EXISTING STYLES HERE ===== */
+    /* ===== ALL STYLES ===== */
     
     * {
         margin: 0;
@@ -183,9 +183,6 @@
         font-size: 0.8rem;
     }
 
-    /* ============================================================
-       OUTPUT — LINE-BASED RENDERING WITH WRAP (OPTION B)
-       ============================================================ */
     #output {
         flex: 1;
         background: #0a0a0a;
@@ -208,7 +205,6 @@
         padding: 40px 0;
     }
 
-    /* ----- MUSIC SYSTEM (kumpulan baris yang di-wrap) ----- */
     .music-system {
         display: flex;
         flex-direction: column;
@@ -216,7 +212,6 @@
         margin-bottom: 2px;
     }
 
-    /* ----- MUSIC ROW (baris fizikal yang di-wrap) ----- */
     .music-row {
         display: flex;
         flex-wrap: wrap;
@@ -236,25 +231,67 @@
         margin-right: 0;
     }
 
-    /* ===== FIX: No-break group untuk region markers ===== */
-    .no-break-group {
+    /* ===== PHRASE BLOCK - SATU UNIT TAK BOLEH PECAH ===== */
+    .phrase {
         display: inline-flex;
         white-space: nowrap;
         align-items: center;
         flex-shrink: 0;
         gap: 0;
         margin-right: 6px;
+        background: rgba(255, 204, 0, 0.05);
+        padding: 0 2px;
+        border-radius: 4px;
+        border-left: 2px solid rgba(255, 204, 0, 0.2);
+        border-right: 2px solid rgba(255, 204, 0, 0.2);
     }
 
-    .no-break-group > * {
+    .phrase > * {
+        margin-right: 0;
+        flex-shrink: 0;
+    }
+
+    .phrase > *:last-child {
         margin-right: 0;
     }
 
-    .no-break-group > *:last-child {
-        margin-right: 0;
+    .phrase .region-marker {
+        background: rgba(42, 42, 78, 0.8);
+        color: #ffcc00;
+        font-weight: bold;
+        padding: 0 4px;
+        border-radius: 3px;
+        font-size: 0.9em;
     }
 
-    /* ----- SEPARATOR ROW — untuk setiap baris fizikal ----- */
+    .phrase .sep-icon {
+        min-width: 20px;
+        min-height: 20px;
+    }
+
+    .phrase .sep-icon img {
+        height: 16px;
+    }
+
+    .phrase .chord-block {
+        min-width: 10px;
+    }
+
+    .phrase .beat {
+        font-size: 0.95em;
+    }
+
+    .phrase.ending-phrase {
+        border-left-color: #ff6b6b;
+        border-right-color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.05);
+    }
+
+    .phrase.ending-phrase .region-marker {
+        background: rgba(255, 107, 107, 0.2);
+        color: #ff6b6b;
+    }
+
     .separator-row {
         width: 100%;
         border-bottom: 2px solid #4fc3f7;
@@ -265,7 +302,6 @@
         transition: width 0.05s ease;
     }
 
-    /* ----- INDIVIDUAL ELEMENTS ----- */
     .chord-block {
         display: inline-flex;
         flex-direction: column;
@@ -338,17 +374,6 @@
         width: auto;
         vertical-align: middle;
         display: block;
-    }
-
-    .ending-marker {
-        display: inline-block;
-        text-align: center;
-        margin: 0 2px;
-        vertical-align: middle;
-        font-weight: bold;
-        font-size: 16px;
-        font-family: 'Courier New', monospace;
-        transition: color 0.2s;
     }
 
     .region-marker {
@@ -443,14 +468,15 @@
         .beat { font-size: 14px; }
         .text-label { font-size: 14px; }
         .section-marker { font-size: 14px; }
-        .sep-repeat1, .sep-repeat2, .sep-default { font-size: 14px; }
         .music-row > * { margin-right: 4px; }
         .separator-row { height: 3px; border-bottom-width: 2px; }
         .sep-icon { min-width: 24px; min-height: 24px; padding: 0 4px; }
         .sep-icon img { height: 16px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
-        .no-break-group { margin-right: 4px; }
+        .phrase { margin-right: 4px; padding: 0 2px; }
+        .phrase .sep-icon { min-width: 16px; min-height: 16px; }
+        .phrase .sep-icon img { height: 12px; }
     }
 
     @media (min-width: 769px) {
@@ -500,8 +526,10 @@
         height: 6px !important;
         border-bottom-width: 3px !important;
     }
+    .fullscreen-mode .phrase {
+        font-size: 18px !important;
+    }
     
-    /* Key display popup */
     .key-popup {
         position: fixed;
         top: 50%;
@@ -611,75 +639,7 @@
     .key-popup-overlay.show {
         display: block;
     }
-    /* ===== FIX: Group :|| and (2va) together ===== */
-    .music-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0;
-        padding: 2px 2px 0px 2px;
-        min-height: 28px;
-        width: 100%;
-    }
-
-    /* Force all items to not shrink */
-    .music-row > * {
-        flex-shrink: 0 !important;
-    }
-
-    /* Special: :|| and (2va) should be treated as one unit */
-    .sep-icon + .region-marker {
-        display: inline-block !important;
-        margin-left: -4px !important;  /* Remove gap between :|| and (2va) */
-        flex-shrink: 0 !important;
-    }
-
-    /* Region markers stay inline */
-    .region-marker {
-        display: inline-block !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* All separators stay inline */
-    .sep-icon {
-        flex-shrink: 0 !important;
-        display: inline-flex !important;
-    }
-
-    /* Chord blocks stay inline */
-    .chord-block {
-        flex-shrink: 0 !important;
-        display: inline-flex !important;
-    }
-
-    /* Beat (slash) elements stay inline */
-    .beat {
-        flex-shrink: 0 !important;
-        display: inline !important;
-        white-space: nowrap !important;
-    }
-    /* ULTIMATE FIX - Force entire row to not wrap */
-    .music-row {
-        display: flex;
-        flex-wrap: nowrap !important;  /* CHANGE from wrap to nowrap */
-        overflow-x: auto;  /* Add scroll if too wide */
-        align-items: center;
-        gap: 0;
-        padding: 2px 2px 0px 2px;
-        min-height: 28px;
-        width: 100%;
-    }
-
-    /* All children stay inline */
-    .music-row > * {
-        flex-shrink: 0 !important;
-        white-space: nowrap !important;
-    }
-    /* FORCE NO WRAP - FIX 2VA */
-    .music-row { flex-wrap: nowrap !important; overflow-x: auto !important; }
-    .music-row > * { flex-shrink: 0 !important; white-space: nowrap !important; }
-    </style>
+</style>
 
 <div class="container">
 
@@ -773,7 +733,7 @@
     // ============================================================
     let currentData = null;
     let currentId = null;
-    let currentKeyIndex = 7; // Default C
+    let currentKeyIndex = 7;
     let currentKey = 'C';
     let originalKey = 'C';
     let fontSize = 16;
@@ -1017,7 +977,7 @@
     }
 
     // ============================================================
-    // TOKENIZE
+    // ===== FIXED: TOKENIZE - DETECT :||(Xva) PATTERN =====
     // ============================================================
     function tokenize(input) {
         const tokens = [];
@@ -1027,6 +987,27 @@
         while (i < input.length) {
             if (input[i] === ' ' || input[i] === '\t') {
                 i++;
+                continue;
+            }
+
+            // ===== FIX: Detect :||(Xva)...|| pattern as ONE PHRASE =====
+            const endingPattern = input.substring(i).match(/^(:||\(([0-9,]+)va\)[^|]*\|\|)/);
+            if (endingPattern) {
+                const fullMatch = endingPattern[1];
+                const numbers = endingPattern[2].split(',').map(Number);
+                const validNumbers = numbers.filter(n => n >= 1 && n <= 4);
+                
+                for (let n of validNumbers) {
+                    if (!activeRegions.includes(n)) activeRegions.push(n);
+                }
+                
+                tokens.push({ 
+                    type: 'phrase', 
+                    value: fullMatch,
+                    numbers: validNumbers,
+                    region: [...activeRegions]
+                });
+                i += fullMatch.length;
                 continue;
             }
 
@@ -1173,6 +1154,19 @@
         }
 
         for (let t of tokens) {
+            // ===== Handle phrase as single block =====
+            if (t.type === 'phrase') {
+                flushSeparator();
+                flushChord();
+                blocks.push({ 
+                    type: 'phrase', 
+                    value: t.value,
+                    numbers: t.numbers || [],
+                    region: t.region || []
+                });
+                continue;
+            }
+
             if (t.type === 'chord') {
                 flushSeparator();
                 flushChord();
@@ -1227,7 +1221,7 @@
     }
 
     // ============================================================
-    // ===== FIXED: GROUP INTO SYSTEMS (2VA TIDAK PUTUS) =====
+    // GROUP INTO SYSTEMS
     // ============================================================
     function groupIntoSystems(blocks) {
         const systems = [];
@@ -1236,11 +1230,15 @@
         function isMajorSeparator(block) {
             if (block.type !== 'separator') return false;
             const v = block.value;
-            return v.includes('||:') || v.includes(':||') || v === '||' || v === ':.|';
+            return v.includes('||:') || v === '||' || v === ':.|';
         }
 
         function isRegionMarker(block) {
             return block.type === 'region_start' || block.type === 'region_end';
+        }
+
+        function isPhrase(block) {
+            return block.type === 'phrase';
         }
 
         function flushSystem() {
@@ -1254,10 +1252,14 @@
             const block = blocks[i];
             const prev = currentSystem.length > 0 ? currentSystem[currentSystem.length - 1] : null;
 
-            // ===== FIX: Region markers jangan break line! =====
+            if (isPhrase(block)) {
+                currentSystem.push(block);
+                continue;
+            }
+
             if (isRegionMarker(block)) {
                 currentSystem.push(block);
-                continue;  // <-- TERUS SKIP, TAK BREAK!
+                continue;
             }
 
             if (block.type === 'icon') {
@@ -1290,6 +1292,106 @@
         const region = block.region || [];
         const rColor = region.length > 0 ? REGION_COLORS[region[0]] : null;
         const finalColor = rColor || regionColor;
+
+        // ===== Handle phrase as single element =====
+        if (block.type === 'phrase') {
+            const phraseDiv = document.createElement('span');
+            phraseDiv.className = 'phrase ending-phrase';
+            
+            const content = block.value;
+            let i = 0;
+            
+            while (i < content.length) {
+                // Check for region marker
+                const regionMatch = content.substring(i).match(/^\(([0-9,]+)va\)/);
+                if (regionMatch) {
+                    const numbers = regionMatch[1].split(',').map(Number);
+                    const validNumbers = numbers.filter(n => n >= 1 && n <= 4);
+                    
+                    const span = document.createElement('span');
+                    span.className = 'region-marker region-start';
+                    const colors = validNumbers.map(n => REGION_COLORS[n]).join(' ');
+                    span.textContent = regionMatch[0];
+                    span.style.color = '#fff';
+                    span.style.background = `linear-gradient(90deg, ${colors.split(' ').join(', ')})`;
+                    span.style.padding = '0 6px';
+                    span.style.borderRadius = '4px';
+                    span.style.fontSize = '0.8em';
+                    phraseDiv.appendChild(span);
+                    i += regionMatch[0].length;
+                    continue;
+                }
+                
+                // Check for chord
+                if (content[i] === '[') {
+                    const j = content.indexOf(']', i);
+                    if (j !== -1) {
+                        const chordText = content.substring(i + 1, j);
+                        const span = document.createElement('span');
+                        span.className = 'chord-block';
+                        const chordEl = document.createElement('span');
+                        chordEl.className = 'chord';
+                        chordEl.textContent = chordText;
+                        chordEl.style.color = finalColor || DEFAULT_COLORS.chord;
+                        span.appendChild(chordEl);
+                        phraseDiv.appendChild(span);
+                        i = j + 1;
+                        continue;
+                    }
+                }
+                
+                // Check for separator
+                const sepMatch = content.substring(i).match(/^(||:||:|||:.|||)/);
+                if (sepMatch) {
+                    const sepValue = sepMatch[1];
+                    const iconFile = ICON_MAP[sepValue];
+                    if (iconFile) {
+                        const span = document.createElement('span');
+                        span.className = 'sep-icon';
+                        const img = document.createElement('img');
+                        img.src = `icons/${iconFile}`;
+                        img.alt = sepValue;
+                        img.style.height = '18px';
+                        img.style.width = 'auto';
+                        img.style.verticalAlign = 'middle';
+                        if (finalColor) {
+                            img.style.filter = `drop-shadow(0 0 2px ${finalColor})`;
+                        }
+                        span.appendChild(img);
+                        phraseDiv.appendChild(span);
+                        i += sepValue.length;
+                        continue;
+                    }
+                }
+                
+                // Check for slash
+                if (content[i] === '/') {
+                    const span = document.createElement('span');
+                    span.className = 'beat';
+                    span.textContent = '/';
+                    span.style.color = finalColor || DEFAULT_COLORS.beat;
+                    phraseDiv.appendChild(span);
+                    i++;
+                    continue;
+                }
+                
+                // Regular text
+                let text = '';
+                while (i < content.length && !content[i].match(/[\[\(]/)) {
+                    text += content[i];
+                    i++;
+                }
+                if (text) {
+                    const span = document.createElement('span');
+                    span.className = 'beat';
+                    span.textContent = text;
+                    span.style.color = finalColor || DEFAULT_COLORS.beat;
+                    phraseDiv.appendChild(span);
+                }
+            }
+            
+            return phraseDiv;
+        }
 
         if (block.type === 'chord-block') {
             const div = document.createElement('span');
@@ -1404,7 +1506,7 @@
     }
 
     // ============================================================
-    // WRAP ELEMENTS INTO ROWS - WITH NO-BREAK GROUP SUPPORT
+    // WRAP ELEMENTS INTO ROWS
     // ============================================================
     function wrapIntoRows(elements, containerWidth) {
         const rows = [];
@@ -1424,73 +1526,16 @@
             if (el.classList.contains('chord-block')) {
                 extra = 6;
             }
-            if (el.classList.contains('no-break-group')) {
-                extra = 4;
+            if (el.classList.contains('phrase')) {
+                extra = 8;
             }
             return (text.length * charWidth) + extra + 6;
         }
 
-        // ===== FIX: Group region markers with following elements =====
-        function groupNoBreakElements(elements) {
-            const grouped = [];
-            let i = 0;
-            
-            while (i < elements.length) {
-                const el = elements[i];
-                
-                // Check if this is a region_start followed by chord or separator
-                if (el.classList && el.classList.contains('region-marker')) {
-                    const group = document.createElement('span');
-                    group.className = 'no-break-group';
-                    group.appendChild(el);
-                    i++;
-                    
-                    // Add following elements until next region marker or major separator
-                    while (i < elements.length) {
-                        const next = elements[i];
-                        if (next.classList && next.classList.contains('region-marker')) {
-                            break;
-                        }
-                        // Check if it's a major separator that should break group
-                        if (next.classList && next.classList.contains('sep-icon')) {
-                            const img = next.querySelector('img');
-                            if (img) {
-                                const alt = img.alt || '';
-                                if (alt.includes('||') || alt.includes('||:') || alt.includes(':||') || alt.includes(':.|')) {
-                                    // Check if this is part of the ending (e.g., :||(2va) pattern)
-                                    // If next element after this is a region marker, keep in group
-                                    if (i + 1 < elements.length && elements[i + 1].classList && elements[i + 1].classList.contains('region-marker')) {
-                                        group.appendChild(next);
-                                        i++;
-                                        continue;
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        group.appendChild(next);
-                        i++;
-                    }
-                    
-                    grouped.push(group);
-                } else {
-                    grouped.push(el);
-                    i++;
-                }
-            }
-            
-            return grouped;
-        }
-
-        // Group elements first
-        const groupedElements = groupNoBreakElements(elements);
-
-        for (let el of groupedElements) {
+        for (let el of elements) {
             const elWidth = getElementWidth(el);
             
-            // Check if this is a no-break group
-            if (el.classList && el.classList.contains('no-break-group')) {
-                // Calculate total width of group
+            if (el.classList && el.classList.contains('phrase')) {
                 const groupWidth = el.scrollWidth || elWidth;
                 if (currentRow.length > 0 && (currentRowWidth + groupWidth) > containerWidth) {
                     rows.push(currentRow);
@@ -1630,10 +1675,12 @@
 
     function applyFontSize(size) {
         outputEl.style.fontSize = size + 'px';
-        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon img')
+        document.querySelectorAll('.chord, .beat, .section-marker, .text-label, .sep-icon img, .phrase')
             .forEach(el => {
                 if (el.tagName === 'IMG') {
                     el.style.height = (size * 1.25) + 'px';
+                } else if (el.classList && el.classList.contains('phrase')) {
+                    el.style.fontSize = size + 'px';
                 } else {
                     el.style.fontSize = size + 'px';
                 }
@@ -1642,8 +1689,12 @@
             el.style.minWidth = (size * 1.6) + 'px';
             el.style.minHeight = (size * 1.6) + 'px';
         });
-        document.querySelectorAll('.no-break-group').forEach(el => {
-            el.style.fontSize = size + 'px';
+        document.querySelectorAll('.phrase .sep-icon').forEach(el => {
+            el.style.minWidth = (size * 1.2) + 'px';
+            el.style.minHeight = (size * 1.2) + 'px';
+        });
+        document.querySelectorAll('.phrase .sep-icon img').forEach(el => {
+            el.style.height = (size * 1.1) + 'px';
         });
         setTimeout(updateSeparatorWidths, 100);
     }
@@ -1803,7 +1854,8 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ 2VA FIXED - Region markers no longer break to new line');
+    console.log('✅ PHRASE FIX - :||(2va)...|| is now a single token');
+    console.log('✅ No more breaking between :|| and (2va)');
     console.log('✅ Transpose feature with proper semitone mapping');
     console.log('✅ Slash chord support');
     console.log('✅ Key selector popup');
