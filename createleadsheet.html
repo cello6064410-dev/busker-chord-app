@@ -304,6 +304,21 @@
         padding: 0 4px;
     }
 
+    /* Color guide for markers */
+    .guide-box .guide-color {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 2px;
+    }
+
+    .guide-box .color-blue { background: #4fc3f7; }
+    .guide-box .color-red { background: #ff6b6b; }
+    .guide-box .color-yellow { background: #ffd93d; }
+    .guide-box .color-orange { background: #ff9f43; }
+    .guide-box .color-green { background: #69db7c; }
+
     #fileInput {
         display: none;
     }
@@ -370,6 +385,8 @@
     <div class="section">
         <div class="section-title">📋 Format Guide</div>
         <div class="guide-box">
+
+            <!-- Row 1: Chords, Sections, Labels, Icons, Beats -->
             <div class="guide-row">
                 <span class="guide-item"><code>[C]</code> <span class="desc">Chord</span></span>
                 <span class="guide-divider">|</span>
@@ -383,6 +400,8 @@
                 <span class="guide-divider">|</span>
                 <span class="guide-item"><code>////</code> <span class="desc">Beats</span></span>
             </div>
+
+            <!-- Row 2: Bar lines, repeats, regions -->
             <div class="guide-row">
                 <span class="guide-item"><code>||:</code> <span class="desc">Repeat Start</span></span>
                 <span class="guide-divider">|</span>
@@ -390,13 +409,60 @@
                 <span class="guide-divider">|</span>
                 <span class="guide-item"><code>|</code> <span class="desc">Bar Line</span></span>
                 <span class="guide-divider">|</span>
+                <span class="guide-item"><code>||</code> <span class="desc">Double Bar</span></span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item"><code>:.|</code> <span class="desc">Repeat End</span></span>
+            </div>
+
+            <!-- Row 3: Regions -->
+            <div class="guide-row">
                 <span class="guide-item"><code>(1va)</code> <span class="desc">Region Start</span></span>
                 <span class="guide-divider">|</span>
                 <span class="guide-item"><code>(.)</code> <span class="desc">Region End</span></span>
             </div>
-            <div class="guide-row" style="margin-top:4px; color:#666; font-size:12px;">
-                <span class="guide-item">Example: <code style="color:#4fc3f7;">||: [1] [C]//// |A| [Am]//// | (1va) [G]//// (.) :|| "Outtro" [2] [C]//// |B| [Dm]//// |</code></span>
+
+            <!-- Row 4: CODA & SEGNO MARKERS (NEW) -->
+            <div class="guide-row" style="border-top: 1px solid #3a3a6e; padding-top: 6px; margin-top: 4px;">
+                <span class="guide-item" style="font-weight:bold; color:#888;">🎵 Markers:</span>
             </div>
+            <div class="guide-row">
+                <span class="guide-item">
+                    <span class="guide-color color-blue"></span>
+                    <code>Segno</code>
+                    <span class="desc">/ <code>Segno(1)</code> / <code>Segno(1)(2)</code></span>
+                </span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item">
+                    <span class="guide-color color-red"></span>
+                    <code>Coda</code>
+                    <span class="desc">/ <code>Coda (1)</code> / <code>Coda (1)(2)</code></span>
+                </span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item">
+                    <span class="guide-color color-yellow"></span>
+                    <code>To Coda</code>
+                    <span class="desc">/ <code>ToCoda(1)(2)</code></span>
+                </span>
+            </div>
+            <div class="guide-row">
+                <span class="guide-item">
+                    <span class="guide-color color-orange"></span>
+                    <code>D.S. al Coda</code>
+                    <span class="desc">Dal Segno al Coda</span>
+                </span>
+                <span class="guide-divider">|</span>
+                <span class="guide-item">
+                    <span class="guide-color color-green"></span>
+                    <code>Fine</code>
+                    <span class="desc">End here</span>
+                </span>
+            </div>
+
+            <!-- Row 5: Example -->
+            <div class="guide-row" style="border-top: 1px solid #3a3a6e; padding-top: 6px; margin-top: 4px; color:#666; font-size:12px;">
+                <span class="guide-item">Example: <code style="color:#4fc3f7;">||: [1] [C]//// |A| [Am]//// | (1va) [G]//// (.) :|| "Outtro" Segno(1) [2] [C]//// |B| [Dm]//// Coda (1) D.S. al Coda Fine</code></span>
+            </div>
+
         </div>
     </div>
 
@@ -612,7 +678,6 @@
                     const data = doc.data();
                     titleInput.value = data.title || '';
                     
-                    // Key Signature mapping
                     const keyMap = {
                         'C': 'C', 'G': 'G', 'D': 'D', 'A': 'A', 'E': 'E', 'B': 'B',
                         'F#': 'F#', 'C#': 'C#', 'F': 'F', 'Bb': 'Bb', 'Eb': 'Eb',
