@@ -20,7 +20,6 @@
 
 <style>
     /* ===== ALL YOUR EXISTING STYLES HERE ===== */
-    /* (Keep all your styles exactly as they are) */
     
     * {
         margin: 0;
@@ -237,6 +236,24 @@
         margin-right: 0;
     }
 
+    /* ===== FIX: No-break group untuk region markers ===== */
+    .no-break-group {
+        display: inline-flex;
+        white-space: nowrap;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 0;
+        margin-right: 6px;
+    }
+
+    .no-break-group > * {
+        margin-right: 0;
+    }
+
+    .no-break-group > *:last-child {
+        margin-right: 0;
+    }
+
     /* ----- SEPARATOR ROW — untuk setiap baris fizikal ----- */
     .separator-row {
         width: 100%;
@@ -345,6 +362,8 @@
         padding: 0 4px;
         border-radius: 4px;
         transition: color 0.2s, background 0.2s;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .region-marker.region-start {
@@ -431,6 +450,7 @@
         .sep-icon img { height: 16px; }
         .floating-bar { gap: 4px; padding: 6px 8px; border-radius: 12px; bottom: 6px; width: 98%; justify-content: space-around; }
         .floating-bar button { font-size: 0.9rem; padding: 6px 8px; min-width: 36px; min-height: 38px; }
+        .no-break-group { margin-right: 4px; }
     }
 
     @media (min-width: 769px) {
@@ -692,7 +712,7 @@
     let scrollInterval = null;
     let isScrolling = false;
     let scrollSpeed = 0.4;
-    let originalContent = ''; // Store original content for transposition
+    let originalContent = '';
 
     const REGION_COLORS = {
         1: '#ff6b6b',
@@ -763,7 +783,6 @@
                     currentKey = currentData.key || 'C';
                     originalKey = currentKey;
                     
-                    // Find key index
                     const keyData = circleOfFifths.find(k => k.major === currentKey);
                     if (keyData) {
                         currentKeyIndex = keyData.index;
@@ -831,7 +850,6 @@
         const useSharp = targetKeyData.keySig === '♯';
         const scale = useSharp ? sharpScale : flatScale;
         
-        // Transpose chords inside brackets [chord]
         return content.replace(/\[([^\]]+)\]/g, (match, chord) => {
             const parts = chord.split('/');
             const rootChord = parts[0];
@@ -870,7 +888,6 @@
         
         updateKeyDisplay();
         
-        // Find original key index
         const originalKeyData = circleOfFifths.find(k => k.major === originalKey);
         const originalIndex = originalKeyData ? originalKeyData.index : 7;
         
@@ -883,7 +900,6 @@
             renderLeadsheet(originalContent);
         }
         
-        // Update key popup
         renderKeyGrid();
     }
 
@@ -1143,7 +1159,7 @@
     }
 
     // ============================================================
-    // GROUP INTO SYSTEMS
+    // ===== FIXED: GROUP INTO SYSTEMS (2VA TIDAK PUTUS) =====
     // ============================================================
     function groupIntoSystems(blocks) {
         const systems = [];
@@ -1153,6 +1169,10 @@
             if (block.type !== 'separator') return false;
             const v = block.value;
             return v.includes('||:') || v.includes(':||') || v === '||' || v === ':.|';
+        }
+
+        function isRegionMarker(block) {
+            return block.type === 'region_start' || block.type === 'region_end';
         }
 
         function flushSystem() {
@@ -1165,6 +1185,12 @@
         for (let i = 0; i < blocks.length; i++) {
             const block = blocks[i];
             const prev = currentSystem.length > 0 ? currentSystem[currentSystem.length - 1] : null;
+
+            // ===== FIX: Region markers jangan break line! =====
+            if (isRegionMarker(block)) {
+                currentSystem.push(block);
+                continue;  // <-- TERUS SKIP, TAK BREAK!
+            }
 
             if (block.type === 'icon') {
                 flushSystem();
@@ -1310,7 +1336,7 @@
     }
 
     // ============================================================
-    // WRAP ELEMENTS INTO ROWS
+    // WRAP ELEMENTS INTO ROWS - WITH NO-BREAK GROUP SUPPORT
     // ============================================================
     function wrapIntoRows(elements, containerWidth) {
         const rows = [];
@@ -1330,18 +1356,90 @@
             if (el.classList.contains('chord-block')) {
                 extra = 6;
             }
+            if (el.classList.contains('no-break-group')) {
+                extra = 4;
+            }
             return (text.length * charWidth) + extra + 6;
         }
 
-        for (let el of elements) {
-            const elWidth = getElementWidth(el);
-            if (currentRow.length > 0 && (currentRowWidth + elWidth) > containerWidth) {
-                rows.push(currentRow);
-                currentRow = [];
-                currentRowWidth = 0;
+        // ===== FIX: Group region markers with following elements =====
+        function groupNoBreakElements(elements) {
+            const grouped = [];
+            let i = 0;
+            
+            while (i < elements.length) {
+                const el = elements[i];
+                
+                // Check if this is a region_start followed by chord or separator
+                if (el.classList && el.classList.contains('region-marker')) {
+                    const group = document.createElement('span');
+                    group.className = 'no-break-group';
+                    group.appendChild(el);
+                    i++;
+                    
+                    // Add following elements until next region marker or major separator
+                    while (i < elements.length) {
+                        const next = elements[i];
+                        if (next.classList && next.classList.contains('region-marker')) {
+                            break;
+                        }
+                        // Check if it's a major separator that should break group
+                        if (next.classList && next.classList.contains('sep-icon')) {
+                            const img = next.querySelector('img');
+                            if (img) {
+                                const alt = img.alt || '';
+                                if (alt.includes('||') || alt.includes('||:') || alt.includes(':||') || alt.includes(':.|')) {
+                                    // Check if this is part of the ending (e.g., :||(2va) pattern)
+                                    // If next element after this is a region marker, keep in group
+                                    if (i + 1 < elements.length && elements[i + 1].classList && elements[i + 1].classList.contains('region-marker')) {
+                                        group.appendChild(next);
+                                        i++;
+                                        continue;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        group.appendChild(next);
+                        i++;
+                    }
+                    
+                    grouped.push(group);
+                } else {
+                    grouped.push(el);
+                    i++;
+                }
             }
-            currentRow.push(el);
-            currentRowWidth += elWidth;
+            
+            return grouped;
+        }
+
+        // Group elements first
+        const groupedElements = groupNoBreakElements(elements);
+
+        for (let el of groupedElements) {
+            const elWidth = getElementWidth(el);
+            
+            // Check if this is a no-break group
+            if (el.classList && el.classList.contains('no-break-group')) {
+                // Calculate total width of group
+                const groupWidth = el.scrollWidth || elWidth;
+                if (currentRow.length > 0 && (currentRowWidth + groupWidth) > containerWidth) {
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentRowWidth = 0;
+                }
+                currentRow.push(el);
+                currentRowWidth += groupWidth;
+            } else {
+                if (currentRow.length > 0 && (currentRowWidth + elWidth) > containerWidth) {
+                    rows.push(currentRow);
+                    currentRow = [];
+                    currentRowWidth = 0;
+                }
+                currentRow.push(el);
+                currentRowWidth += elWidth;
+            }
         }
 
         if (currentRow.length > 0) {
@@ -1476,6 +1574,9 @@
             el.style.minWidth = (size * 1.6) + 'px';
             el.style.minHeight = (size * 1.6) + 'px';
         });
+        document.querySelectorAll('.no-break-group').forEach(el => {
+            el.style.fontSize = size + 'px';
+        });
         setTimeout(updateSeparatorWidths, 100);
     }
 
@@ -1580,7 +1681,6 @@
                 closeKeyPopup();
             }
         }
-        // Keyboard shortcuts for transpose
         if (e.key === ']' || e.key === '}') {
             e.preventDefault();
             transposeUp();
@@ -1635,7 +1735,8 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ Transpose feature ADDED with proper semitone mapping');
+    console.log('✅ 2VA FIXED - Region markers no longer break to new line');
+    console.log('✅ Transpose feature with proper semitone mapping');
     console.log('✅ Slash chord support');
     console.log('✅ Key selector popup');
     console.log('Keyboard shortcuts:');
