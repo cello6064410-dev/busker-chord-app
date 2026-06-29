@@ -980,21 +980,25 @@
     // ===== FIXED: TOKENIZE - DETECT :||(Xva) PATTERN =====
     // ============================================================
     function tokenize(input) {
-        const tokens = [];
-        let i = 0;
-        let activeRegions = [];
+    const tokens = [];
+    let i = 0;
+    let activeRegions = [];
 
-        while (i < input.length) {
-            if (input[i] === ' ' || input[i] === '\t') {
-                i++;
-                continue;
-            }
+    while (i < input.length) {
+        if (input[i] === ' ' || input[i] === '\t') {
+            i++;
+            continue;
+        }
 
-            // ===== FIX: Detect :||(Xva)...|| pattern as ONE PHRASE =====
-            const endingPattern = input.substring(i).match(/^(:||\(([0-9,]+)va\)[^|]*\|\|)/);
-            if (endingPattern) {
-                const fullMatch = endingPattern[1];
-                const numbers = endingPattern[2].split(',').map(Number);
+        // ===== FIX: Detect :||(Xva)...|| pattern =====
+        // Check for :|| followed by (numberva) and ending with ||
+        const endingMatch = input.substring(i).match(/^(:||\(([0-9,]+)va\)[^|]*\|\|)/);
+        if (endingMatch) {
+            const fullMatch = endingMatch[1];
+            const numbersStr = endingMatch[2];
+            
+            if (numbersStr) {
+                const numbers = numbersStr.split(',').map(Number);
                 const validNumbers = numbers.filter(n => n >= 1 && n <= 4);
                 
                 for (let n of validNumbers) {
@@ -1010,10 +1014,14 @@
                 i += fullMatch.length;
                 continue;
             }
+        }
 
-            const regionStartMatch = input.substring(i).match(/^\(([0-9,]+)va\)/);
-            if (regionStartMatch) {
-                const numbers = regionStartMatch[1].split(',').map(Number);
+        // Check for region start (1va, 2va, etc.)
+        const regionStartMatch = input.substring(i).match(/^\(([0-9,]+)va\)/);
+        if (regionStartMatch) {
+            const numbersStr = regionStartMatch[1];
+            if (numbersStr) {
+                const numbers = numbersStr.split(',').map(Number);
                 const validNumbers = numbers.filter(n => n >= 1 && n <= 4);
                 if (validNumbers.length > 0) {
                     for (let n of validNumbers) {
@@ -1024,101 +1032,102 @@
                     continue;
                 }
             }
+        }
 
-            if (input.substring(i, i + 3) === '(.)') {
-                tokens.push({ type: 'region_end' });
-                activeRegions = [];
-                i += 3;
+        if (input.substring(i, i + 3) === '(.)') {
+            tokens.push({ type: 'region_end' });
+            activeRegions = [];
+            i += 3;
+            continue;
+        }
+
+        const iconMatch = input.substring(i).match(/^\|([A-Za-z])\|/);
+        if (iconMatch) {
+            const letter = iconMatch[1].toUpperCase();
+            tokens.push({ type: 'icon', letter: letter, region: [...activeRegions] });
+            i += iconMatch[0].length;
+            continue;
+        }
+
+        if (input[i] === '"') {
+            const j = input.indexOf('"', i + 1);
+            if (j !== -1) {
+                const text = input.substring(i + 1, j);
+                tokens.push({ type: 'textlabel', value: text, region: [...activeRegions] });
+                i = j + 1;
                 continue;
             }
+        }
 
-            const iconMatch = input.substring(i).match(/^\|([A-Za-z])\|/);
-            if (iconMatch) {
-                const letter = iconMatch[1].toUpperCase();
-                tokens.push({ type: 'icon', letter: letter, region: [...activeRegions] });
-                i += iconMatch[0].length;
-                continue;
-            }
+        if (input.substring(i, i + 3) === '||:') {
+            tokens.push({ type: 'separator', value: '||:', section: 'repeat_start', region: [...activeRegions] });
+            i += 3;
+            continue;
+        }
 
-            if (input[i] === '"') {
-                const j = input.indexOf('"', i + 1);
-                if (j !== -1) {
-                    const text = input.substring(i + 1, j);
-                    tokens.push({ type: 'textlabel', value: text, region: [...activeRegions] });
+        if (input.substring(i, i + 3) === ':||') {
+            tokens.push({ type: 'separator', value: ':||', section: 'repeat_end', region: [...activeRegions] });
+            i += 3;
+            continue;
+        }
+
+        if (input.substring(i, i + 3) === ':.|') {
+            tokens.push({ type: 'separator', value: ':.|', section: 'repeat_end', region: [...activeRegions] });
+            i += 3;
+            continue;
+        }
+
+        if (input.substring(i, i + 2) === '||') {
+            tokens.push({ type: 'separator', value: '||', section: 'double_bar', region: [...activeRegions] });
+            i += 2;
+            continue;
+        }
+
+        if (input[i] === '|') {
+            tokens.push({ type: 'separator', value: '|', section: 'bar', region: [...activeRegions] });
+            i++;
+            continue;
+        }
+
+        if (input[i] === '[') {
+            const j = input.indexOf(']', i);
+            if (j !== -1) {
+                const content = input.substring(i + 1, j);
+                if (/^[0-9]+$/.test(content)) {
+                    tokens.push({ type: 'section', value: content, region: [...activeRegions] });
+                    i = j + 1;
+                    continue;
+                } else {
+                    tokens.push({ type: 'chord', value: content, region: [...activeRegions] });
                     i = j + 1;
                     continue;
                 }
             }
-
-            if (input.substring(i, i + 3) === '||:') {
-                tokens.push({ type: 'separator', value: '||:', section: 'repeat_start', region: [...activeRegions] });
-                i += 3;
-                continue;
-            }
-
-            if (input.substring(i, i + 3) === ':||') {
-                tokens.push({ type: 'separator', value: ':||', section: 'repeat_end', region: [...activeRegions] });
-                i += 3;
-                continue;
-            }
-
-            if (input.substring(i, i + 3) === ':.|') {
-                tokens.push({ type: 'separator', value: ':.|', section: 'repeat_end', region: [...activeRegions] });
-                i += 3;
-                continue;
-            }
-
-            if (input.substring(i, i + 2) === '||') {
-                tokens.push({ type: 'separator', value: '||', section: 'double_bar', region: [...activeRegions] });
-                i += 2;
-                continue;
-            }
-
-            if (input[i] === '|') {
-                tokens.push({ type: 'separator', value: '|', section: 'bar', region: [...activeRegions] });
-                i++;
-                continue;
-            }
-
-            if (input[i] === '[') {
-                const j = input.indexOf(']', i);
-                if (j !== -1) {
-                    const content = input.substring(i + 1, j);
-                    if (/^[0-9]+$/.test(content)) {
-                        tokens.push({ type: 'section', value: content, region: [...activeRegions] });
-                        i = j + 1;
-                        continue;
-                    } else {
-                        tokens.push({ type: 'chord', value: content, region: [...activeRegions] });
-                        i = j + 1;
-                        continue;
-                    }
-                }
-            }
-
-            if (input.substring(i, i + 4) === '////') {
-                tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
-                i += 4;
-                continue;
-            }
-
-            if (input.substring(i, i + 2) === '//') {
-                tokens.push({ type: 'slash', value: '//', region: [...activeRegions] });
-                i += 2;
-                continue;
-            }
-
-            if (input[i] === '/') {
-                tokens.push({ type: 'slash', value: '/', region: [...activeRegions] });
-                i++;
-                continue;
-            }
-
-            i++;
         }
 
-        return tokens;
+        if (input.substring(i, i + 4) === '////') {
+            tokens.push({ type: 'slash', value: '////', region: [...activeRegions] });
+            i += 4;
+            continue;
+        }
+
+        if (input.substring(i, i + 2) === '//') {
+            tokens.push({ type: 'slash', value: '//', region: [...activeRegions] });
+            i += 2;
+            continue;
+        }
+
+        if (input[i] === '/') {
+            tokens.push({ type: 'slash', value: '/', region: [...activeRegions] });
+            i++;
+            continue;
+        }
+
+        i++;
     }
+
+    return tokens;
+}
 
     // ============================================================
     // BUILD BLOCKS
