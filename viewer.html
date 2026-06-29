@@ -310,11 +310,42 @@
   function getKeyDataBySig(sig) {
     return circleOfFifths.find(k => k.sig === sig) || circleOfFifths[7];
   }
+  // ============================================
+  // HELPER: Find key data from any format
+  // ============================================
+  function normalizeKeyName(key) {
+      if (!key) return 'C';
+      return key
+          .replace(/b/g, '♭')
+          .replace(/#/g, '♯');
+  }
 
+  function findKeyData(keyName) {
+      if (!keyName) return circleOfFifths[7];
+      
+      const normalized = normalizeKeyName(keyName);
+      
+      // Try to find in circleOfFifths by major OR minor
+      let found = circleOfFifths.find(k => 
+          k.major === normalized || 
+          k.minor === normalized
+      );
+      
+      // If not found, try without symbols
+      if (!found) {
+          const plain = keyName.replace(/[♭♯]/g, '');
+          found = circleOfFifths.find(k => 
+              k.major.replace(/[♭♯]/g, '') === plain ||
+              k.minor.replace(/[♭♯]/g, '') === plain
+          );
+      }
+      
+      return found || circleOfFifths[7];
+  }
   // ============================================
   // SELECT SONG
   // ============================================
-  function selectSong(songId) {
+    function selectSong(songId) {
     stopScroll();
     currentSongId = songId;
     const song = songs.find(s => s.id === songId);
@@ -324,12 +355,13 @@
     }
     songTitleEl.textContent = song.title || 'Untitled';
 
-    const sig = song.keySignature || '0';
-    const keyData = getKeyDataBySig(sig);
+    // FIX: Use keyMajor from database
+    const keyName = song.keyMajor || 'C';
+    const keyData = findKeyData(keyName);
     
     currentKeyMajor = keyData.major;
     currentKeyMinor = keyData.minor;
-    currentKeySignature = sig;
+    currentKeySignature = keyData.sig;
     currentKeyIndex = keyData.index;
 
     updateKeyDisplay();
@@ -427,50 +459,25 @@
       return;
     }
     
-    const originalSig = song.keySignature || '0';
-    const originalKeyData = getKeyDataBySig(originalSig);
+    // FIX: Use keyMajor from database
+    const keyName = song.keyMajor || 'C';
+    const originalKeyData = findKeyData(keyName);
     const originalIndex = originalKeyData.index;
     
-    // FIXED: Use proper semitone offset calculation
     const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
     
-    // Apply transposition if needed
     if (semitoneOffset !== 0) {
       lyrics = transposeLyricsBySemitone(lyrics, semitoneOffset);
     }
     
     lyrics = formatChordsAboveLyrics(lyrics);
     lyrics = convertChordSymbols(lyrics);
-    
-    // Apply slash chord styling
     lyrics = applySlashChordStyling(lyrics);
     
     outputEl.innerHTML = lyrics;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
   }
-
-  // ============================================
-  // SLASH CHORD STYLING
-  // ============================================
-  function applySlashChordStyling(html) {
-    // Style slash chords in chord rows
-    const chordRows = html.match(/<div class="chord-row">.*?<\/div>/g);
-    if (!chordRows) return html;
-    
-    chordRows.forEach(row => {
-      const styledRow = row.replace(/([A-G][♯♭]?)(maj7|m7|m|dim|aug|sus[24]|add[0-9])?\/?([A-G][♯♭]?)?/g, (match, root, quality, bass) => {
-        if (bass) {
-          return `<span class="slash-chord">${root}${quality || ''}<span class="bass-note">/${bass}</span></span>`;
-        }
-        return match;
-      });
-      html = html.replace(row, styledRow);
-    });
-    
-    return html;
-  }
-
   // ============================================
   // UPDATE KEY DISPLAY
   // ============================================
