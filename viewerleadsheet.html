@@ -362,14 +362,14 @@
         justify-content: center;
         margin: 0 0px;
         vertical-align: middle;
-        min-width: 20px;             /* ← Kurangkan min-width */
+        min-width: 16px;
         min-height: 36px;
-        padding: 0 1px;              /* ← Kurangkan padding */
+        padding: 0 1px;
         flex-shrink: 0;
-        font-family: 'Courier New', monospace;
+        font-family: 'Arial', 'Segoe UI', sans-serif;  /* Better for box drawing */
         font-weight: bold;
-        font-size: 24px;
-        letter-spacing: -2px;        /* ← Rapatkan! */
+        font-size: 22px;
+        letter-spacing: 0px;
         line-height: 1.6;
     }
 
@@ -859,10 +859,10 @@
     // ===== ICON MAP - TEXT SYMBOLS (NO IMAGES) =====
     const ICON_MAP = {
         '|': '|',
-        '||': '||',
-        '||:': '||:',
-        ':||': ':||',
-        ':.|': ':||'
+        '||': '‖',        // ← U+2016 Double Vertical Line
+        '||:': '‖:',      // ← Double bar + colon
+        ':||': ':‖',      // ← Colon + Double bar
+        ':.|': ':‖'
     };
 
     // ============================================================
@@ -1782,19 +1782,18 @@
             span.textContent = textValue;
             span.style.fontWeight = 'bold';
             span.style.fontSize = '24px';
-            span.style.fontFamily = 'Courier New, monospace';
+            span.style.fontFamily = 'Arial, sans-serif';  // ← Better for Unicode
             span.style.letterSpacing = '0px';
             span.style.lineHeight = '1.6';
             span.style.minHeight = '36px';
             span.style.display = 'inline-flex';
             span.style.alignItems = 'center';
-            
-            // Different colors: single bar = blue, double/repeat = yellow
+    
             const value = block.value;
             if (value === '|') {
-                span.style.color = '#4fc3f7';    // Single bar - Blue
+                span.style.color = '#4fc3f7';
             } else {
-                span.style.color = '#ffd93d';    // Double bar, repeat start, repeat end - Yellow
+                span.style.color = '#ffd93d';
             }
             
             return span;
