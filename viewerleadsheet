@@ -19,6 +19,9 @@
 <body>
 
 <style>
+    /* ===== ALL YOUR EXISTING STYLES HERE ===== */
+    /* (Keep all your styles exactly as they are) */
+    
     * {
         margin: 0;
         padding: 0;
@@ -124,6 +127,12 @@
         padding: 2px 12px;
         border-radius: 12px;
         border: 1px solid #2a2a4e;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .info-bar #keyDisplay:hover {
+        background: #2a2a4e;
     }
 
     .info-bar .transpose-group {
@@ -147,7 +156,11 @@
         min-height: 28px;
         min-width: 28px;
         font-family: 'Courier New', monospace;
-        transition: color 0.2s;
+        transition: color 0.2s, transform 0.1s;
+    }
+
+    .info-bar .transpose-group button:active {
+        transform: scale(0.85);
     }
 
     .info-bar .transpose-group button.sharp {
@@ -467,6 +480,117 @@
         height: 6px !important;
         border-bottom-width: 3px !important;
     }
+    
+    /* Key display popup */
+    .key-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1a1a2e;
+        border: 2px solid #2a2a4e;
+        border-radius: 16px;
+        padding: 24px;
+        z-index: 99999;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+        display: none;
+    }
+    
+    .key-popup.show {
+        display: block;
+    }
+    
+    .key-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #2a2a4e;
+    }
+    
+    .key-popup-header h2 {
+        color: #ffcc00;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .key-popup-close {
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 4px 8px;
+        transition: color 0.2s;
+    }
+    
+    .key-popup-close:hover {
+        color: #fff;
+    }
+    
+    .key-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    
+    .key-item {
+        padding: 8px 12px;
+        background: #0f0f0f;
+        border: 1px solid #2a2a4e;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        color: #aaa;
+    }
+    
+    .key-item:hover {
+        background: #2a2a4e;
+        border-color: #4a4a6e;
+        color: #fff;
+    }
+    
+    .key-item.active {
+        background: #2a4a2e;
+        border-color: #4fc3f7;
+        color: #ffcc00;
+        font-weight: bold;
+    }
+    
+    .key-item .key-sig {
+        color: #666;
+        font-size: 0.7rem;
+        display: block;
+        margin-top: 2px;
+    }
+    
+    .key-item.active .key-sig {
+        color: #4fc3f7;
+    }
+    
+    .key-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 99998;
+        display: none;
+    }
+    
+    .key-popup-overlay.show {
+        display: block;
+    }
 </style>
 
 <div class="container">
@@ -482,11 +606,11 @@
         </div>
         <div class="info-bar">
             <span id="songTitle">No Leadsheet Loaded</span>
-            <span id="keyDisplay">Key: C</span>
+            <span id="keyDisplay" onclick="openKeyPopup()" title="Click to change key">Key: C</span>
             <div class="transpose-group">
-                <button onclick="transposeUp()" class="sharp" title="Transpose Up">♯+</button>
+                <button onclick="transposeUp()" class="sharp" title="Transpose Up (↑)">♯+</button>
                 <span class="divider">|</span>
-                <button onclick="transposeDown()" class="flat" title="Transpose Down">♭−</button>
+                <button onclick="transposeDown()" class="flat" title="Transpose Down (↓)">♭−</button>
             </div>
         </div>
     </div>
@@ -505,6 +629,18 @@
 
 </div>
 
+<!-- Key Selection Popup -->
+<div class="key-popup-overlay" id="keyOverlay" onclick="closeKeyPopup()"></div>
+<div class="key-popup" id="keyPopup">
+    <div class="key-popup-header">
+        <h2>🎵 Select Key</h2>
+        <button class="key-popup-close" onclick="closeKeyPopup()">✕</button>
+    </div>
+    <div class="key-grid" id="keyGrid">
+        <!-- Keys will be rendered here -->
+    </div>
+</div>
+
 <script>
     // ============================================================
     // FIREBASE CONFIG
@@ -520,14 +656,43 @@
     const db = firebase.firestore();
 
     // ============================================================
+    // CIRCLE OF FIFTHS WITH SEMITONE MAPPING
+    // ============================================================
+    const circleOfFifths = [
+        { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0, semitone: 11, keySig: '♭' },
+        { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1, semitone: 6, keySig: '♭' },
+        { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2, semitone: 1, keySig: '♭' },
+        { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3, semitone: 8, keySig: '♭' },
+        { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4, semitone: 3, keySig: '♭' },
+        { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5, semitone: 10, keySig: '♭' },
+        { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6, semitone: 5, keySig: '♭' },
+        { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7, semitone: 0, keySig: '' },
+        { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8, semitone: 7, keySig: '♯' },
+        { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9, semitone: 2, keySig: '♯' },
+        { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10, semitone: 9, keySig: '♯' },
+        { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11, semitone: 4, keySig: '♯' },
+        { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12, semitone: 11, keySig: '♯' },
+        { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13, semitone: 6, keySig: '♯' },
+        { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14, semitone: 1, keySig: '♯' }
+    ];
+
+    const sharpScale = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+    const flatScale = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+    const neutralScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    // ============================================================
     // GLOBALS
     // ============================================================
     let currentData = null;
     let currentId = null;
+    let currentKeyIndex = 7; // Default C
+    let currentKey = 'C';
+    let originalKey = 'C';
     let fontSize = 16;
     let scrollInterval = null;
     let isScrolling = false;
     let scrollSpeed = 0.4;
+    let originalContent = ''; // Store original content for transposition
 
     const REGION_COLORS = {
         1: '#ff6b6b',
@@ -547,7 +712,6 @@
         ending: '#ff6b6b'
     };
 
-    // Icon mapping for bar lines
     const ICON_MAP = {
         '|': 'barline.png',
         '||': 'doublebarline.png',
@@ -563,6 +727,9 @@
     const songTitleEl = document.getElementById('songTitle');
     const keyDisplayEl = document.getElementById('keyDisplay');
     const playBtn = document.getElementById('playBtn');
+    const keyPopup = document.getElementById('keyPopup');
+    const keyOverlay = document.getElementById('keyOverlay');
+    const keyGrid = document.getElementById('keyGrid');
 
     // ============================================================
     // AUTH CHECK
@@ -592,9 +759,19 @@
             .then((doc) => {
                 if (doc.exists) {
                     currentData = doc.data();
+                    originalContent = currentData.content || '';
+                    currentKey = currentData.key || 'C';
+                    originalKey = currentKey;
+                    
+                    // Find key index
+                    const keyData = circleOfFifths.find(k => k.major === currentKey);
+                    if (keyData) {
+                        currentKeyIndex = keyData.index;
+                    }
+                    
                     songTitleEl.textContent = currentData.title || 'Untitled';
-                    keyDisplayEl.textContent = `Key: ${currentData.key || 'C'}`;
-                    renderLeadsheet(currentData.content || '');
+                    updateKeyDisplay();
+                    renderLeadsheet(originalContent);
                 } else {
                     outputEl.innerHTML = '<div class="loading-text">❌ Leadsheet not found</div>';
                 }
@@ -602,6 +779,157 @@
             .catch((err) => {
                 outputEl.innerHTML = `<div class="loading-text">❌ Error: ${err.message}</div>`;
             });
+    }
+
+    // ============================================================
+    // TRANSPOSE FUNCTIONS
+    // ============================================================
+    function getSemitoneOffset(currentIndex, originalIndex) {
+        const current = circleOfFifths[currentIndex];
+        const original = circleOfFifths[originalIndex];
+        
+        let offset = current.semitone - original.semitone;
+        
+        const diff = currentIndex - originalIndex;
+        if (diff > 0) {
+            offset = ((offset % 12) + 12) % 12;
+        } else if (diff < 0) {
+            offset = -(((12 - offset) % 12) || 0);
+        }
+        
+        return offset;
+    }
+
+    function transposeSingleNote(noteWithQuality, scale, steps) {
+        const rootMatch = noteWithQuality.match(/^[A-G][♯♭]?/);
+        if (!rootMatch) return noteWithQuality;
+        
+        const root = rootMatch[0];
+        const quality = noteWithQuality.substring(root.length);
+        
+        let index = scale.indexOf(root);
+        if (index === -1) {
+            const altRoot = root.replace('♯', '#').replace('♭', 'b');
+            index = scale.indexOf(altRoot);
+        }
+        
+        if (index === -1) {
+            const neutralIndex = neutralScale.indexOf(root);
+            if (neutralIndex === -1) return noteWithQuality;
+            const newIndex = (neutralIndex + steps) % 12;
+            return neutralScale[newIndex] + quality;
+        }
+        
+        const newIndex = (index + steps) % 12;
+        return scale[newIndex] + quality;
+    }
+
+    function transposeContent(content, semitoneOffset) {
+        const steps = ((semitoneOffset % 12) + 12) % 12;
+        
+        const targetKeyData = circleOfFifths[currentKeyIndex];
+        const useSharp = targetKeyData.keySig === '♯';
+        const scale = useSharp ? sharpScale : flatScale;
+        
+        // Transpose chords inside brackets [chord]
+        return content.replace(/\[([^\]]+)\]/g, (match, chord) => {
+            const parts = chord.split('/');
+            const rootChord = parts[0];
+            const bassNote = parts.length > 1 ? parts[1] : null;
+            
+            let transposedRoot = transposeSingleNote(rootChord, scale, steps);
+            
+            let transposedBass = null;
+            if (bassNote) {
+                transposedBass = transposeSingleNote(bassNote, scale, steps);
+            }
+            
+            if (transposedBass) {
+                return `[${transposedRoot}/${transposedBass}]`;
+            }
+            return `[${transposedRoot}]`;
+        });
+    }
+
+    function transposeUp() {
+        let newIndex = currentKeyIndex + 1;
+        if (newIndex >= circleOfFifths.length) newIndex = circleOfFifths.length - 1;
+        applyTranspose(newIndex);
+    }
+
+    function transposeDown() {
+        let newIndex = currentKeyIndex - 1;
+        if (newIndex < 0) newIndex = 0;
+        applyTranspose(newIndex);
+    }
+
+    function applyTranspose(newIndex) {
+        currentKeyIndex = newIndex;
+        const keyData = circleOfFifths[currentKeyIndex];
+        currentKey = keyData.major;
+        
+        updateKeyDisplay();
+        
+        // Find original key index
+        const originalKeyData = circleOfFifths.find(k => k.major === originalKey);
+        const originalIndex = originalKeyData ? originalKeyData.index : 7;
+        
+        const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
+        
+        if (semitoneOffset !== 0) {
+            const transposed = transposeContent(originalContent, semitoneOffset);
+            renderLeadsheet(transposed);
+        } else {
+            renderLeadsheet(originalContent);
+        }
+        
+        // Update key popup
+        renderKeyGrid();
+    }
+
+    function updateKeyDisplay() {
+        const keyData = circleOfFifths[currentKeyIndex];
+        const sigDisplay = keyData.sig.replace('#', '♯').replace('b', '♭');
+        keyDisplayEl.textContent = `Key: ${keyData.major} / ${keyData.minor}`;
+    }
+
+    // ============================================================
+    // KEY POPUP
+    // ============================================================
+    function openKeyPopup() {
+        keyPopup.classList.add('show');
+        keyOverlay.classList.add('show');
+        renderKeyGrid();
+    }
+
+    function closeKeyPopup() {
+        keyPopup.classList.remove('show');
+        keyOverlay.classList.remove('show');
+    }
+
+    function renderKeyGrid() {
+        keyGrid.innerHTML = '';
+        
+        circleOfFifths.forEach((key) => {
+            const div = document.createElement('div');
+            div.className = 'key-item';
+            if (key.index === currentKeyIndex) {
+                div.classList.add('active');
+            }
+            
+            const sigDisplay = key.sig.replace('#', '♯').replace('b', '♭');
+            div.innerHTML = `
+                ${key.major} / ${key.minor}
+                <span class="key-sig">${sigDisplay}</span>
+            `;
+            
+            div.onclick = () => {
+                applyTranspose(key.index);
+                closeKeyPopup();
+            };
+            
+            keyGrid.appendChild(div);
+        });
     }
 
     // ============================================================
@@ -657,7 +985,6 @@
                 }
             }
 
-            // Separators — all become icons from ICON_MAP
             if (input.substring(i, i + 3) === '||:') {
                 tokens.push({ type: 'separator', value: '||:', section: 'repeat_start', region: [...activeRegions] });
                 i += 3;
@@ -806,7 +1133,6 @@
             } else if (t.type === 'region_end') {
                 flushSeparator();
                 flushChord();
-                // Do nothing — hidden
             }
         }
 
@@ -817,7 +1143,7 @@
     }
 
     // ============================================================
-    // GROUP INTO SYSTEMS — ICON = LINE BREAKER
+    // GROUP INTO SYSTEMS
     // ============================================================
     function groupIntoSystems(blocks) {
         const systems = [];
@@ -899,7 +1225,6 @@
             const div = document.createElement('span');
             div.className = 'sep-icon';
 
-            // Use icon from ICON_MAP
             const iconFile = ICON_MAP[block.value];
             if (iconFile) {
                 const img = document.createElement('img');
@@ -911,9 +1236,7 @@
                 if (finalColor) {
                     img.style.filter = `drop-shadow(0 0 2px ${finalColor})`;
                 }
-                // Fallback if image fails to load
                 img.onerror = function() {
-                    // Replace with emoji fallback
                     const emojiMap = {
                         '|': '│',
                         '||': '‖',
@@ -925,7 +1248,6 @@
                 };
                 div.appendChild(img);
             } else {
-                // Fallback — text
                 const span = document.createElement('span');
                 span.textContent = block.value;
                 span.style.color = finalColor || DEFAULT_COLORS.separator;
@@ -1030,7 +1352,7 @@
     }
 
     // ============================================================
-    // RENDER LEADSHEET — OPTION B (separator per row)
+    // RENDER LEADSHEET
     // ============================================================
     function renderLeadsheet(input) {
         if (!input || !input.trim()) {
@@ -1038,7 +1360,6 @@
             return;
         }
 
-        // Normalize: semua dash → slash
         input = input.replace(/-/g, '/');
         input = input.replace(/\/+/g, (m) => '/'.repeat(m.length));
 
@@ -1053,7 +1374,6 @@
 
         outputEl.innerHTML = '';
 
-        // Get container width for wrapping
         const containerWidth = outputEl.clientWidth - 32;
 
         for (let system of systems) {
@@ -1086,7 +1406,6 @@
 
                 systemDiv.appendChild(rowDiv);
 
-                // Separator AFTER each row
                 const sepRow = document.createElement('div');
                 sepRow.className = 'separator-row';
                 systemDiv.appendChild(sepRow);
@@ -1098,7 +1417,6 @@
         applyFontSize(fontSize);
         outputEl.scrollTop = 0;
 
-        // Update separator widths after render
         setTimeout(updateSeparatorWidths, 50);
     }
 
@@ -1132,7 +1450,15 @@
         fontSize = Math.min(32, Math.max(10, fontSize + delta));
         applyFontSize(fontSize);
         if (currentData) {
-            renderLeadsheet(currentData.content || '');
+            const keyData = circleOfFifths.find(k => k.major === originalKey);
+            const originalIndex = keyData ? keyData.index : 7;
+            const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
+            if (semitoneOffset !== 0) {
+                const transposed = transposeContent(originalContent, semitoneOffset);
+                renderLeadsheet(transposed);
+            } else {
+                renderLeadsheet(originalContent);
+            }
         }
     }
 
@@ -1211,17 +1537,6 @@
     });
 
     // ============================================================
-    // TRANSPOSE (visual only)
-    // ============================================================
-    function transposeUp() {
-        console.log('Transpose Up');
-    }
-
-    function transposeDown() {
-        console.log('Transpose Down');
-    }
-
-    // ============================================================
     // NAVIGATION
     // ============================================================
     function openList() {
@@ -1261,6 +1576,18 @@
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
+            if (keyPopup.classList.contains('show')) {
+                closeKeyPopup();
+            }
+        }
+        // Keyboard shortcuts for transpose
+        if (e.key === ']' || e.key === '}') {
+            e.preventDefault();
+            transposeUp();
+        }
+        if (e.key === '[' || e.key === '{') {
+            e.preventDefault();
+            transposeDown();
         }
     });
 
@@ -1273,6 +1600,7 @@
         if (id && auth.currentUser) {
             loadLeadsheet(id);
         }
+        renderKeyGrid();
     });
 
     // ============================================================
@@ -1283,7 +1611,15 @@
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
             if (currentData) {
-                renderLeadsheet(currentData.content || '');
+                const keyData = circleOfFifths.find(k => k.major === originalKey);
+                const originalIndex = keyData ? keyData.index : 7;
+                const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
+                if (semitoneOffset !== 0) {
+                    const transposed = transposeContent(originalContent, semitoneOffset);
+                    renderLeadsheet(transposed);
+                } else {
+                    renderLeadsheet(originalContent);
+                }
             }
         }, 200);
     });
@@ -1299,9 +1635,14 @@
     });
 
     console.log('🎵 Leadsheet Viewer loaded!');
-    console.log('✅ Option B: Wrap + separator per row');
-    console.log('✅ Icons from icons/ folder for bar lines');
-    console.log('✅ Fallback: emoji if image not found');
+    console.log('✅ Transpose feature ADDED with proper semitone mapping');
+    console.log('✅ Slash chord support');
+    console.log('✅ Key selector popup');
+    console.log('Keyboard shortcuts:');
+    console.log('  Space - Toggle scroll');
+    console.log('  ] or } - Transpose up');
+    console.log('  [ or { - Transpose down');
+    console.log('  Escape - Close popup / Exit fullscreen');
 </script>
 
 </body>

@@ -125,24 +125,24 @@
   const IDLE_TIMEOUT = 30 * 60 * 1000;
 
   // ============================================
-  // CIRCLE OF FIFTHS - KEY SIGNATURE DATA
+  // CIRCLE OF FIFTHS - WITH SEMITONE MAPPING (FIXED)
   // ============================================
   const circleOfFifths = [
-    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0, keySig: '♭' },
-    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1, keySig: '♭' },
-    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2, keySig: '♭' },
-    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3, keySig: '♭' },
-    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4, keySig: '♭' },
-    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5, keySig: '♭' },
-    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6, keySig: '♭' },
-    { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7, keySig: '' },
-    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8, keySig: '♯' },
-    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9, keySig: '♯' },
-    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10, keySig: '♯' },
-    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11, keySig: '♯' },
-    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12, keySig: '♯' },
-    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13, keySig: '♯' },
-    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14, keySig: '♯' }
+    { id: '7♭',  major: 'C♭', minor: 'A♭m', sig: '7♭',  index: 0, semitone: 11, keySig: '♭' },
+    { id: '6♭',  major: 'G♭', minor: 'E♭m', sig: '6♭',  index: 1, semitone: 6, keySig: '♭' },
+    { id: '5♭',  major: 'D♭', minor: 'B♭m', sig: '5♭',  index: 2, semitone: 1, keySig: '♭' },
+    { id: '4♭',  major: 'A♭', minor: 'Fm',  sig: '4♭',  index: 3, semitone: 8, keySig: '♭' },
+    { id: '3♭',  major: 'E♭', minor: 'Cm',  sig: '3♭',  index: 4, semitone: 3, keySig: '♭' },
+    { id: '2♭',  major: 'B♭', minor: 'Gm',  sig: '2♭',  index: 5, semitone: 10, keySig: '♭' },
+    { id: '1♭',  major: 'F',  minor: 'Dm',  sig: '1♭',  index: 6, semitone: 5, keySig: '♭' },
+    { id: '0',   major: 'C',  minor: 'Am',  sig: '0',   index: 7, semitone: 0, keySig: '' },
+    { id: '1♯',  major: 'G',  minor: 'Em',  sig: '1♯',  index: 8, semitone: 7, keySig: '♯' },
+    { id: '2♯',  major: 'D',  minor: 'Bm',  sig: '2♯',  index: 9, semitone: 2, keySig: '♯' },
+    { id: '3♯',  major: 'A',  minor: 'F♯m', sig: '3♯',  index: 10, semitone: 9, keySig: '♯' },
+    { id: '4♯',  major: 'E',  minor: 'C♯m', sig: '4♯',  index: 11, semitone: 4, keySig: '♯' },
+    { id: '5♯',  major: 'B',  minor: 'G♯m', sig: '5♯',  index: 12, semitone: 11, keySig: '♯' },
+    { id: '6♯',  major: 'F♯', minor: 'D♯m', sig: '6♯',  index: 13, semitone: 6, keySig: '♯' },
+    { id: '7♯',  major: 'C♯', minor: 'A♯m', sig: '7♯',  index: 14, semitone: 1, keySig: '♯' }
   ];
 
   const enharmonicMap = {
@@ -157,6 +157,9 @@
   // ============================================
   const sharpScale = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
   const flatScale = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+  
+  // Neutral scale for fallback
+  const neutralScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
   // ============================================
   // DOM REFERENCES
@@ -172,6 +175,28 @@
   const keyListContainer = document.getElementById('keyListContainer');
   const enharmonicToggle = document.getElementById('enharmonicToggle');
   const enharmonicLabel = document.getElementById('enharmonicLabel');
+
+  // ============================================
+  // FIXED: GET SEMITONE OFFSET
+  // ============================================
+  function getSemitoneOffset(currentIndex, originalIndex) {
+    const current = circleOfFifths[currentIndex];
+    const original = circleOfFifths[originalIndex];
+    
+    let offset = current.semitone - original.semitone;
+    
+    // Ensure correct direction based on circle movement
+    const diff = currentIndex - originalIndex;
+    if (diff > 0) {
+      // Moving forward in circle
+      offset = ((offset % 12) + 12) % 12;
+    } else if (diff < 0) {
+      // Moving backward in circle
+      offset = -(((12 - offset) % 12) || 0);
+    }
+    
+    return offset;
+  }
 
   // ============================================
   // AUTH - CHECK LOGIN STATUS
@@ -325,7 +350,75 @@
   }
 
   // ============================================
-  // DISPLAY SONG
+  // FIXED: TRANSPOSE SINGLE NOTE
+  // ============================================
+  function transposeSingleNote(noteWithQuality, scale, steps) {
+    // Extract root note (first 1-2 characters)
+    const rootMatch = noteWithQuality.match(/^[A-G][♯♭]?/);
+    if (!rootMatch) return noteWithQuality;
+    
+    const root = rootMatch[0];
+    const quality = noteWithQuality.substring(root.length);
+    
+    // Find root in scale
+    let index = scale.indexOf(root);
+    if (index === -1) {
+      // Try alternative spelling (♯ ↔ #, ♭ ↔ b)
+      const altRoot = root.replace('♯', '#').replace('♭', 'b');
+      index = scale.indexOf(altRoot);
+    }
+    
+    if (index === -1) {
+      // Fallback: use neutral scale
+      const neutralIndex = neutralScale.indexOf(root);
+      if (neutralIndex === -1) return noteWithQuality;
+      
+      const newIndex = (neutralIndex + steps) % 12;
+      return neutralScale[newIndex] + quality;
+    }
+    
+    // Transpose
+    const newIndex = (index + steps) % 12;
+    return scale[newIndex] + quality;
+  }
+
+  // ============================================
+  // FIXED: TRANSPOSE LYRICS BY SEMITONE
+  // ============================================
+  function transposeLyricsBySemitone(lyrics, semitoneOffset) {
+    // Normalize semitone offset to 0-11 for transposition
+    const steps = ((semitoneOffset % 12) + 12) % 12;
+    
+    // Determine which scale to use based on target key
+    const targetKeyData = circleOfFifths[currentKeyIndex];
+    const useSharp = targetKeyData.keySig === '♯';
+    const scale = useSharp ? sharpScale : flatScale;
+    
+    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
+      // Handle slash chords
+      const parts = chord.split('/');
+      const rootChord = parts[0];
+      const bassNote = parts.length > 1 ? parts[1] : null;
+      
+      // Transpose root
+      let transposedRoot = transposeSingleNote(rootChord, scale, steps);
+      
+      // Transpose bass if exists
+      let transposedBass = null;
+      if (bassNote) {
+        transposedBass = transposeSingleNote(bassNote, scale, steps);
+      }
+      
+      // Combine
+      if (transposedBass) {
+        return `[${transposedRoot}/${transposedBass}]`;
+      }
+      return `[${transposedRoot}]`;
+    });
+  }
+
+  // ============================================
+  // FIXED: DISPLAY SONG
   // ============================================
   function displaySong(song) {
     let lyrics = song.lyrics || song.content || '';
@@ -336,15 +429,12 @@
     
     const originalSig = song.keySignature || '0';
     const originalKeyData = getKeyDataBySig(originalSig);
-    const steps = currentKeyIndex - originalKeyData.index;
+    const originalIndex = originalKeyData.index;
     
-    let semitoneOffset = 0;
-    if (steps > 0) {
-      semitoneOffset = steps * 7;
-    } else if (steps < 0) {
-      semitoneOffset = steps * 5;
-    }
+    // FIXED: Use proper semitone offset calculation
+    const semitoneOffset = getSemitoneOffset(currentKeyIndex, originalIndex);
     
+    // Apply transposition if needed
     if (semitoneOffset !== 0) {
       lyrics = transposeLyricsBySemitone(lyrics, semitoneOffset);
     }
@@ -352,9 +442,33 @@
     lyrics = formatChordsAboveLyrics(lyrics);
     lyrics = convertChordSymbols(lyrics);
     
+    // Apply slash chord styling
+    lyrics = applySlashChordStyling(lyrics);
+    
     outputEl.innerHTML = lyrics;
     outputEl.scrollTop = 0;
     applyFontSize(fontSize);
+  }
+
+  // ============================================
+  // SLASH CHORD STYLING
+  // ============================================
+  function applySlashChordStyling(html) {
+    // Style slash chords in chord rows
+    const chordRows = html.match(/<div class="chord-row">.*?<\/div>/g);
+    if (!chordRows) return html;
+    
+    chordRows.forEach(row => {
+      const styledRow = row.replace(/([A-G][♯♭]?)(maj7|m7|m|dim|aug|sus[24]|add[0-9])?\/?([A-G][♯♭]?)?/g, (match, root, quality, bass) => {
+        if (bass) {
+          return `<span class="slash-chord">${root}${quality || ''}<span class="bass-note">/${bass}</span></span>`;
+        }
+        return match;
+      });
+      html = html.replace(row, styledRow);
+    });
+    
+    return html;
   }
 
   // ============================================
@@ -368,7 +482,7 @@
   }
 
   // ============================================
-  // TRANSPOSE FUNCTIONS
+  // FIXED: TRANSPOSE FUNCTIONS
   // ============================================
   function transposeUp() {
     let newIndex = currentKeyIndex + 1;
@@ -394,28 +508,6 @@
       const song = songs.find(s => s.id === currentSongId);
       if (song) displaySong(song);
     }
-  }
-
-  function transposeLyricsBySemitone(lyrics, semitoneOffset) {
-    const targetKeyData = circleOfFifths[currentKeyIndex];
-    const useSharp = targetKeyData.keySig === '♯';
-    const scale = useSharp ? sharpScale : flatScale;
-    const steps = Math.abs(semitoneOffset) % 12;
-    
-    return lyrics.replace(/\[([^\]]+)\]/g, (match, chord) => {
-      let transposed = chord;
-      for (let i = 0; i < scale.length; i++) {
-        const root = scale[i];
-        if (chord.startsWith(root)) {
-          const newIndex = (i + steps + 12) % 12;
-          const newRoot = scale[newIndex];
-          const quality = chord.substring(root.length);
-          transposed = newRoot + quality;
-          break;
-        }
-      }
-      return `[${transposed}]`;
-    });
   }
 
   // ============================================
@@ -801,9 +893,10 @@
   });
 
   console.log('🎵 Song Viewer Pro loaded!');
+  console.log('✅ Transpose system FIXED with proper semitone mapping');
   console.log('Controls:');
-  console.log('  ⬆  - Transpose Up (+7 semitone)');
-  console.log('  ⬇  - Transpose Down (-5 semitone)');
+  console.log('  ⬆  - Transpose Up');
+  console.log('  ⬇  - Transpose Down');
   console.log('  🎵 Transpose - Open key selector');
   console.log('  ▶  - Start auto-scroll');
   console.log('  ⏹  - Stop auto-scroll');
