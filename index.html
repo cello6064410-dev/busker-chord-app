@@ -32,7 +32,8 @@
     
     <!-- Header -->
     <div class="index-header">
-      <div class="index-icon">🎸</div>
+      <!-- Replace emoji with image -->
+      <img src="icons/violinman.png" alt="Violin Man" class="index-icon-image">
       <h1>
         <span class="color-asli">Asli</span>
         <span class="color-busker">Busker</span>
@@ -253,10 +254,18 @@ if ('serviceWorker' in navigator) {
     margin-bottom: 10px;
   }
 
-  .index-icon {
-    font-size: 4rem;
-    margin-bottom: 8px;
+  /* New style for image icon */
+  .index-icon-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 12px;
     display: block;
+    margin-left: auto;
+    margin-right: auto;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     animation: float 3s ease-in-out infinite;
   }
 
@@ -502,8 +511,9 @@ if ('serviceWorker' in navigator) {
     .index-header h1 {
       font-size: 2rem;
     }
-    .index-icon {
-      font-size: 2.8rem;
+    .index-icon-image {
+      width: 60px;
+      height: 60px;
     }
     .index-btn {
       padding: 12px 16px;
