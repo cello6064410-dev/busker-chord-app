@@ -20,6 +20,59 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <style>
+    /* ===== FIX: CLOSE SPACING BETWEEN CHORD & LYRICS ===== */
+    .chord-row {
+      font-weight: bold;
+      font-size: 16px;
+      font-family: 'Courier New', monospace;
+      color: #ffcc00;
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+      line-height: 1.2 !important;
+    }
+
+    .lyric-row {
+      font-size: 16px;
+      font-family: 'Courier New', monospace;
+      color: #ffffff;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      line-height: 1.2 !important;
+    }
+
+    #output {
+      line-height: 1.2 !important;
+    }
+
+    /* Slash chord styling */
+    .slash-chord {
+      display: inline-block;
+      position: relative;
+      font-weight: bold;
+    }
+
+    .slash-chord .bass-note {
+      color: #ffcc00;
+      font-size: 0.75em;
+      opacity: 0.8;
+      margin-left: 1px;
+    }
+
+    .slash-chord:hover .bass-note {
+      color: #ff6b6b;
+      opacity: 1;
+      transition: color 0.3s ease;
+    }
+
+    /* Fullscreen mode adjustments */
+    .fullscreen-mode .chord-row,
+    .fullscreen-mode .lyric-row {
+      font-size: 18px !important;
+      line-height: 1.3 !important;
+    }
+  </style>
 </head>
 <body>
 
@@ -366,7 +419,7 @@
   }
 
   // ============================================
-  // SLASH CHORD STYLING - ADDED
+  // SLASH CHORD STYLING
   // ============================================
   function applySlashChordStyling(html) {
     const chordRows = html.match(/<div class="chord-row">.*?<\/div>/g);
@@ -623,7 +676,7 @@
   }
 
   // ============================================
-  // FORMAT CHORDS ABOVE LYRICS
+  // FORMAT CHORDS ABOVE LYRICS - FIXED SPACING
   // ============================================
   function formatChordsAboveLyrics(text) {
     const lines = text.split('\n');
@@ -683,10 +736,12 @@
         chordLine += item.chord;
       }
       chordLine = chordLine.trimEnd();
+      
+      // ===== FIX: Close spacing - no margins, line-height 1.2 =====
       if (chordMap.length > 0) {
-        result.push(`<div class="chord-row">${chordLine}</div>`);
+        result.push(`<div class="chord-row" style="margin-bottom:0; padding-bottom:0; line-height:1.2;">${chordLine}</div>`);
       }
-      result.push(`<div class="lyric-row">${lyricLine}</div>`);
+      result.push(`<div class="lyric-row" style="margin-top:0; padding-top:0; line-height:1.2;">${lyricLine}</div>`);
     }
     return result.join('\n');
   }
@@ -703,6 +758,7 @@
     outputEl.style.fontSize = size + 'px';
     document.querySelectorAll('.chord-row, .lyric-row').forEach(el => {
       el.style.fontSize = size + 'px';
+      el.style.lineHeight = '1.2';
     });
   }
 
@@ -895,6 +951,7 @@
   console.log('🎵 Song Viewer Pro loaded!');
   console.log('✅ Key signature loads from keyMajor field in database');
   console.log('✅ Slash chord styling added');
+  console.log('✅ Close spacing between chord and lyric rows (line-height: 1.2)');
   console.log('✅ Transpose system FIXED with proper semitone mapping');
   console.log('Controls:');
   console.log('  ⬆  - Transpose Up');
